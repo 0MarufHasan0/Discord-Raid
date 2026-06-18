@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const Raid = require('../../database/models/Raid');
 const User = require('../../database/models/User');
+const updateLeaderboard = require('../../utils/updateLeaderboard');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -33,12 +34,18 @@ module.exports = {
       // Find user and deduct 10 points (if approved) and decrement raid counters, clamping at 0
       const userDoc = await User.findOne({ discordId: interaction.user.id });
       if (userDoc) {
-        if (raid.status === 'approved') {
+        const wasApproved = raid.status === 'approved';
+        if (wasApproved) {
           userDoc.points = Math.max(0, userDoc.points - 10);
           userDoc.raidsApproved = Math.max(0, userDoc.raidsApproved - 1);
         }
         userDoc.raidsSubmitted = Math.max(0, userDoc.raidsSubmitted - 1);
         await userDoc.save();
+
+        if (wasApproved) {
+          // Update live leaderboard channel
+          updateLeaderboard(interaction.client);
+        }
       }
 
       const totalPoints = userDoc ? userDoc.points : 0;

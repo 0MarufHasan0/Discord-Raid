@@ -30,8 +30,16 @@ async function updateMarketplace(client) {
       return;
     }
 
-    // Fetch active items
-    const items = await MarketItem.find({ isActive: true }).sort({ name: 1 });
+    // Fetch active and non-expired items
+    const now = new Date();
+    const items = await MarketItem.find({ 
+      isActive: true,
+      $or: [
+        { expiresAt: { $exists: false } },
+        { expiresAt: null },
+        { expiresAt: { $gt: now } }
+      ]
+    }).sort({ name: 1 });
 
     const embed = new EmbedBuilder()
       .setTitle("🏪 Live Whitelist Marketplace")
@@ -39,9 +47,11 @@ async function updateMarketplace(client) {
       .setTimestamp();
 
     if (items.length === 0) {
-      embed.setDescription("🏪 **Marketplace এ এখন কোনো Whitelist Role/Item নেই।**\nনতুন কোনো আইটেম যুক্ত হলে এখানে স্বয়ংক্রিয়ভাবে আপডেট হয়ে যাবে।");
+      embed.setDescription("🏪 **Marketplace এ এখন কোনো Whitelist Role/Item নেই।**\nনতুন কোনো আইটেম যুক্ত হলে এখানে স্বয়ংক্রিয়ভাবে আপডেট হয়ে যাবে।\n\n⚠️ **নোট:** কোনো Whitelist ক্লেইম করার পর অবশ্যই একটি **ticket** ওপেন করে প্রুফ/স্ক্রিনশট জমা দিন।");
     } else {
       let desc = "এখানে বর্তমান লাইভ Whitelist Role/Items-এর তালিকা রয়েছে। তুমি রেইড করে অর্জিত পয়েন্ট দিয়ে এগুলো এক্সচেঞ্জ করতে পারবে।\n\n";
+      desc += "⚠️ **নোট: যেকোনো Whitelist ক্লেইম করার পর অবশ্যই একটি ticket ওপেন করে প্রুফ/স্ক্রিনশট জমা দিন।**\n\n";
+      desc += "───────────────────\n\n";
       
       items.forEach(item => {
         const availableSlots = Math.max(0, item.totalSlots - item.claimedSlots);
@@ -51,6 +61,12 @@ async function updateMarketplace(client) {
         desc += `> 📝 **Description:** ${item.description}\n`;
         desc += `> 💰 **Cost:** \`${item.pointCost}\` points\n`;
         desc += `> ${slotsEmoji} **Slots:** \`${item.claimedSlots}/${item.totalSlots}\` claimed (${availableSlots} left)\n`;
+        
+        if (item.expiresAt) {
+          const unixTimestamp = Math.floor(item.expiresAt.getTime() / 1000);
+          desc += `> ⏰ **Expires:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)\n`;
+        }
+        
         desc += `> 🛒 **Command:** \`/claimwl item_name:${item.name}\`\n`;
         desc += `\n───────────────────\n\n`;
       });

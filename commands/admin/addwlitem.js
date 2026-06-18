@@ -22,7 +22,19 @@ module.exports = {
     .addIntegerOption(option =>
       option.setName('total_slots')
         .setDescription('Total number of slots available')
-        .setRequired(true)),
+        .setRequired(true))
+    .addIntegerOption(option =>
+      option.setName('duration_days')
+        .setDescription('Number of days this item remains active (optional)')
+        .setRequired(false))
+    .addIntegerOption(option =>
+      option.setName('duration_hours')
+        .setDescription('Number of hours this item remains active (optional)')
+        .setRequired(false))
+    .addIntegerOption(option =>
+      option.setName('duration_minutes')
+        .setDescription('Number of minutes this item remains active (optional)')
+        .setRequired(false)),
   async execute(interaction) {
     try {
       // Check admin permissions
@@ -34,11 +46,24 @@ module.exports = {
       const pointCost = interaction.options.getInteger('point_cost');
       const totalSlots = interaction.options.getInteger('total_slots');
 
+      const durationDays = interaction.options.getInteger('duration_days') || 0;
+      const durationHours = interaction.options.getInteger('duration_hours') || 0;
+      const durationMinutes = interaction.options.getInteger('duration_minutes') || 0;
+
       if (pointCost <= 0 || totalSlots <= 0) {
         return interaction.reply({
           embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Cost এবং Slots অবশ্যই ০-এর চেয়ে বেশি হতে হবে।")],
           ephemeral: true
         });
+      }
+
+      let expiresAt = null;
+      const durationMs = (durationDays * 24 * 60 * 60 * 1000) +
+                       (durationHours * 60 * 60 * 1000) +
+                       (durationMinutes * 60 * 1000);
+
+      if (durationMs > 0) {
+        expiresAt = new Date(Date.now() + durationMs);
       }
 
       // Check if item already exists (case-insensitive)
@@ -52,16 +77,20 @@ module.exports = {
           existingItem.totalSlots = totalSlots;
           existingItem.claimedSlots = 0; // reset claimed slots? Or keep them? Usually resetting is safer or keeping. Let's reset since it is re-added.
           existingItem.isActive = true;
+          existingItem.expiresAt = expiresAt;
           await existingItem.save();
 
           // Update live marketplace channel
           updateMarketplace(interaction.client);
 
+          let successDesc = `✅ Inactive Marketplace item '${name}' পুনরায় active করা হয়েছে!\n💰 Cost: **${pointCost}** points\n🎟️ Slots: **${totalSlots}**`;
+          if (expiresAt) {
+            const unixTimestamp = Math.floor(expiresAt.getTime() / 1000);
+            successDesc += `\n⏰ **Expires:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)`;
+          }
+
           return interaction.reply({
-            embeds: [new EmbedBuilder()
-              .setColor(0x00FF00) // Success green
-              .setDescription(`✅ Inactive Marketplace item '${name}' পুনরায় active করা হয়েছে!\n💰 Cost: **${pointCost}** points\n🎟️ Slots: **${totalSlots}**`)
-            ],
+            embeds: [new EmbedBuilder().setColor(0x00FF00).setDescription(successDesc)],
             ephemeral: true
           });
         }
@@ -79,16 +108,23 @@ module.exports = {
         pointCost,
         totalSlots,
         claimedSlots: 0,
-        isActive: true
+        isActive: true,
+        expiresAt: expiresAt
       });
       await newItem.save();
 
       // Update live marketplace channel
       updateMarketplace(interaction.client);
 
+      let replyDesc = `✅ Marketplace এ '**${name}**' add হয়েছে!\n💰 Cost: **${pointCost}** points\n🎟️ Slots: **${totalSlots}**`;
+      if (expiresAt) {
+        const unixTimestamp = Math.floor(expiresAt.getTime() / 1000);
+        replyDesc += `\n⏰ **Expires:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)`;
+      }
+
       const replyEmbed = new EmbedBuilder()
         .setColor(0x00FF00) // Success green
-        .setDescription(`✅ Marketplace এ '**${name}**' add হয়েছে!\n💰 Cost: **${pointCost}** points\n🎟️ Slots: **${totalSlots}**`);
+        .setDescription(replyDesc);
 
       await interaction.reply({ embeds: [replyEmbed], ephemeral: true });
 

@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const checkAdmin = require('../../utils/checkAdmin');
 const User = require('../../database/models/User');
+const updateLeaderboard = require('../../utils/updateLeaderboard');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -45,6 +46,9 @@ module.exports = {
         },
         { upsert: true, new: true, setDefaultsOnInsert: true }
       );
+
+      // Update live leaderboard channel
+      updateLeaderboard(interaction.client);
 
       // Attempt to DM the user
       const dmEmbed = new EmbedBuilder()

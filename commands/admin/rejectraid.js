@@ -2,6 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const checkAdmin = require('../../utils/checkAdmin');
 const Raid = require('../../database/models/Raid');
 const User = require('../../database/models/User');
+const updateLeaderboard = require('../../utils/updateLeaderboard');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -59,6 +60,9 @@ module.exports = {
           await userDoc.save();
           newTotalPoints = userDoc.points;
           pointsDeducted = true;
+
+          // Update live leaderboard channel
+          updateLeaderboard(interaction.client);
         }
       }
 

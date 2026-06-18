@@ -2,6 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const checkAdmin = require('../../utils/checkAdmin');
 const Raid = require('../../database/models/Raid');
 const User = require('../../database/models/User');
+const updateLeaderboard = require('../../utils/updateLeaderboard');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -52,6 +53,9 @@ module.exports = {
         },
         { upsert: true, new: true, setDefaultsOnInsert: true }
       );
+
+      // Update live leaderboard channel
+      updateLeaderboard(interaction.client);
 
       // Try to DM the raider
       const raiderUser = await interaction.client.users.fetch(raid.userId).catch(() => null);

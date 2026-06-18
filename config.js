@@ -11,6 +11,7 @@ const config = {
   adminRoleId: process.env.ADMIN_ROLE_ID,
   tweetChannelId: process.env.TWEET_CHANNEL_ID,
   marketplaceChannelId: process.env.MARKETPLACE_CHANNEL_ID || '1517134759493374105',
+  leaderboardChannelId: process.env.LEADERBOARD_CHANNEL_ID || '1517134882738933943',
 };
 
 // Check for missing configurations

@@ -2,6 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const Raid = require('../../database/models/Raid');
 const User = require('../../database/models/User');
 const Tweet = require('../../database/models/Tweet');
+const updateLeaderboard = require('../../utils/updateLeaderboard');
 
 /**
  * Normalizes Twitter/X status links and extracts the status ID.
@@ -140,6 +141,9 @@ module.exports = {
         },
         { upsert: true, new: true, setDefaultsOnInsert: true }
       );
+
+      // Update live leaderboard channel
+      updateLeaderboard(interaction.client);
 
       // Reply publicly
       const replyEmbed = new EmbedBuilder()

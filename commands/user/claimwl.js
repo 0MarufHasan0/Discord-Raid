@@ -2,6 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const MarketItem = require('../../database/models/MarketItem');
 const User = require('../../database/models/User');
 const updateMarketplace = require('../../utils/updateMarketplace');
+const updateLeaderboard = require('../../utils/updateLeaderboard');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -25,6 +26,14 @@ module.exports = {
       if (!item) {
         return interaction.reply({
           embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ '${itemName}' নামে কোনো item নেই`)],
+          ephemeral: true
+        });
+      }
+
+      // Check if item has expired
+      if (item.expiresAt && new Date() > item.expiresAt) {
+        return interaction.reply({
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ '${item.name}' আইটেমটির মেয়াদ শেষ হয়ে গেছে! তুমি আর এটি ক্লেইম করতে পারবে না।`)],
           ephemeral: true
         });
       }
@@ -77,6 +86,9 @@ module.exports = {
       // Update live marketplace channel
       updateMarketplace(interaction.client);
 
+      // Update live leaderboard channel
+      updateLeaderboard(interaction.client);
+
       // Reply success
       const remainingPoints = userDoc.points;
       const successEmbed = new EmbedBuilder()
@@ -84,7 +96,8 @@ module.exports = {
         .setDescription(
           `✅ তুমি '**${item.name}**' claim করেছো!\n` +
           `💰 **${item.pointCost}** points কাটা হয়েছে\n` +
-          `💳 বাকি points: **${remainingPoints}**`
+          `💳 বাকি points: **${remainingPoints}**\n\n` +
+          `🎟️ **Whitelist-টি ক্লেইম করার পর, অনুগ্রহ করে একটি ticket ওপেন করে প্রুফ/স্ক্রিনশট জমা দাও।**`
         )
         .setTimestamp();
 

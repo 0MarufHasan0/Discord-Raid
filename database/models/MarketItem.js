@@ -26,6 +26,9 @@ const MarketItemSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  expiresAt: {
+    type: Date
+  },
   createdAt: {
     type: Date,
     default: Date.now
