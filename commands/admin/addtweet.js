@@ -224,14 +224,15 @@ module.exports = {
             desc += `> ${tweetData.text.replace(/\n/g, '\n> ')}\n\n`;
           }
           
-          // Add Twitter stats line
-          desc += `💬 ${tweetData.replies || 0}   🔁 ${tweetData.retweets || 0}   ❤️ ${tweetData.likes || 0}   👁️ ${tweetData.views || 0}\n\n`;
-          
           // Expiration time using Discord dynamic timestamps
           desc += `⏰ **Raid Active Until:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)\n\n`;
           
           desc += `**👉 Raid Submit Command:**\n`;
-          desc += `\`\`\`/submitraid link:<proof_link> tweet_id:${tweetId}\`\`\``;
+          desc += `\`\`\`/submitraid link:<proof_link> tweet_id:${tweetId}\`\`\`\n\n`;
+
+          // Add Twitter stats line below the raid submit command
+          desc += `💬 ${tweetData.replies || 0}   🔁 ${tweetData.retweets || 0}   ❤️ ${tweetData.likes || 0}   👁️ ${tweetData.views || 0}`;
+          
           announcementEmbed.setDescription(desc);
 
           // Set image if media photo is available
