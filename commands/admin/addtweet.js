@@ -187,6 +187,7 @@ module.exports = {
         // Build premium announcement embed
         const announcementEmbed = new EmbedBuilder()
           .setColor(0x5865F2) // Discord Blurple
+          .setThumbnail(interaction.client.user.displayAvatarURL({ dynamic: true }))
           .setFooter({ 
             text: `Tweet ID: ${tweetId} • Posted by ${interaction.user.username}`,
             iconURL: interaction.user.displayAvatarURL({ dynamic: true })
