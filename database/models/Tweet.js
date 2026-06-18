@@ -22,6 +22,9 @@ const TweetSchema = new mongoose.Schema({
   channelId: {
     type: String,
     required: true
+  },
+  expiresAt: {
+    type: Date
   }
 });
 

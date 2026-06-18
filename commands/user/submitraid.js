@@ -47,6 +47,14 @@ module.exports = {
         });
       }
 
+      // Check if the Tweet has expired
+      if (tweetDoc.expiresAt && new Date() > tweetDoc.expiresAt) {
+        return interaction.reply({
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ এই রেইডের সময় শেষ হয়ে গেছে! তুমি আর এই Tweet ID-এর জন্য রেইড সাবমিট করতে পারবে না।")],
+          ephemeral: true
+        });
+      }
+
       // Use canonical casing from database
       const canonicalTweetId = tweetDoc.tweetId;
       const escapedCanonicalTweetId = canonicalTweetId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

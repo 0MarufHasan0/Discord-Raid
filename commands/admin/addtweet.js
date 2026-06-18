@@ -68,6 +68,18 @@ module.exports = {
     .addStringOption(option =>
       option.setName('tweet_link')
         .setDescription('Link of the tweet/post (optional)')
+        .setRequired(false))
+    .addIntegerOption(option =>
+      option.setName('duration_days')
+        .setDescription('Number of days the raid remains active (default: 1)')
+        .setRequired(false))
+    .addIntegerOption(option =>
+      option.setName('duration_hours')
+        .setDescription('Number of hours the raid remains active (optional)')
+        .setRequired(false))
+    .addIntegerOption(option =>
+      option.setName('duration_minutes')
+        .setDescription('Number of minutes the raid remains active (optional)')
         .setRequired(false)),
   async execute(interaction) {
     try {
@@ -80,6 +92,20 @@ module.exports = {
 
       const content = interaction.options.getString('content');
       const tweetLink = interaction.options.getString('tweet_link');
+      
+      const durationDays = interaction.options.getInteger('duration_days') || 0;
+      const durationHours = interaction.options.getInteger('duration_hours') || 0;
+      const durationMinutes = interaction.options.getInteger('duration_minutes') || 0;
+
+      let durationMs = (durationDays * 24 * 60 * 60 * 1000) +
+                       (durationHours * 60 * 60 * 1000) +
+                       (durationMinutes * 60 * 1000);
+
+      if (durationMs === 0) {
+        durationMs = 24 * 60 * 60 * 1000; // Default to 24 hours
+      }
+
+      const expiresAt = new Date(Date.now() + durationMs);
 
       const tweetChannelIdString = config.tweetChannelId || '';
       const tweetChannelIds = tweetChannelIdString.split(',').map(id => id.trim()).filter(Boolean);
@@ -161,14 +187,21 @@ module.exports = {
         // Build premium announcement embed
         const announcementEmbed = new EmbedBuilder()
           .setColor(0x5865F2) // Discord Blurple
+          .setThumbnail(interaction.client.user.displayAvatarURL({ dynamic: true }))
           .setFooter({ 
             text: `Tweet ID: ${tweetId} • Posted by ${interaction.user.username}`,
             iconURL: interaction.user.displayAvatarURL({ dynamic: true })
           })
           .setTimestamp();
 
-        let messageText = '';
+        // Prepare message content (user custom content text goes at the very top, outside embed)
+        let messageText = contentCleaned || '';
+        if (finalTweetLink) {
+          messageText = `${messageText} [.](${finalTweetLink})`.trim();
+        }
+
         const buttons = [];
+        const unixTimestamp = Math.floor(expiresAt.getTime() / 1000);
 
         if (tweetData) {
           // Set premium author details
@@ -179,17 +212,24 @@ module.exports = {
               url: tweetData.url || originalTweetLink
             });
           } else {
-            announcementEmbed.setTitle("📢 New Tweet");
+            announcementEmbed.setAuthor({
+              name: "New Raid Announcement",
+              iconURL: interaction.client.user.displayAvatarURL({ dynamic: true })
+            });
           }
 
           // Build description
           let desc = '';
-          if (contentCleaned) {
-            desc += `${contentCleaned}\n\n`;
-          }
           if (tweetData.text) {
             desc += `> ${tweetData.text.replace(/\n/g, '\n> ')}\n\n`;
           }
+          
+          // Add Twitter stats line
+          desc += `💬 ${tweetData.replies || 0}   🔁 ${tweetData.retweets || 0}   ❤️ ${tweetData.likes || 0}   👁️ ${tweetData.views || 0}\n\n`;
+          
+          // Expiration time using Discord dynamic timestamps
+          desc += `⏰ **Raid Active Until:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)\n\n`;
+          
           desc += `**👉 Raid Submit Command:**\n`;
           desc += `\`\`\`/submitraid link:<proof_link> tweet_id:${tweetId}\`\`\``;
           announcementEmbed.setDescription(desc);
@@ -203,20 +243,19 @@ module.exports = {
           }
         } else {
           // Fallback / Standard layout
-          announcementEmbed.setTitle("📢 New Tweet");
+          announcementEmbed.setAuthor({
+            name: "New Raid Announcement",
+            iconURL: interaction.client.user.displayAvatarURL({ dynamic: true })
+          });
 
           let desc = '';
-          if (contentCleaned) {
-            desc += `${contentCleaned}\n\n`;
-          }
+          // Expiration time using Discord dynamic timestamps
+          desc += `⏰ **Raid Active Until:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)\n\n`;
+          
           desc += `**👉 Raid Submit Command:**\n`;
           desc += `\`\`\`/submitraid link:<proof_link> tweet_id:${tweetId}\`\`\`\n`;
           desc += `*(Click the **Copy Tweet ID** button below to copy the ID)*`;
           announcementEmbed.setDescription(desc);
-
-          if (finalTweetLink) {
-            messageText = `[.](${finalTweetLink})`;
-          }
         }
 
         // Add Raid button if we have a tweet link
@@ -264,7 +303,8 @@ module.exports = {
               content: contentCleaned,
               imageUrl: originalTweetLink || null, // save tweet link/url under imageUrl
               postedBy: interaction.user.username,
-              channelId: channelId
+              channelId: channelId,
+              expiresAt: expiresAt
             });
             await newTweet.save();
             results.push({ channelId, success: true, channelName: channel.name });
