@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const config = require('./config');
 const connectDB = require('./database/db');
+const updateMarketplace = require('./utils/updateMarketplace');
 
 // Create a new client instance
 const client = new Client({
@@ -84,8 +85,9 @@ client.on('interactionCreate', async interaction => {
 });
 
 // Bot ready event
-client.once('ready', () => {
+client.once('ready', async () => {
   console.log("✅ Marketplace Boss Bot online!");
+  await updateMarketplace(client);
 });
 
 // Bot startup lifecycle

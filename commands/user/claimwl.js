@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const MarketItem = require('../../database/models/MarketItem');
 const User = require('../../database/models/User');
+const updateMarketplace = require('../../utils/updateMarketplace');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -72,6 +73,9 @@ module.exports = {
       // Deduct points from user
       userDoc.points -= item.pointCost;
       await userDoc.save();
+
+      // Update live marketplace channel
+      updateMarketplace(interaction.client);
 
       // Reply success
       const remainingPoints = userDoc.points;

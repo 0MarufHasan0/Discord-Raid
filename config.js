@@ -10,6 +10,7 @@ const config = {
   mongodbUrl: process.env.MONGODB_URL,
   adminRoleId: process.env.ADMIN_ROLE_ID,
   tweetChannelId: process.env.TWEET_CHANNEL_ID,
+  marketplaceChannelId: process.env.MARKETPLACE_CHANNEL_ID || '1517134759493374105',
 };
 
 // Check for missing configurations

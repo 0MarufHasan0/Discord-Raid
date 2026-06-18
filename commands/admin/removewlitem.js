@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const checkAdmin = require('../../utils/checkAdmin');
 const MarketItem = require('../../database/models/MarketItem');
+const updateMarketplace = require('../../utils/updateMarketplace');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -38,6 +39,9 @@ module.exports = {
       // Deactivate item
       item.isActive = false;
       await item.save();
+
+      // Update live marketplace channel
+      updateMarketplace(interaction.client);
 
       const replyEmbed = new EmbedBuilder()
         .setColor(0x00FF00) // Success green
