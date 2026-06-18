@@ -92,6 +92,15 @@ client.once('ready', async () => {
   await updateLeaderboard(client);
 });
 
+// Keep-alive HTTP Server for 24/7 Hosting (Render/Koyeb)
+const http = require('http');
+http.createServer((req, res) => {
+  res.write("Bot is running!");
+  res.end();
+}).listen(process.env.PORT || 3000, () => {
+  console.log("📡 Keep-alive server is listening on port " + (process.env.PORT || 3000));
+});
+
 // Bot startup lifecycle
 (async () => {
   try {

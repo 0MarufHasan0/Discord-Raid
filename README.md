@@ -80,3 +80,31 @@
    ```bash
    npm start
    ```
+
+---
+
+## 🌐 ২৪/৭ ফ্রিতে হোস্টিং করার নিয়ম (Render / Koyeb)
+
+বটটিকে ২৪ ঘণ্টা ফ্রিতে অনলাইনে একটিভ রাখতে প্রজেক্টে একটি বিল্ট-ইন **HTTP Keep-alive server** যুক্ত করা হয়েছে। 
+
+### Render.com এ হোস্ট করার ধাপসমূহ:
+১. [Render.com](https://render.com/) এ GitHub অ্যাকাউন্ট দিয়ে লগইন করুন।
+২. **New +** > **Web Service** সিলেক্ট করে এই রিপোজিটরি কানেক্ট করুন।
+৩. সেটিংস কনফিগার করুন:
+   * **Build Command:** `npm install`
+   * **Start Command:** `npm start`
+   * **Instance Type:** **Free**
+৪. **Advanced** অপশনে গিয়ে **Add Environment Variable** এ ক্লিক করে আপনার `.env` ফাইলের সব কনফিগারেশন কী ও ভ্যালুগুলো যোগ করুন।
+৫. **Deploy** বাটনে ক্লিক করুন।
+
+### ২৪ ঘণ্টা লাইভ রাখার উপায় (Render Keep-alive):
+Render-এর ফ্রি সার্ভিস অব্যবহৃত থাকলে ১৫ মিনিট পর স্লিপ মোডে চলে যায়। এটি প্রতিরোধ করতে:
+১. Render-এর দেওয়া ওয়েব সার্ভিস লিঙ্কটি কপি করুন (যেমন: `https://your-app.onrender.com`)।
+২. [UptimeRobot](https://uptimerobot.com/) এ একটি ফ্রি অ্যাকাউন্ট তৈরি করুন।
+৩. **Add New Monitor** সিলেক্ট করে:
+   * **Monitor Type:** `HTTPS`
+   * **Friendly Name:** `Discord Bot Keep Alive`
+   * **URL:** আপনার Render লিঙ্কটি পেস্ট করুন।
+   * **Interval:** `Every 5 minutes`
+৪. মনিটরটি ক্রিয়েট করুন। UptimeRobot প্রতি ৫ মিনিট পর পর রিকোয়েস্ট পাঠিয়ে বটটিকে ২৪ ঘণ্টা সচল রাখবে।
+
