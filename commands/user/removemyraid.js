@@ -23,7 +23,7 @@ module.exports = {
       });
       if (!raid) {
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ এই Tweet ID (\`${tweetId}\`)-এর জন্য তোমার কোনো রেইড সাবমিশন পাওয়া যায়নি।`)],
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ No raid submission found for this Tweet ID (\`${tweetId}\`).`)],
           ephemeral: true
         });
       }
@@ -53,11 +53,11 @@ module.exports = {
       const replyEmbed = new EmbedBuilder()
         .setColor(0x00FF00) // Success green
         .setDescription(
-          `✅ তোমার রেইড সাবমিশন সফলভাবে ডিলিট করা হয়েছে!\n\n` +
+          `✅ Your raid submission has been successfully deleted!\n\n` +
           `📋 **Tweet ID:** **${raid.tweetId || tweetId}**\n` +
-          `💰 **পয়েন্ট পরিবর্তন:** **-10** (যদি অ্যাপ্রুভ হয়ে থাকে)\n` +
-          `💰 **তোমার বর্তমান মোট points:** **${totalPoints}**\n\n` +
-          `তুমি এখন আবার নতুন করে লিংক দিয়ে এই Tweet ID-এর জন্য রেইড সাবমিট করতে পারবে।`
+          `💰 **Point Change:** **-10** (if it was approved)\n` +
+          `💰 **Your current total points:** **${totalPoints}**\n\n` +
+          `You can now submit a new raid for this Tweet ID.`
         )
         .setTimestamp();
 
@@ -67,9 +67,9 @@ module.exports = {
       console.error('Error in /removemyraid command:', error);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.followUp({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         } else {
-          await interaction.reply({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.reply({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         }
       } catch (err) {
         // Silently catch errors if interaction already finished/closed

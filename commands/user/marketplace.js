@@ -16,7 +16,7 @@ module.exports = {
         .setTimestamp();
 
       if (items.length === 0) {
-        embed.setDescription("🏪 Marketplace এ এখন কোনো item নেই");
+        embed.setDescription("🏪 There are currently no items in the marketplace.");
         return interaction.reply({ embeds: [embed] });
       }
 
@@ -27,7 +27,7 @@ module.exports = {
         });
       });
 
-      embed.setFooter({ text: "/claimwl [item name] দিয়ে claim করো" });
+      embed.setFooter({ text: "Use /claimwl [item name] to claim an item" });
 
       await interaction.reply({ embeds: [embed] });
 
@@ -35,9 +35,9 @@ module.exports = {
       console.error('Error in /marketplace command:', error);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.followUp({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         } else {
-          await interaction.reply({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.reply({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         }
       } catch (err) {
         // Silently catch errors if interaction already finished/closed

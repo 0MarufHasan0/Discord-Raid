@@ -47,10 +47,10 @@ async function updateMarketplace(client) {
       .setTimestamp();
 
     if (items.length === 0) {
-      embed.setDescription("🏪 **Marketplace এ এখন কোনো Whitelist Role/Item নেই।**\nনতুন কোনো আইটেম যুক্ত হলে এখানে স্বয়ংক্রিয়ভাবে আপডেট হয়ে যাবে।\n\n⚠️ **নোট:** কোনো Whitelist ক্লেইম করার পর অবশ্যই একটি **ticket** ওপেন করে প্রুফ/স্ক্রিনশট জমা দিন।");
+      embed.setDescription("🏪 **There are currently no Whitelist Roles/Items in the Marketplace.**\nWhen a new item is added, it will automatically be updated here.\n\n⚠️ **Note:** After claiming any Whitelist, please open a **ticket** to submit your proof/screenshot.");
     } else {
-      let desc = "এখানে বর্তমান লাইভ Whitelist Role/Items-এর তালিকা রয়েছে। তুমি রেইড করে অর্জিত পয়েন্ট দিয়ে এগুলো এক্সচেঞ্জ করতে পারবে।\n\n";
-      desc += "⚠️ **নোট: যেকোনো Whitelist ক্লেইম করার পর অবশ্যই একটি ticket ওপেন করে প্রুফ/স্ক্রিনশট জমা দিন।**\n\n";
+      let desc = "Here is the list of current live Whitelist Roles/Items. You can exchange your points earned from raids to claim them.\n\n";
+      desc += "⚠️ **Note: After claiming any Whitelist, you must open a ticket to submit your proof/screenshot.**\n\n";
       desc += "───────────────────\n\n";
       
       items.forEach(item => {

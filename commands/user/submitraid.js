@@ -43,7 +43,7 @@ module.exports = {
       }).sort({ postedAt: -1 });
       if (!tweetDoc) {
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ ভুল Tweet ID! দয়া করে সঠিক Tweet ID প্রদান করো (যা টুইট এনাউন্সমেন্টের ফুটারে রয়েছে)।")],
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Invalid Tweet ID! Please provide a correct Tweet ID (found in the footer of the tweet announcement).")],
           ephemeral: true
         });
       }
@@ -51,7 +51,7 @@ module.exports = {
       // Check if the Tweet has expired
       if (tweetDoc.expiresAt && new Date() > tweetDoc.expiresAt) {
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ এই রেইডের সময় শেষ হয়ে গেছে! তুমি আর এই Tweet ID-এর জন্য রেইড সাবমিট করতে পারবে না।")],
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ This raid has expired! You can no longer submit a raid for this Tweet ID.")],
           ephemeral: true
         });
       }
@@ -67,7 +67,7 @@ module.exports = {
       });
       if (existingUserRaid) {
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ তুমি ইতিমধ্যে এই টুইটের জন্য রেইড সাবমিট করেছ।\n\nযদি ভুল লিংক দিয়ে থাকো এবং নতুন করে রেইড সাবমিট করতে চাও, তবে প্রথমে \`/removemyraid tweet_id:${canonicalTweetId}\` কমান্ড দিয়ে আগের রেইডটি ডিলিট করো।`)],
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ You have already submitted a raid for this tweet.\n\nIf you submitted the wrong link and want to submit a new one, please delete your previous raid using \`/removemyraid tweet_id:${canonicalTweetId}\` first.`)],
           ephemeral: true
         });
       }
@@ -75,7 +75,7 @@ module.exports = {
       // Simple URL validation
       if (!link.startsWith('http://') && !link.startsWith('https://')) {
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ দয়া করে একটি সঠিক URL/লিংক প্রদান করুন (http:// বা https:// দিয়ে শুরু হতে হবে)।")],
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Please provide a valid URL/link (must start with http:// or https://).")],
           ephemeral: true
         });
       }
@@ -88,7 +88,7 @@ module.exports = {
         const tweetInfo = getTweetIdAndNormalize(link);
         if (!tweetInfo) {
           return interaction.reply({
-            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ দয়া করে একটি সঠিক Twitter বা X পোস্টের লিংক দিন (যেমন: `https://x.com/username/status/1234567890`)।")],
+            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Please provide a valid Twitter or X post link (e.g., `https://x.com/username/status/1234567890`).")],
             ephemeral: true
           });
         }
@@ -99,7 +99,7 @@ module.exports = {
           const normOriginal = getTweetIdAndNormalize(tweetDoc.imageUrl);
           if (normOriginal && normOriginal.statusId === tweetInfo.statusId) {
             return interaction.reply({
-              embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ তুমি মূল টুইটের লিংকটি সাবমিট করেছ। দয়া করে রেইড সম্পন্ন করে তোমার নিজের রিপ্লাই, রিটুইট, বা কোট টুইটের লিংক সাবমিট করো।")],
+              embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ You submitted the original announcement tweet link. Please complete the raid and submit the link to your own reply, retweet, or quote tweet.")],
               ephemeral: true
             });
           }
@@ -110,7 +110,7 @@ module.exports = {
       const existingRaid = await Raid.findOne({ link: finalLinkToSave });
       if (existingRaid) {
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ এই লিংকটি ইতিমধ্যে সাবমিট করা হয়েছে।")],
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ This link has already been submitted.")],
           ephemeral: true
         });
       }
@@ -149,11 +149,11 @@ module.exports = {
       const replyEmbed = new EmbedBuilder()
         .setColor(0x00FF00) // Success green
         .setDescription(
-          `✅ তোমার raid সফলভাবে সম্পন্ন হয়েছে এবং অটো-অ্যাপ্রুভ হয়েছে!\n\n` +
+          `✅ Your raid was completed successfully and auto-approved!\n\n` +
           `📋 **Raid ID:** **${raidId}**\n` +
           `📋 **Tweet ID:** **${canonicalTweetId}**\n` +
           `🔗 **Link:** ${finalLinkToSave}\n\n` +
-          `🎉 তুমি **10** points পেয়েছ! তোমার মোট points: **${userDoc.points}**`
+          `🎉 You received **10** points! Your total points: **${userDoc.points}**`
         )
         .setTimestamp();
 
@@ -163,9 +163,9 @@ module.exports = {
       console.error('Error in /submitraid command:', error);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.followUp({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         } else {
-          await interaction.reply({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.reply({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         }
       } catch (err) {
         // Silently catch errors if interaction already finished/closed

@@ -15,7 +15,7 @@ async function checkAdmin(interaction) {
   if (!interaction.member || !interaction.member.roles) {
     const embed = new EmbedBuilder()
       .setColor(0xFF0000)
-      .setDescription("❌ তোমার এই command ব্যবহারের permission নেই");
+      .setDescription("❌ You do not have permission to use this command.");
     await interaction.reply({ embeds: [embed], ephemeral: true });
     return false;
   }
@@ -33,7 +33,7 @@ async function checkAdmin(interaction) {
   if (!hasRole) {
     const embed = new EmbedBuilder()
       .setColor(0xFF0000) // Red
-      .setDescription("❌ তোমার এই command ব্যবহারের permission নেই");
+      .setDescription("❌ You do not have permission to use this command.");
     
     await interaction.reply({ embeds: [embed], ephemeral: true });
     return false;

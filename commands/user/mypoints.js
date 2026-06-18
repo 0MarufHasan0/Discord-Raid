@@ -22,10 +22,10 @@ module.exports = {
 
       // Build embed
       const embed = new EmbedBuilder()
-        .setTitle(`💰 তোমার Points — ${interaction.user.username}`)
+        .setTitle(`💰 Your Points — ${interaction.user.username}`)
         .setColor(0x00FF00) // Success green
         .addFields(
-          { name: 'মোট Points', value: String(userDoc.points), inline: true },
+          { name: 'Total Points', value: String(userDoc.points), inline: true },
           { name: 'Raids Submitted', value: String(userDoc.raidsSubmitted), inline: true },
           { name: 'Raids Approved', value: String(userDoc.raidsApproved), inline: true }
         )
@@ -37,9 +37,9 @@ module.exports = {
       console.error('Error in /mypoints command:', error);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.followUp({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         } else {
-          await interaction.reply({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.reply({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         }
       } catch (err) {
         // Silently catch errors if interaction already finished/closed

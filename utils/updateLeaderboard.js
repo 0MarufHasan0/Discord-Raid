@@ -39,9 +39,9 @@ async function updateLeaderboard(client) {
       .setTimestamp();
 
     if (topUsers.length === 0) {
-      embed.setDescription("📭 **লিডারবোর্ডে এখনো কোনো ব্যবহারকারী নেই।**\nপয়েন্ট অর্জন করার সাথে সাথে এখানে নাম চলে আসবে!");
+      embed.setDescription("📭 **No users on the leaderboard yet.**\nNames will appear here as soon as they earn points!");
     } else {
-      let desc = "রেইড সম্পন্ন করে পয়েন্ট অর্জন করো এবং লিডারবোর্ডের শীর্ষে উঠে আসো!\n\n";
+      let desc = "Complete raids to earn points and climb to the top of the leaderboard!\n\n";
       const rankEmojis = ['🥇', '🥈', '🥉'];
       
       topUsers.forEach((user, index) => {

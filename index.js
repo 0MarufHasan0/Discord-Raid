@@ -54,7 +54,7 @@ client.on('interactionCreate', async interaction => {
     await command.execute(interaction);
   } catch (error) {
     console.error(`❌ Error executing /${interaction.commandName}:`, error);
-    const errMessage = "❌ একটা error হয়েছে। আবার চেষ্টা করো।";
+    const errMessage = "❌ An error occurred. Please try again.";
     
     try {
       if (interaction.replied || interaction.deferred) {

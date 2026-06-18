@@ -25,7 +25,7 @@ module.exports = {
 
       if (!item) {
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ '${itemName}' নামে কোনো item নেই`)],
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ No item found with the name '${itemName}'`)],
           ephemeral: true
         });
       }
@@ -33,7 +33,7 @@ module.exports = {
       // Check if item has expired
       if (item.expiresAt && new Date() > item.expiresAt) {
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ '${item.name}' আইটেমটির মেয়াদ শেষ হয়ে গেছে! তুমি আর এটি ক্লেইম করতে পারবে না।`)],
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ The item '${item.name}' has expired! You can no longer claim it.`)],
           ephemeral: true
         });
       }
@@ -41,7 +41,7 @@ module.exports = {
       // Check if slots are available
       if (item.claimedSlots >= item.totalSlots) {
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ '${item.name}' এর সব slots শেষ!`)],
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ All slots for '${item.name}' have been claimed!`)],
           ephemeral: true
         });
       }
@@ -60,7 +60,7 @@ module.exports = {
       // Check points balance
       if (userDoc.points < item.pointCost) {
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ তোমার কাছে যথেষ্ট points নেই!\nদরকার: **${item.pointCost}** | তোমার কাছে: **${userDoc.points}**`)],
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ You do not have enough points!\nRequired: **${item.pointCost}** | You have: **${userDoc.points}**`)],
           ephemeral: true
         });
       }
@@ -74,7 +74,7 @@ module.exports = {
 
       if (!updatedItem) {
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ '${item.name}' এর সব slots শেষ!`)],
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ All slots for '${item.name}' have been claimed!`)],
           ephemeral: true
         });
       }
@@ -94,10 +94,10 @@ module.exports = {
       const successEmbed = new EmbedBuilder()
         .setColor(0x00FF00) // Success green
         .setDescription(
-          `✅ তুমি '**${item.name}**' claim করেছো!\n` +
-          `💰 **${item.pointCost}** points কাটা হয়েছে\n` +
-          `💳 বাকি points: **${remainingPoints}**\n\n` +
-          `🎟️ **Whitelist-টি ক্লেইম করার পর, অনুগ্রহ করে একটি ticket ওপেন করে প্রুফ/স্ক্রিনশট জমা দাও।**`
+          `✅ You have claimed '**${item.name}**'!\n` +
+          `💰 **${item.pointCost}** points deducted\n` +
+          `💳 Remaining points: **${remainingPoints}**\n\n` +
+          `🎟️ **After claiming the whitelist, please open a ticket to submit proof/screenshot.**`
         )
         .setTimestamp();
 
@@ -107,9 +107,9 @@ module.exports = {
       console.error('Error in /claimwl command:', error);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.followUp({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         } else {
-          await interaction.reply({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.reply({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         }
       } catch (err) {
         // Silently catch errors if interaction already finished/closed

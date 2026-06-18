@@ -14,18 +14,18 @@ module.exports = {
 
       if (raids.length === 0) {
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0x5865F2).setDescription("তুমি এখনো কোনো raid submit করোনি")],
+          embeds: [new EmbedBuilder().setColor(0x5865F2).setDescription("You have not submitted any raids yet.")],
           ephemeral: true
         });
       }
 
       const embed = new EmbedBuilder()
-        .setTitle("📜 তোমার Raid History")
+        .setTitle("📜 Your Raid History")
         .setColor(0x5865F2) // Discord Blurple
         .setTimestamp();
 
       raids.forEach(raid => {
-        const formattedDate = raid.submittedAt ? new Date(raid.submittedAt).toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' }) : 'Unknown';
+        const formattedDate = raid.submittedAt ? new Date(raid.submittedAt).toLocaleString('en-US', { timeZone: 'Asia/Dhaka' }) : 'Unknown';
         
         let extraInfo = '';
         let statusEmoji = '🟡';
@@ -53,9 +53,9 @@ module.exports = {
       console.error('Error in /myraidhistory command:', error);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.followUp({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         } else {
-          await interaction.reply({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.reply({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         }
       } catch (err) {
         // Silently catch errors if interaction already finished/closed
