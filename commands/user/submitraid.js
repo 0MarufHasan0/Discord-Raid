@@ -36,10 +36,10 @@ module.exports = {
       const tweetId = interaction.options.getString('tweet_id').trim();
       const escapedTweetId = tweetId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-      // Check if the Tweet ID exists in our database (case-insensitive query)
+      // Check if the Tweet ID exists in our database (case-insensitive query, getting the latest post)
       const tweetDoc = await Tweet.findOne({ 
         tweetId: { $regex: new RegExp(`^${escapedTweetId}$`, 'i') } 
-      });
+      }).sort({ postedAt: -1 });
       if (!tweetDoc) {
         return interaction.reply({
           embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ ভুল Tweet ID! দয়া করে সঠিক Tweet ID প্রদান করো (যা টুইট এনাউন্সমেন্টের ফুটারে রয়েছে)।")],
