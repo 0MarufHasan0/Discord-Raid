@@ -28,10 +28,10 @@ module.exports = {
         });
       }
 
-      // Check if already approved/rejected
-      if (raid.status !== 'pending') {
+      // Check if already approved
+      if (raid.status === 'approved') {
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0xFFA500).setDescription(`⚠️ এই raid already ${raid.status}`)],
+          embeds: [new EmbedBuilder().setColor(0xFFA500).setDescription(`⚠️ এই raid already approved`)],
           ephemeral: true
         });
       }

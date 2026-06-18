@@ -13,12 +13,16 @@ module.exports = {
   async execute(interaction) {
     try {
       const tweetId = interaction.options.getString('tweet_id').trim();
+      const escapedTweetId = tweetId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-      // Find the raid submission
-      const raid = await Raid.findOne({ userId: interaction.user.id, tweetId: tweetId });
+      // Find the raid submission (using case-insensitive search for tweetId)
+      const raid = await Raid.findOne({ 
+        userId: interaction.user.id, 
+        tweetId: { $regex: new RegExp(`^${escapedTweetId}$`, 'i') } 
+      });
       if (!raid) {
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ এই Tweet ID (\`${tweetId}\`)-এর জন্য তোমার কোনো رেইড সাবমিশন পাওয়া যায়নি।`)],
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ এই Tweet ID (\`${tweetId}\`)-এর জন্য তোমার কোনো রেইড সাবমিশন পাওয়া যায়নি।`)],
           ephemeral: true
         });
       }
@@ -43,7 +47,7 @@ module.exports = {
         .setColor(0x00FF00) // Success green
         .setDescription(
           `✅ তোমার রেইড সাবমিশন সফলভাবে ডিলিট করা হয়েছে!\n\n` +
-          `📋 **Tweet ID:** **${tweetId}**\n` +
+          `📋 **Tweet ID:** **${raid.tweetId || tweetId}**\n` +
           `💰 **পয়েন্ট পরিবর্তন:** **-10** (যদি অ্যাপ্রুভ হয়ে থাকে)\n` +
           `💰 **তোমার বর্তমান মোট points:** **${totalPoints}**\n\n` +
           `তুমি এখন আবার নতুন করে লিংক দিয়ে এই Tweet ID-এর জন্য রেইড সাবমিট করতে পারবে।`

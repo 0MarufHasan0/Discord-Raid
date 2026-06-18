@@ -13,10 +13,11 @@ module.exports = {
   async execute(interaction) {
     try {
       const itemName = interaction.options.getString('item_name').trim();
+      const escapedItemName = itemName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
       // Find item (case-insensitive and must be active)
       const item = await MarketItem.findOne({ 
-        name: { $regex: new RegExp(`^${itemName}$`, 'i') },
+        name: { $regex: new RegExp(`^${escapedItemName}$`, 'i') },
         isActive: true 
       });
 

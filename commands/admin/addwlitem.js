@@ -41,7 +41,8 @@ module.exports = {
       }
 
       // Check if item already exists (case-insensitive)
-      const existingItem = await MarketItem.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') } });
+      const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const existingItem = await MarketItem.findOne({ name: { $regex: new RegExp(`^${escapedName}$`, 'i') } });
       if (existingItem) {
         // If it exists but is inactive, we can reactivate and update it
         if (!existingItem.isActive) {

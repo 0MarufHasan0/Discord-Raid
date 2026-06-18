@@ -17,9 +17,10 @@ module.exports = {
       if (!isAdmin) return;
 
       const name = interaction.options.getString('name').trim();
+      const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
       // Find the item (case-insensitive)
-      const item = await MarketItem.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') } });
+      const item = await MarketItem.findOne({ name: { $regex: new RegExp(`^${escapedName}$`, 'i') } });
       if (!item) {
         return interaction.reply({
           embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ '${name}' নামে কোনো item নেই`)],

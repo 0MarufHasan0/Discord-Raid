@@ -1,13 +1,60 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const https = require('https');
 const config = require('../../config');
 const checkAdmin = require('../../utils/checkAdmin');
 const Tweet = require('../../database/models/Tweet');
 
-function extractStatusId(url) {
+function extractTweetInfo(url) {
   if (!url) return null;
-  const regex = /https?:\/\/(www\.)?(twitter|x)\.com\/([a-zA-Z0-9_]+)\/status\/(\d+)/i;
+  const regex = /https?:\/\/([a-zA-Z0-9-]+\.)?(twitter|x)\.com\/([a-zA-Z0-9_]+)\/status\/(\d+)/i;
   const match = url.match(regex);
-  return match ? match[4] : null;
+  if (!match) return null;
+  return {
+    username: match[3],
+    statusId: match[4]
+  };
+}
+
+function fetchTweetData(username, statusId) {
+  return new Promise((resolve, reject) => {
+    const url = `https://api.fxtwitter.com/${username}/status/${statusId}`;
+    const options = {
+      headers: {
+        'User-Agent': 'MarketplaceBossBot/1.0 (Discord Bot)'
+      },
+      timeout: 5000
+    };
+
+    const req = https.get(url, options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        if (res.statusCode === 200) {
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed && parsed.tweet) {
+              resolve(parsed.tweet);
+            } else {
+              reject(new Error('Invalid response structure'));
+            }
+          } catch (e) {
+            reject(e);
+          }
+        } else {
+          reject(new Error(`HTTP status code ${res.statusCode}`));
+        }
+      });
+    });
+
+    req.on('error', (err) => {
+      reject(err);
+    });
+
+    req.on('timeout', () => {
+      req.destroy();
+      reject(new Error('Request timeout'));
+    });
+  });
 }
 
 module.exports = {
@@ -52,25 +99,36 @@ module.exports = {
       let contentCleaned = content;
 
       if (tweetLink) {
-        isTwitterLink = /https?:\/\/(www\.)?(twitter|x)\.com\/\S+/i.test(tweetLink);
+        isTwitterLink = /https?:\/\/([a-zA-Z0-9-]+\.)?(twitter|x)\.com\/\S+/i.test(tweetLink);
         if (isTwitterLink) {
-          finalTweetLink = tweetLink.replace(/\b(x|twitter)\.com\b/i, 'fxtwitter.com');
+          finalTweetLink = tweetLink.replace(/https?:\/\/([a-zA-Z0-9-]+\.)?(x|twitter)\.com/i, 'https://fxtwitter.com');
         } else {
           finalTweetLink = tweetLink;
         }
       } else {
-        const twitterRegex = /https?:\/\/(www\.)?(twitter|x)\.com\/\S+/i;
+        const twitterRegex = /https?:\/\/([a-zA-Z0-9-]+\.)?(twitter|x)\.com\/\S+/i;
         const match = content.match(twitterRegex);
         if (match) {
           originalTweetLink = match[0];
           isTwitterLink = true;
-          finalTweetLink = originalTweetLink.replace(/\b(x|twitter)\.com\b/i, 'fxtwitter.com');
+          finalTweetLink = originalTweetLink.replace(/https?:\/\/([a-zA-Z0-9-]+\.)?(x|twitter)\.com/i, 'https://fxtwitter.com');
           contentCleaned = content.replace(twitterRegex, '').replace(/\s+/g, ' ').trim();
         }
       }
 
-      const statusId = extractStatusId(originalTweetLink);
+      const tweetInfo = extractTweetInfo(originalTweetLink);
+      const statusId = tweetInfo ? tweetInfo.statusId : null;
       const tweetId = statusId || `TWT-${Date.now().toString().slice(-6)}`;
+
+      // Fetch FxTwitter API data if this is a Twitter link
+      let tweetData = null;
+      if (tweetInfo) {
+        try {
+          tweetData = await fetchTweetData(tweetInfo.username, tweetInfo.statusId);
+        } catch (apiError) {
+          console.error(`⚠️ FxTwitter API error: ${apiError.message}. Falling back to standard layout.`);
+        }
+      }
 
       for (const channelId of tweetChannelIds) {
         let channel = interaction.client.channels.cache.get(channelId);
@@ -100,69 +158,101 @@ module.exports = {
         let sentSuccess = false;
         let errorReason = null;
 
-        // If we have a tweet link (either explicitly in tweet_link, or inside content)
-        if (finalTweetLink) {
-          const announcementEmbed = new EmbedBuilder()
-            .setTitle("📢 New Tweet")
-            .setDescription(
-              `${contentCleaned ? `${contentCleaned}\n` : ''}` +
-              `__________________________________________________\n\n` +
-              `📋 **Tweet ID:** \`${tweetId}\`\n` +
-              `👉 Submit using: \`/submitraid link:<proof_link> tweet_id:${tweetId}\``
-            )
-            .setColor(0x5865F2) // Discord Blurple
-            .setFooter({ text: `Tweet ID: ${tweetId} • Posted by ${interaction.user.username}` })
-            .setTimestamp();
+        // Build premium announcement embed
+        const announcementEmbed = new EmbedBuilder()
+          .setColor(0x5865F2) // Discord Blurple
+          .setFooter({ 
+            text: `Tweet ID: ${tweetId} • Posted by ${interaction.user.username}`,
+            iconURL: interaction.user.displayAvatarURL({ dynamic: true })
+          })
+          .setTimestamp();
 
-          const messageText = `[.](${finalTweetLink})`;
+        let messageText = '';
+        const buttons = [];
 
-          // Create the Link button pointing to the original tweet link
-          const button = new ButtonBuilder()
-            .setLabel('Raid')
-            .setURL(originalTweetLink)
-            .setStyle(ButtonStyle.Link);
-
-          const row = new ActionRowBuilder().addComponents(button);
-
-          try {
-            await channel.send({ 
-              content: messageText,
-              embeds: [announcementEmbed],
-              components: [row] 
+        if (tweetData) {
+          // Set premium author details
+          if (tweetData.author) {
+            announcementEmbed.setAuthor({
+              name: `${tweetData.author.name} (@${tweetData.author.screen_name})`,
+              iconURL: tweetData.author.avatar_url,
+              url: tweetData.url || originalTweetLink
             });
-            sentSuccess = true;
-          } catch (sendError) {
-            console.error(`❌ Error sending message to channel ${channelId}:`, sendError);
-            if (sendError.code === 50013 || sendError.message.includes('Missing Permissions')) {
-              errorReason = "বটের এই চ্যানেলে মেসেজ পাঠানোর পারমিশন নেই (Missing Permissions)।";
-            } else {
-              errorReason = `মেসেজ পাঠাতে সমস্যা হয়েছে। বিবরণ: ${sendError.message}`;
+          } else {
+            announcementEmbed.setTitle("📢 New Tweet");
+          }
+
+          // Build description
+          let desc = '';
+          if (contentCleaned) {
+            desc += `${contentCleaned}\n\n`;
+          }
+          if (tweetData.text) {
+            desc += `> ${tweetData.text.replace(/\n/g, '\n> ')}\n\n`;
+          }
+          desc += `**👉 Raid Submit Command:**\n`;
+          desc += `\`\`\`/submitraid link:<proof_link> tweet_id:${tweetId}\`\`\``;
+          announcementEmbed.setDescription(desc);
+
+          // Set image if media photo is available
+          if (tweetData.media && tweetData.media.all && tweetData.media.all.length > 0) {
+            const photo = tweetData.media.all.find(m => m.type === 'photo' || m.type === 'image');
+            if (photo && photo.url) {
+              announcementEmbed.setImage(photo.url);
             }
           }
         } else {
-          // Standard text announcement embed
-          const announcementEmbed = new EmbedBuilder()
-            .setTitle("📢 New Tweet")
-            .setDescription(
-              `${contentCleaned ? `${contentCleaned}\n` : ''}` +
-              `__________________________________________________\n\n` +
-              `📋 **Tweet ID:** \`${tweetId}\`\n` +
-              `👉 Submit using: \`/submitraid link:<proof_link> tweet_id:${tweetId}\``
-            )
-            .setColor(0x5865F2) // Discord Blurple
-            .setFooter({ text: `Tweet ID: ${tweetId} • Posted by ${interaction.user.username}` })
-            .setTimestamp();
+          // Fallback / Standard layout
+          announcementEmbed.setTitle("📢 New Tweet");
 
-          try {
-            await channel.send({ embeds: [announcementEmbed] });
-            sentSuccess = true;
-          } catch (sendError) {
-            console.error(`❌ Error sending embed to channel ${channelId}:`, sendError);
-            if (sendError.code === 50013 || sendError.message.includes('Missing Permissions')) {
-              errorReason = "বটের এই চ্যানেলে মেসেজ বা এম্বেড লিংক পাঠানোর পারমিশন নেই (Missing Permissions)।";
-            } else {
-              errorReason = `মেসেজ পাঠাতে সমস্যা হয়েছে। বিবরণ: ${sendError.message}`;
-            }
+          let desc = '';
+          if (contentCleaned) {
+            desc += `${contentCleaned}\n\n`;
+          }
+          desc += `**👉 Raid Submit Command:**\n`;
+          desc += `\`\`\`/submitraid link:<proof_link> tweet_id:${tweetId}\`\`\`\n`;
+          desc += `*(Click the **Copy Tweet ID** button below to copy the ID)*`;
+          announcementEmbed.setDescription(desc);
+
+          if (finalTweetLink) {
+            messageText = `[.](${finalTweetLink})`;
+          }
+        }
+
+        // Add Raid button if we have a tweet link
+        if (originalTweetLink) {
+          buttons.push(
+            new ButtonBuilder()
+              .setLabel('Raid')
+              .setURL(originalTweetLink)
+              .setStyle(ButtonStyle.Link)
+          );
+        }
+
+        // Add Copy Tweet ID button
+        buttons.push(
+          new ButtonBuilder()
+            .setLabel('Copy Tweet ID')
+            .setEmoji('📋')
+            .setCustomId(`copy_tweet_id_${tweetId}`)
+            .setStyle(ButtonStyle.Secondary)
+        );
+
+        const row = new ActionRowBuilder().addComponents(buttons);
+
+        try {
+          await channel.send({
+            content: messageText || undefined,
+            embeds: [announcementEmbed],
+            components: [row]
+          });
+          sentSuccess = true;
+        } catch (sendError) {
+          console.error(`❌ Error sending message to channel ${channelId}:`, sendError);
+          if (sendError.code === 50013 || sendError.message.includes('Missing Permissions')) {
+            errorReason = "বটের এই চ্যানেলে মেসেজ পাঠানোর পারমিশন নেই (Missing Permissions)।";
+          } else {
+            errorReason = `মেসেজ পাঠাতে সমস্যা হয়েছে। বিবরণ: ${sendError.message}`;
           }
         }
 

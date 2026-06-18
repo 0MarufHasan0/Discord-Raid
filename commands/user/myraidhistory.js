@@ -28,15 +28,22 @@ module.exports = {
         const formattedDate = raid.submittedAt ? new Date(raid.submittedAt).toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' }) : 'Unknown';
         
         let extraInfo = '';
-        if (raid.status === 'rejected' && raid.rejectedReason) {
-          extraInfo = `\n❌ **Reason:** ${raid.rejectedReason}`;
-        } else if (raid.status === 'approved' && raid.approvedBy) {
-          extraInfo = `\n✅ **Approved By:** ${raid.approvedBy}`;
+        let statusEmoji = '🟡';
+        if (raid.status === 'rejected') {
+          statusEmoji = '🔴';
+          if (raid.rejectedReason) {
+            extraInfo = `\n❌ **Reason:** ${raid.rejectedReason}`;
+          }
+        } else if (raid.status === 'approved') {
+          statusEmoji = '🟢';
+          if (raid.approvedBy) {
+            extraInfo = `\n✅ **Approved By:** ${raid.approvedBy}`;
+          }
         }
 
         embed.addFields({
           name: raid.raidId,
-          value: `🔴 **Status:** ${raid.status}\n📋 **Tweet ID:** ${raid.tweetId || 'N/A'}\n🔗 **Link:** ${raid.link}\n📅 **Date:** ${formattedDate}${extraInfo}`
+          value: `${statusEmoji} **Status:** ${raid.status}\n📋 **Tweet ID:** ${raid.tweetId || 'N/A'}\n🔗 **Link:** ${raid.link}\n📅 **Date:** ${formattedDate}${extraInfo}`
         });
       });
 

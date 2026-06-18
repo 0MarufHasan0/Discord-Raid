@@ -9,7 +9,7 @@ const Tweet = require('../../database/models/Tweet');
  */
 function getTweetIdAndNormalize(url) {
   if (!url) return null;
-  const regex = /https?:\/\/(www\.)?(twitter|x)\.com\/([a-zA-Z0-9_]+)\/status\/(\d+)/i;
+  const regex = /https?:\/\/([a-zA-Z0-9-]+\.)?(twitter|x)\.com\/([a-zA-Z0-9_]+)\/status\/(\d+)/i;
   const match = url.match(regex);
   if (!match) return null;
   return {
@@ -34,9 +34,12 @@ module.exports = {
     try {
       const link = interaction.options.getString('link').trim();
       const tweetId = interaction.options.getString('tweet_id').trim();
+      const escapedTweetId = tweetId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-      // Check if the Tweet ID exists in our database
-      const tweetDoc = await Tweet.findOne({ tweetId: tweetId });
+      // Check if the Tweet ID exists in our database (case-insensitive query)
+      const tweetDoc = await Tweet.findOne({ 
+        tweetId: { $regex: new RegExp(`^${escapedTweetId}$`, 'i') } 
+      });
       if (!tweetDoc) {
         return interaction.reply({
           embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ ভুল Tweet ID! দয়া করে সঠিক Tweet ID প্রদান করো (যা টুইট এনাউন্সমেন্টের ফুটারে রয়েছে)।")],
@@ -44,11 +47,18 @@ module.exports = {
         });
       }
 
-      // Check if this user has already submitted a raid for this specific tweet ID
-      const existingUserRaid = await Raid.findOne({ userId: interaction.user.id, tweetId: tweetId });
+      // Use canonical casing from database
+      const canonicalTweetId = tweetDoc.tweetId;
+      const escapedCanonicalTweetId = canonicalTweetId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+      // Check if this user has already submitted a raid for this specific tweet ID (case-insensitive query)
+      const existingUserRaid = await Raid.findOne({ 
+        userId: interaction.user.id, 
+        tweetId: { $regex: new RegExp(`^${escapedCanonicalTweetId}$`, 'i') } 
+      });
       if (existingUserRaid) {
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ তুমি ইতিমধ্যে এই টুইটের জন্য রেইড সাবমিট করেছ।\n\nযদি ভুল লিংক দিয়ে থাকো এবং নতুন করে রেইড সাবমিট করতে চাও, তবে প্রথমে \`/removemyraid tweet_id:${tweetId}\` কমান্ড দিয়ে আগের রেইডটি ডিলিট করো।`)],
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ তুমি ইতিমধ্যে এই টুইটের জন্য রেইড সাবমিট করেছ।\n\nযদি ভুল লিংক দিয়ে থাকো এবং নতুন করে রেইড সাবমিট করতে চাও, তবে প্রথমে \`/removemyraid tweet_id:${canonicalTweetId}\` কমান্ড দিয়ে আগের রেইডটি ডিলিট করো।`)],
           ephemeral: true
         });
       }
@@ -62,7 +72,7 @@ module.exports = {
       }
 
       // Check if it is a Twitter/X link
-      const isTwitterDomain = /https?:\/\/(www\.)?(twitter|x)\.com/i.test(link);
+      const isTwitterDomain = /https?:\/\/([a-zA-Z0-9-]+\.)?(twitter|x)\.com/i.test(link);
       let finalLinkToSave = link;
 
       if (isTwitterDomain) {
@@ -101,7 +111,7 @@ module.exports = {
       // Create and save new raid as auto-approved
       const newRaid = new Raid({
         raidId,
-        tweetId,
+        tweetId: canonicalTweetId,
         userId: interaction.user.id,
         username: interaction.user.username,
         link: finalLinkToSave,
@@ -129,7 +139,7 @@ module.exports = {
         .setDescription(
           `✅ তোমার raid সফলভাবে সম্পন্ন হয়েছে এবং অটো-অ্যাপ্রুভ হয়েছে!\n\n` +
           `📋 **Raid ID:** **${raidId}**\n` +
-          `📋 **Tweet ID:** **${tweetId}**\n` +
+          `📋 **Tweet ID:** **${canonicalTweetId}**\n` +
           `🔗 **Link:** ${finalLinkToSave}\n\n` +
           `🎉 তুমি **10** points পেয়েছ! তোমার মোট points: **${userDoc.points}**`
         )

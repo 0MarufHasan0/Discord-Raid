@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const checkAdmin = require('../../utils/checkAdmin');
 const Raid = require('../../database/models/Raid');
+const User = require('../../database/models/User');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -32,25 +33,45 @@ module.exports = {
         });
       }
 
-      // Check if already processed
-      if (raid.status !== 'pending') {
+      // Check if already rejected
+      if (raid.status === 'rejected') {
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0xFFA500).setDescription(`⚠️ এই raid already ${raid.status}`)],
+          embeds: [new EmbedBuilder().setColor(0xFFA500).setDescription(`⚠️ এই raid already rejected`)],
           ephemeral: true
         });
       }
+
+      const oldStatus = raid.status;
 
       // Update raid status and reason
       raid.status = 'rejected';
       raid.rejectedReason = reason;
       await raid.save();
 
+      // If the old status was approved, deduct 10 points and decrement raidsApproved from the user
+      let pointsDeducted = false;
+      let newTotalPoints = 0;
+      if (oldStatus === 'approved') {
+        const userDoc = await User.findOne({ discordId: raid.userId });
+        if (userDoc) {
+          userDoc.points = Math.max(0, userDoc.points - 10);
+          userDoc.raidsApproved = Math.max(0, userDoc.raidsApproved - 1);
+          await userDoc.save();
+          newTotalPoints = userDoc.points;
+          pointsDeducted = true;
+        }
+      }
+
       // Try to DM the raider
       const raiderUser = await interaction.client.users.fetch(raid.userId).catch(() => null);
       if (raiderUser) {
+        let dmDescription = `❌ তোমার raid reject হয়েছে\n**কারণ:** ${reason}\n**Raid ID:** ${raidId}`;
+        if (pointsDeducted) {
+          dmDescription += `\n⚠️ **পয়েন্ট কর্তন:** -10 (বর্তমান পয়েন্ট: ${newTotalPoints})`;
+        }
         const dmEmbed = new EmbedBuilder()
           .setColor(0xFF0000) // Error red
-          .setDescription(`❌ তোমার raid reject হয়েছে\n**কারণ:** ${reason}\n**Raid ID:** ${raidId}`)
+          .setDescription(dmDescription)
           .setTimestamp();
 
         try {
@@ -61,9 +82,13 @@ module.exports = {
       }
 
       // Reply to admin
+      let replyDescription = `✅ Raid **${raidId}** reject করা হয়েছে।`;
+      if (pointsDeducted) {
+        replyDescription += ` **${raid.username}** এর একাউন্ট থেকে 10 points কেটে নেওয়া হয়েছে (বর্তমানয় পয়েন্ট: **${newTotalPoints}**)।`;
+      }
       const replyEmbed = new EmbedBuilder()
         .setColor(0x00FF00) // Success green
-        .setDescription(`✅ Raid **${raidId}** reject করা হয়েছে`);
+        .setDescription(replyDescription);
 
       await interaction.reply({ embeds: [replyEmbed], ephemeral: true });
 

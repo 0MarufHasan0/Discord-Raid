@@ -66,6 +66,23 @@ client.on('interactionCreate', async interaction => {
   }
 });
 
+// Handle button interactions
+client.on('interactionCreate', async interaction => {
+  if (!interaction.isButton()) return;
+
+  if (interaction.customId.startsWith('copy_tweet_id_')) {
+    const tweetId = interaction.customId.replace('copy_tweet_id_', '');
+    try {
+      await interaction.reply({
+        content: `${tweetId}`,
+        ephemeral: true
+      });
+    } catch (error) {
+      console.error('Error replying to copy button:', error);
+    }
+  }
+});
+
 // Bot ready event
 client.once('ready', () => {
   console.log("✅ Marketplace Boss Bot online!");
