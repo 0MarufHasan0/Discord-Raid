@@ -105,8 +105,8 @@ module.exports = {
           const announcementEmbed = new EmbedBuilder()
             .setTitle("📢 New Tweet")
             .setDescription(
-              `${contentCleaned ? `${contentCleaned}\n\n` : ''}` +
-              `───────────────────────────\n` +
+              `${contentCleaned ? `${contentCleaned}\n` : ''}` +
+              `__________________________________________________\n\n` +
               `📋 **Tweet ID:** \`${tweetId}\`\n` +
               `👉 Submit using: \`/submitraid link:<proof_link> tweet_id:${tweetId}\``
             )
@@ -144,8 +144,8 @@ module.exports = {
           const announcementEmbed = new EmbedBuilder()
             .setTitle("📢 New Tweet")
             .setDescription(
-              `${contentCleaned}\n\n` +
-              `───────────────────────────\n` +
+              `${contentCleaned ? `${contentCleaned}\n` : ''}` +
+              `__________________________________________________\n\n` +
               `📋 **Tweet ID:** \`${tweetId}\`\n` +
               `👉 Submit using: \`/submitraid link:<proof_link> tweet_id:${tweetId}\``
             )
