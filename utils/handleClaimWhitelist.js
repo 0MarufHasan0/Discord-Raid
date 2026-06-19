@@ -120,6 +120,10 @@ async function handleClaimWhitelist(interaction, itemName) {
           {
             id: interaction.user.id,
             allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory', 'AttachFiles', 'EmbedLinks']
+          },
+          {
+            id: interaction.client.user.id,
+            allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory', 'AttachFiles', 'EmbedLinks', 'ManageChannels']
           }
         ];
         
