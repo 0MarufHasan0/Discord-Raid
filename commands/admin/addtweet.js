@@ -187,7 +187,6 @@ module.exports = {
         // Build premium announcement embed
         const announcementEmbed = new EmbedBuilder()
           .setColor(0x5865F2) // Discord Blurple
-          .setThumbnail(interaction.client.user.displayAvatarURL({ dynamic: true }))
           .setFooter({ 
             text: `Tweet ID: ${tweetId} • Posted by ${interaction.user.username}`,
             iconURL: interaction.user.displayAvatarURL({ dynamic: true })
@@ -226,11 +225,8 @@ module.exports = {
           
           // Expiration time using Discord dynamic timestamps
           desc += `⏰ **Raid Active Until:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)\n\n`;
-          
-          desc += `**👉 Raid Submit Command:**\n`;
-          desc += `\`\`\`/submitraid link:<proof_link> tweet_id:${tweetId}\`\`\`\n\n`;
 
-          // Add Twitter stats line below the raid submit command
+          // Add Twitter stats line
           desc += `💬 ${tweetData.replies || 0}   🔁 ${tweetData.retweets || 0}   ❤️ ${tweetData.likes || 0}   👁️ ${tweetData.views || 0}`;
           
           announcementEmbed.setDescription(desc);
@@ -252,19 +248,30 @@ module.exports = {
           let desc = '';
           // Expiration time using Discord dynamic timestamps
           desc += `⏰ **Raid Active Until:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)\n\n`;
-          
-          desc += `**👉 Raid Submit Command:**\n`;
-          desc += `\`\`\`/submitraid link:<proof_link> tweet_id:${tweetId}\`\`\`\n`;
-          desc += `*(Click the **Copy Tweet ID** button below to copy the ID)*`;
           announcementEmbed.setDescription(desc);
         }
 
-        // Add Raid button if we have a tweet link
+        // Add Like and Retweet buttons if we have a tweet link
         if (originalTweetLink) {
+          const likeUrl = statusId 
+            ? `https://x.com/intent/like?tweet_id=${statusId}` 
+            : originalTweetLink;
           buttons.push(
             new ButtonBuilder()
-              .setLabel('Raid')
-              .setURL(originalTweetLink)
+              .setLabel('Like')
+              .setEmoji('❤️')
+              .setURL(likeUrl)
+              .setStyle(ButtonStyle.Link)
+          );
+
+          const retweetUrl = statusId 
+            ? `https://x.com/intent/retweet?tweet_id=${statusId}` 
+            : originalTweetLink;
+          buttons.push(
+            new ButtonBuilder()
+              .setLabel('Retweet')
+              .setEmoji('🔁')
+              .setURL(retweetUrl)
               .setStyle(ButtonStyle.Link)
           );
         }

@@ -116,48 +116,55 @@ async function handleRaidSubmission(interaction, link, tweetId) {
     }
 
     const isTwitterDomain = /https?:\/\/([a-zA-Z0-9-]+\.)?(twitter|x)\.com/i.test(link);
-    let finalLinkToSave = link;
+    if (!isTwitterDomain) {
+      return sendReply(interaction, {
+        embeds: [
+          new EmbedBuilder()
+            .setColor(0xFF0000)
+            .setDescription("❌ Only Twitter/X post links can be submitted as raid proof!")
+        ],
+        ephemeral: true
+      });
+    }
 
-    if (isTwitterDomain) {
-      const tweetInfo = getTweetIdAndNormalize(link);
-      if (!tweetInfo) {
+    const tweetInfo = getTweetIdAndNormalize(link);
+    if (!tweetInfo) {
+      return sendReply(interaction, {
+        embeds: [
+          new EmbedBuilder()
+            .setColor(0xFF0000)
+            .setDescription("❌ Please provide a valid Twitter or X post link (e.g., `https://x.com/username/status/1234567890`).")
+        ],
+        ephemeral: true
+      });
+    }
+    const finalLinkToSave = tweetInfo.normalized;
+
+    // 6. Check if the user is trying to submit the original announcement tweet link
+    if (tweetDoc.imageUrl) {
+      const normOriginal = getTweetIdAndNormalize(tweetDoc.imageUrl);
+      if (normOriginal && normOriginal.statusId === tweetInfo.statusId) {
         return sendReply(interaction, {
           embeds: [
             new EmbedBuilder()
               .setColor(0xFF0000)
-              .setDescription("❌ Please provide a valid Twitter or X post link (e.g., `https://x.com/username/status/1234567890`).")
+              .setDescription("❌ You submitted the original announcement tweet link. Please complete the raid and submit the link to your own reply, retweet, or quote tweet.")
           ],
           ephemeral: true
         });
       }
-      finalLinkToSave = tweetInfo.normalized;
+    }
 
-      // 6. Check if the user is trying to submit the original announcement tweet link
-      if (tweetDoc.imageUrl) {
-        const normOriginal = getTweetIdAndNormalize(tweetDoc.imageUrl);
-        if (normOriginal && normOriginal.statusId === tweetInfo.statusId) {
-          return sendReply(interaction, {
-            embeds: [
-              new EmbedBuilder()
-                .setColor(0xFF0000)
-                .setDescription("❌ You submitted the original announcement tweet link. Please complete the raid and submit the link to your own reply, retweet, or quote tweet.")
-            ],
-            ephemeral: true
-          });
-        }
-      }
-
-      // 7. Verify that the link username matches the user's registered Twitter username
-      if (tweetInfo.username.toLowerCase() !== userDoc.twitter.toLowerCase()) {
-        return sendReply(interaction, {
-          embeds: [
-            new EmbedBuilder()
-              .setColor(0xFF0000)
-              .setDescription(`❌ The Twitter username in your submitted link (@${tweetInfo.username}) does not match your connected Twitter handle (@${userDoc.twitter})!\n\nIf you updated your Twitter handle, please link it again using \`/settwitter\`.`)
-          ],
-          ephemeral: true
-        });
-      }
+    // 7. Verify that the link username matches the user's registered Twitter username
+    if (tweetInfo.username.toLowerCase() !== userDoc.twitter.toLowerCase()) {
+      return sendReply(interaction, {
+        embeds: [
+          new EmbedBuilder()
+            .setColor(0xFF0000)
+            .setDescription(`❌ The Twitter username in your submitted link (@${tweetInfo.username}) does not match your connected Twitter handle (@${userDoc.twitter})!\n\nIf you updated your Twitter handle, please link it again using \`/settwitter\`.`)
+        ],
+        ephemeral: true
+      });
     }
 
     // 8. Check for duplicate link submission in Raid collection (by anyone)
@@ -188,6 +195,14 @@ async function handleRaidSubmission(interaction, link, tweetId) {
       approvedBy: 'Auto-System'
     });
     await newRaid.save();
+
+    // If user already has more than 5 raids, delete the oldest ones to keep history to max 5
+    const userRaids = await Raid.find({ userId: interaction.user.id }).sort({ submittedAt: -1 });
+    if (userRaids.length > 5) {
+      const raidsToDelete = userRaids.slice(5);
+      const idsToDelete = raidsToDelete.map(r => r._id);
+      await Raid.deleteMany({ _id: { $in: idsToDelete } });
+    }
 
     // Increment points and raid counts for User
     const updatedUserDoc = await User.findOneAndUpdate(
