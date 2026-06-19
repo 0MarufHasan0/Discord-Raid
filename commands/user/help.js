@@ -79,6 +79,10 @@ module.exports = {
               {
                 name: '🔌 `/disconnecttwitter`',
                 value: 'Unlink your Twitter/X account from the bot.'
+              },
+              {
+                name: '❌ `/removemyraid tweet_id:<tweet_id>`',
+                value: 'Delete a submitted raid to fix mistakes (only if the raid is not expired). Deducts 10 points (if approved) and lets you resubmit.'
               }
             )
             .setTimestamp();

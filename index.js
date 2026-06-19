@@ -146,7 +146,7 @@ client.on('interactionCreate', async interaction => {
             embeds: [
               new EmbedBuilder()
                 .setColor(0xFF0000)
-                .setDescription("❌ You have already submitted a raid for this tweet.")
+                .setDescription(`❌ You have already submitted a raid for this tweet.\n\nIf you submitted the wrong link and want to submit a new one, please delete your previous raid using \`/removemyraid tweet_id:${canonicalTweetId}\` first (only if the raid is not expired).`)
             ],
             ephemeral: true
           });
