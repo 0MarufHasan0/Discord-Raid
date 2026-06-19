@@ -199,7 +199,8 @@ module.exports = {
           messageText = `${messageText} [.](${finalTweetLink})`.trim();
         }
 
-        const buttons = [];
+        const twitterRow = new ActionRowBuilder();
+        const botRow = new ActionRowBuilder();
         const unixTimestamp = Math.floor(expiresAt.getTime() / 1000);
 
         if (tweetData) {
@@ -256,7 +257,7 @@ module.exports = {
           const likeUrl = statusId 
             ? `https://x.com/intent/like?tweet_id=${statusId}` 
             : originalTweetLink;
-          buttons.push(
+          twitterRow.addComponents(
             new ButtonBuilder()
               .setLabel('Like')
               .setEmoji('❤️')
@@ -267,7 +268,7 @@ module.exports = {
           const retweetUrl = statusId 
             ? `https://x.com/intent/retweet?tweet_id=${statusId}` 
             : originalTweetLink;
-          buttons.push(
+          twitterRow.addComponents(
             new ButtonBuilder()
               .setLabel('Retweet')
               .setEmoji('🔁')
@@ -276,8 +277,17 @@ module.exports = {
           );
         }
 
+        // Add Submit Raid button (Chess emoji ⚔️)
+        botRow.addComponents(
+          new ButtonBuilder()
+            .setLabel('Submit Raid')
+            .setEmoji('⚔️')
+            .setCustomId(`submit_raid_btn_${tweetId}`)
+            .setStyle(ButtonStyle.Success)
+        );
+
         // Add Copy Tweet ID button
-        buttons.push(
+        botRow.addComponents(
           new ButtonBuilder()
             .setLabel('Copy Tweet ID')
             .setEmoji('📋')
@@ -285,22 +295,17 @@ module.exports = {
             .setStyle(ButtonStyle.Secondary)
         );
 
-        // Add Submit Raid button (Chess emoji ♟️)
-        buttons.push(
-          new ButtonBuilder()
-            .setLabel('Submit Raid')
-            .setEmoji('♟️')
-            .setCustomId(`submit_raid_btn_${tweetId}`)
-            .setStyle(ButtonStyle.Success)
-        );
-
-        const row = new ActionRowBuilder().addComponents(buttons);
+        const componentsToSend = [];
+        if (twitterRow.components.length > 0) {
+          componentsToSend.push(twitterRow);
+        }
+        componentsToSend.push(botRow);
 
         try {
           await channel.send({
             content: messageText || undefined,
             embeds: [announcementEmbed],
-            components: [row]
+            components: componentsToSend
           });
           sentSuccess = true;
         } catch (sendError) {
