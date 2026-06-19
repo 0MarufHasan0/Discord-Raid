@@ -203,8 +203,7 @@ async function handleClaimWhitelist(interaction, itemName) {
           `🏷️ **Item Name:** **${item.name}**\n` +
           `💰 **Cost:** \`${item.pointCost}\` points\n` +
           `💳 **Remaining Points:** \`${userDoc.points}\` points\n` +
-          `${ticketText}\n\n` +
-          `🎟️ **Please go to the ticket channel or open a support ticket to submit your proof/screenshot.**`
+          `${ticketText}`
         )
         .setTimestamp();
         
@@ -216,7 +215,7 @@ async function handleClaimWhitelist(interaction, itemName) {
     // Reply success to the claiming interaction
     const ticketDesc = ticketChannelLink 
       ? `\n🎟️ **A private support ticket channel ${ticketChannelLink} has been automatically created for you.**` 
-      : `\n🎟️ **Please open a ticket to submit your proof/screenshot.**${ticketCreationError ? `\n\n⚠️ *Ticket creation error: ${ticketCreationError}*` : ''}`;
+      : `\n⚠️ **Ticket creation failed. Please contact an admin to submit your proof.**${ticketCreationError ? `\n*Error: ${ticketCreationError}*` : ''}`;
 
     const successEmbed = new EmbedBuilder()
       .setColor(0x00FF00) // Success green

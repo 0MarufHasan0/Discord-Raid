@@ -27,7 +27,7 @@ module.exports = {
         });
       });
 
-      embed.setFooter({ text: "Use the button below or /claimwl to claim an item" });
+      embed.setFooter({ text: "Click the 'Claim Whitelist' button below to claim an item" });
 
       const row = new ActionRowBuilder()
         .addComponents(

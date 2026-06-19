@@ -47,34 +47,30 @@ async function updateMarketplace(client) {
       .setTimestamp();
 
     if (items.length === 0) {
-      embed.setDescription("🏪 **There are currently no Whitelist Roles/Items in the Marketplace.**\nWhen a new item is added, it will automatically be updated here.\n\n⚠️ **Note:** After claiming any Whitelist, please open a **ticket** to submit your proof/screenshot.");
+      embed.setDescription("🏪 **There are currently no Whitelist Roles/Items in the Marketplace.**\nWhen a new item is added, it will automatically be updated here.");
     } else {
-      let desc = "Here is the list of current live Whitelist Roles/Items. You can exchange your points earned from raids to claim them.\n\n";
-      desc += "⚠️ **Note: After claiming any Whitelist, you must open a ticket to submit your proof/screenshot.**\n\n";
-      desc += "───────────────────\n\n";
+      let desc = "Select an item using the **Claim Whitelist** button below to exchange your points.\n\n";
       
       items.forEach(item => {
         const availableSlots = Math.max(0, item.totalSlots - item.claimedSlots);
-        const slotsEmoji = availableSlots > 0 ? "🎟️" : "❌";
+        const slotsText = availableSlots > 0 ? `\`${availableSlots}\` left` : `**SOLD OUT**`;
         
         desc += `**🏷️ ${item.name}**\n`;
-        desc += `> 📝 **Description:** ${item.description}\n`;
-        desc += `> 💰 **Cost:** \`${item.pointCost}\` points\n`;
-        desc += `> ${slotsEmoji} **Slots:** \`${item.claimedSlots}/${item.totalSlots}\` claimed (${availableSlots} left)\n`;
+        desc += `• **Description:** ${item.description}\n`;
+        desc += `• **Cost:** \`${item.pointCost}\` points\n`;
+        desc += `• **Slots:** ${item.claimedSlots}/${item.totalSlots} (${slotsText})\n`;
         
         if (item.expiresAt) {
           const unixTimestamp = Math.floor(item.expiresAt.getTime() / 1000);
-          desc += `> ⏰ **Expires:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)\n`;
+          desc += `• **Expires:** <t:${unixTimestamp}:R>\n`;
         }
-        
-        desc += `> 🛒 **Command:** \`/claimwl item_name:${item.name}\`\n`;
-        desc += `\n───────────────────\n\n`;
+        desc += `\n`;
       });
       
       embed.setDescription(desc);
     }
 
-    embed.setFooter({ text: "🔴 Live updates enabled • Use /claimwl to claim your role" });
+    embed.setFooter({ text: "🔴 Live updates enabled • Click 'Claim Whitelist' below to purchase" });
 
     // Build the components row
     const components = [];
