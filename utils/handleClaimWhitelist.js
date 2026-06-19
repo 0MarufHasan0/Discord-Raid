@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, ChannelType } = require('discord.js');
 const MarketItem = require('../database/models/MarketItem');
 const User = require('../database/models/User');
 const config = require('../config');
@@ -123,18 +123,23 @@ async function handleClaimWhitelist(interaction, itemName) {
         ];
         
         adminRoleIds.forEach(roleId => {
-          permissionOverwrites.push({
-            id: roleId,
-            allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory', 'AttachFiles', 'EmbedLinks', 'ManageChannels']
-          });
+          // Only add permission overwrite if the role exists in the guild
+          if (guild.roles.cache.has(roleId)) {
+            permissionOverwrites.push({
+              id: roleId,
+              allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory', 'AttachFiles', 'EmbedLinks', 'ManageChannels']
+            });
+          } else {
+            console.warn(`⚠️ Warning: Role ID ${roleId} not found in guild ${guild.name} (${guild.id}). Skipping permission overwrite.`);
+          }
         });
         
         // Find category containing "ticket"
-        let parentCategory = guild.channels.cache.find(c => c.name.toLowerCase().includes('ticket') && c.type === 4);
+        let parentCategory = guild.channels.cache.find(c => c.name.toLowerCase().includes('ticket') && c.type === ChannelType.GuildCategory);
         
         const ticketChannel = await guild.channels.create({
           name: ticketChannelName,
-          type: 0, // GuildText
+          type: ChannelType.GuildText,
           parent: parentCategory ? parentCategory.id : null,
           permissionOverwrites: permissionOverwrites
         });
@@ -155,7 +160,7 @@ async function handleClaimWhitelist(interaction, itemName) {
           
         await ticketChannel.send({ content: `<@${interaction.user.id}> | Admins`, embeds: [ticketEmbed] });
       } catch (err) {
-        console.error('Failed to create ticket channel:', err);
+        console.error('❌ Failed to create ticket channel:', err);
       }
     }
 
