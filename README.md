@@ -70,6 +70,7 @@ npm start
 * `/addpoints [user] [points]` - Manually reward points to a user.
 * `/removepoints [user] [points]` - Manually deduct points from a user.
 * `/raidlist` - List recently submitted raids with date filters, user details, and remove instructions.
+* `/editraidpoints <tweet_id> <points>` - Edit the point value of an active (non-expired) raid announcement and dynamically update its Discord announcement embed.
 
 ### User Commands
 * `/settwitter <username>` - Link your Twitter/X account handle (without `@`) for automated verification of raid proof.

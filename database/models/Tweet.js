@@ -29,6 +29,9 @@ const TweetSchema = new mongoose.Schema({
   points: {
     type: Number,
     default: 10
+  },
+  messageId: {
+    type: String
   }
 });
 

@@ -306,8 +306,9 @@ module.exports = {
         }
         componentsToSend.push(botRow);
 
+        let sentMessage = null;
         try {
-          await channel.send({
+          sentMessage = await channel.send({
             content: messageText || undefined,
             embeds: [announcementEmbed],
             components: componentsToSend
@@ -322,7 +323,7 @@ module.exports = {
           }
         }
 
-        if (sentSuccess) {
+        if (sentSuccess && sentMessage) {
           try {
             // Save to MongoDB
             const newTweet = new Tweet({
@@ -332,7 +333,8 @@ module.exports = {
               postedBy: interaction.user.username,
               channelId: channelId,
               expiresAt: expiresAt,
-              points: points
+              points: points,
+              messageId: sentMessage.id
             });
             await newTweet.save();
             results.push({ channelId, success: true, channelName: channel.name });
