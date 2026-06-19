@@ -29,9 +29,15 @@ CLIENT_ID=your_discord_bot_client_id
 MONGODB_URL=your_mongodb_connection_url
 ADMIN_ROLE_ID=role_id_1,role_id_2,...
 TWEET_CHANNEL_ID=channel_id_1,channel_id_2,...
+MARKETPLACE_CHANNEL_ID=your_marketplace_channel_id
+LEADERBOARD_CHANNEL_ID=your_leaderboard_channel_id
+TICKET_CATEGORY_ID=your_ticket_category_id
 ```
 * **ADMIN_ROLE_ID**: A comma-separated list of Discord Role IDs that can execute administrator commands (e.g., `/addtweet`, `/approveraid`).
 * **TWEET_CHANNEL_ID**: A comma-separated list of Channel IDs where the bot will post tweets.
+* **MARKETPLACE_CHANNEL_ID**: Channel ID where the bot will maintain a live, auto-updated marketplace embed.
+* **LEADERBOARD_CHANNEL_ID**: Channel ID where the bot will maintain a live, auto-updated points leaderboard.
+* **TICKET_CATEGORY_ID**: Discord Category ID under which whitelist purchase tickets will be created.
 
 ---
 
@@ -85,10 +91,10 @@ npm start
 
 ---
 
-## Raid Submission & Twitter Verification Flow
+## Features Flow
 
+### 1. Raid Submission & Twitter Verification Flow
 The bot features a secure, automated raid submission system that integrates with Twitter/X handles:
-
 1. **Link Twitter Handle**: Users must link their Twitter/X account using `/settwitter <username>` before they can submit raids. Only one Discord account can be linked to a specific Twitter handle at any given time.
 2. **Submit Raid via Button/Modal**: Every raid announcement includes a green **Submit Raid** button with a Crossed Swords emoji (⚔️). Clicking this button opens a modal popup allowing users to directly paste their proof link (reply/quote tweet link).
 3. **Automated Verifications**:
@@ -99,4 +105,15 @@ The bot features a secure, automated raid submission system that integrates with
    * Rejects if the user submits the original announcement link itself.
    * Checks for duplicate links across all submitted raids.
 4. **Approval & Points**: On passing all checks, the raid is auto-approved, the user is awarded points corresponding to the tweet's points reward (default: 10), and the live leaderboard is updated.
+
+### 2. Whitelist Marketplace & Interactive Ticket Flow
+The bot manages a live marketplace where users can exchange points for Whitelist roles:
+1. **Interactive Button**: A green **Claim Whitelist** (🎟️) button is attached to the marketplace embed. Clicking this button triggers an ephemeral dropdown select menu containing all active, non-expired whitelist items.
+2. **Deductions & Receipts**: Choosing an item verifies the user's balance and slot availability, deducts points, and triggers a live update of the leaderboard and marketplace channels. It then sends a beautiful receipt via Direct Message (DM).
+3. **Automated Ticket Creation**: A private ticket channel named `ticket-{item_name}-{username}` is automatically created under the configured `TICKET_CATEGORY_ID` (default: `1192961054196633610`), adding only the user, administrators, and the bot itself.
+4. **Admin Ping**: The bot mentions the buyer and all server administrators inside the ticket channel, outputting the name of the whitelist they claimed.
+5. **Interactive Controls**: Inside the ticket, the bot adds a **Close Ticket** (🔒) button. Clicking it:
+   * Disables writing permissions for the user (locks the ticket).
+   * Generates **Reopen Ticket** (🔓) and **Delete Ticket** (⛔) buttons.
+   * Reopening restores writing permission; deleting triggers a 5-second countdown and deletes the channel.
 
