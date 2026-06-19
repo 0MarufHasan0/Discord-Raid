@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const MarketItem = require('../../database/models/MarketItem');
 
 module.exports = {
@@ -27,9 +27,18 @@ module.exports = {
         });
       });
 
-      embed.setFooter({ text: "Use /claimwl [item name] to claim an item" });
+      embed.setFooter({ text: "Use the button below or /claimwl to claim an item" });
 
-      await interaction.reply({ embeds: [embed] });
+      const row = new ActionRowBuilder()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId('open_marketplace_claim_menu')
+            .setLabel('Claim Whitelist')
+            .setEmoji('🎟️')
+            .setStyle(ButtonStyle.Success)
+        );
+
+      await interaction.reply({ embeds: [embed], components: [row] });
 
     } catch (error) {
       console.error('Error in /marketplace command:', error);

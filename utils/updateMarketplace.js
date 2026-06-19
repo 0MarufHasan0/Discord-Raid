@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const config = require('../config');
 const MarketItem = require('../database/models/MarketItem');
 
@@ -76,6 +76,20 @@ async function updateMarketplace(client) {
 
     embed.setFooter({ text: "🔴 Live updates enabled • Use /claimwl to claim your role" });
 
+    // Build the components row
+    const components = [];
+    if (items.length > 0) {
+      const row = new ActionRowBuilder()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId('open_marketplace_claim_menu')
+            .setLabel('Claim Whitelist')
+            .setEmoji('🎟️')
+            .setStyle(ButtonStyle.Success)
+        );
+      components.push(row);
+    }
+
     // Fetch the last 50 messages to find the bot's previous marketplace embed
     let messages;
     try {
@@ -88,7 +102,7 @@ async function updateMarketplace(client) {
       }
       // Fallback: try to send a new message
       try {
-        await channel.send({ embeds: [embed] });
+        await channel.send({ embeds: [embed], components: components });
       } catch (sendErr) {
         console.error(`❌ Fallback send failed:`, sendErr.message);
       }
@@ -103,10 +117,10 @@ async function updateMarketplace(client) {
 
     try {
       if (botMessage) {
-        await botMessage.edit({ embeds: [embed] });
+        await botMessage.edit({ embeds: [embed], components: components });
         console.log(`✅ Live Marketplace message updated in #${channel.name}`);
       } else {
-        await channel.send({ embeds: [embed] });
+        await channel.send({ embeds: [embed], components: components });
         console.log(`✅ New Live Marketplace message sent in #${channel.name}`);
       }
     } catch (sendOrEditError) {

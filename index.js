@@ -171,6 +171,66 @@ client.on('interactionCreate', async interaction => {
       } catch (error) {
         console.error('Error opening submit raid modal:', error);
       }
+    } else if (interaction.customId === 'open_marketplace_claim_menu') {
+      try {
+        const MarketItem = require('./database/models/MarketItem');
+        const { ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, EmbedBuilder } = require('discord.js');
+
+        const now = new Date();
+        const items = await MarketItem.find({
+          isActive: true,
+          $or: [
+            { expiresAt: { $exists: false } },
+            { expiresAt: null },
+            { expiresAt: { $gt: now } }
+          ]
+        }).sort({ name: 1 });
+
+        if (items.length === 0) {
+          return await interaction.reply({
+            embeds: [
+              new EmbedBuilder()
+                .setColor(0xFF0000)
+                .setDescription("❌ There are currently no active items available for claiming.")
+            ],
+            ephemeral: true
+          });
+        }
+
+        const selectMenu = new StringSelectMenuBuilder()
+          .setCustomId('marketplace_claim_select')
+          .setPlaceholder('Select a Whitelist to claim...');
+
+        items.slice(0, 25).forEach(item => {
+          const availableSlots = Math.max(0, item.totalSlots - item.claimedSlots);
+          const option = new StringSelectMenuOptionBuilder()
+            .setLabel(item.name)
+            .setValue(item.name)
+            .setDescription(`Cost: ${item.pointCost} pts | Slots: ${item.claimedSlots}/${item.totalSlots} (${availableSlots} left)`);
+          
+          if (availableSlots <= 0) {
+            option.setLabel(`[SOLD OUT] ${item.name}`);
+          }
+          selectMenu.addOptions(option);
+        });
+
+        const row = new ActionRowBuilder().addComponents(selectMenu);
+
+        await interaction.reply({
+          content: 'Please choose a Whitelist to claim from the dropdown below:',
+          components: [row],
+          ephemeral: true
+        });
+
+      } catch (error) {
+        console.error('Error opening claim whitelist menu:', error);
+        try {
+          await interaction.reply({
+            content: '❌ An error occurred while opening the claim menu.',
+            ephemeral: true
+          });
+        } catch (e) {}
+      }
     }
   } else if (interaction.isModalSubmit()) {
     if (interaction.customId.startsWith('submit_raid_modal_')) {
@@ -184,6 +244,16 @@ client.on('interactionCreate', async interaction => {
         await handleRaidSubmission(interaction, link, tweetId);
       } catch (error) {
         console.error('Error handling submit raid modal submission:', error);
+      }
+    }
+  } else if (interaction.isStringSelectMenu()) {
+    if (interaction.customId === 'marketplace_claim_select') {
+      try {
+        const itemName = interaction.values[0];
+        const handleClaimWhitelist = require('./utils/handleClaimWhitelist');
+        await handleClaimWhitelist(interaction, itemName);
+      } catch (error) {
+        console.error('Error handling whitelist claim select menu:', error);
       }
     }
   }
