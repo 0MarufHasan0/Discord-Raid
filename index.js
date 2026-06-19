@@ -231,6 +231,121 @@ client.on('interactionCreate', async interaction => {
           });
         } catch (e) {}
       }
+    } else if (interaction.customId === 'ticket_close') {
+      try {
+        const { ActionRowBuilder, ButtonBuilder, ButtonStyle, OverwriteType, EmbedBuilder } = require('discord.js');
+        await interaction.deferReply({ ephemeral: false });
+
+        const memberType = OverwriteType ? OverwriteType.Member : 1;
+        const memberOverwrite = interaction.channel.permissionOverwrites.cache.find(
+          o => o.type === memberType && o.id !== interaction.client.user.id
+        );
+
+        if (memberOverwrite) {
+          await interaction.channel.permissionOverwrites.edit(memberOverwrite.id, {
+            SendMessages: false
+          });
+        }
+
+        const closedEmbed = new EmbedBuilder()
+          .setColor(0xFF0000)
+          .setDescription(`🔒 **Ticket closed by <@${interaction.user.id}>**\nUsers can no longer send messages in this channel.`);
+
+        const controlRow = new ActionRowBuilder()
+          .addComponents(
+            new ButtonBuilder()
+              .setCustomId('ticket_reopen')
+              .setLabel('Reopen Ticket')
+              .setEmoji('🔓')
+              .setStyle(ButtonStyle.Success),
+            new ButtonBuilder()
+              .setCustomId('ticket_delete')
+              .setLabel('Delete Ticket')
+              .setEmoji('⛔')
+              .setStyle(ButtonStyle.Danger)
+          );
+
+        try {
+          await interaction.message.edit({ components: [] });
+        } catch (e) {}
+
+        await interaction.editReply({ embeds: [closedEmbed], components: [controlRow] });
+
+      } catch (error) {
+        console.error('Error closing ticket:', error);
+        try {
+          if (interaction.deferred || interaction.replied) {
+            await interaction.editReply({ content: '❌ Failed to close the ticket.' });
+          } else {
+            await interaction.reply({ content: '❌ Failed to close the ticket.', ephemeral: true });
+          }
+        } catch (e) {}
+      }
+    } else if (interaction.customId === 'ticket_reopen') {
+      try {
+        const { ActionRowBuilder, ButtonBuilder, ButtonStyle, OverwriteType, EmbedBuilder } = require('discord.js');
+        await interaction.deferReply({ ephemeral: false });
+
+        const memberType = OverwriteType ? OverwriteType.Member : 1;
+        const memberOverwrite = interaction.channel.permissionOverwrites.cache.find(
+          o => o.type === memberType && o.id !== interaction.client.user.id
+        );
+
+        if (memberOverwrite) {
+          await interaction.channel.permissionOverwrites.edit(memberOverwrite.id, {
+            SendMessages: true
+          });
+        }
+
+        const reopenedEmbed = new EmbedBuilder()
+          .setColor(0x00FF00)
+          .setDescription(`🔓 **Ticket reopened by <@${interaction.user.id}>**\nUsers can now send messages again.`);
+
+        const closeButtonRow = new ActionRowBuilder()
+          .addComponents(
+            new ButtonBuilder()
+              .setCustomId('ticket_close')
+              .setLabel('Close Ticket')
+              .setEmoji('🔒')
+              .setStyle(ButtonStyle.Danger)
+          );
+
+        try {
+          await interaction.message.edit({ components: [] });
+        } catch (e) {}
+
+        await interaction.editReply({ embeds: [reopenedEmbed], components: [closeButtonRow] });
+
+      } catch (error) {
+        console.error('Error reopening ticket:', error);
+        try {
+          if (interaction.deferred || interaction.replied) {
+            await interaction.editReply({ content: '❌ Failed to reopen the ticket.' });
+          } else {
+            await interaction.reply({ content: '❌ Failed to reopen the ticket.', ephemeral: true });
+          }
+        } catch (e) {}
+      }
+    } else if (interaction.customId === 'ticket_delete') {
+      try {
+        await interaction.reply({
+          content: '⚠️ **This ticket will be deleted in 5 seconds...**'
+        });
+
+        setTimeout(async () => {
+          try {
+            await interaction.channel.delete();
+          } catch (deleteError) {
+            console.error('Failed to delete channel:', deleteError);
+          }
+        }, 5000);
+
+      } catch (error) {
+        console.error('Error initiating ticket deletion:', error);
+        try {
+          await interaction.reply({ content: '❌ Failed to delete the ticket.', ephemeral: true });
+        } catch (e) {}
+      }
     }
   } else if (interaction.isModalSubmit()) {
     if (interaction.customId.startsWith('submit_raid_modal_')) {

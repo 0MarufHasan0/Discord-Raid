@@ -12,6 +12,7 @@ const config = {
   tweetChannelId: process.env.TWEET_CHANNEL_ID,
   marketplaceChannelId: process.env.MARKETPLACE_CHANNEL_ID || '1517134759493374105',
   leaderboardChannelId: process.env.LEADERBOARD_CHANNEL_ID || '1517134882738933943',
+  ticketCategoryId: process.env.TICKET_CATEGORY_ID || '1192961054196633610',
 };
 
 // Check for missing configurations

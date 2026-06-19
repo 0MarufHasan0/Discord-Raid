@@ -1,4 +1,4 @@
-const { EmbedBuilder, ChannelType } = require('discord.js');
+const { EmbedBuilder, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const MarketItem = require('../database/models/MarketItem');
 const User = require('../database/models/User');
 const config = require('../config');
@@ -134,8 +134,11 @@ async function handleClaimWhitelist(interaction, itemName) {
           }
         });
         
-        // Find category containing "ticket"
-        let parentCategory = guild.channels.cache.find(c => c.name.toLowerCase().includes('ticket') && c.type === ChannelType.GuildCategory);
+        // Find category: prioritize config.ticketCategoryId, fallback to name check
+        let parentCategory = guild.channels.cache.get(config.ticketCategoryId);
+        if (!parentCategory || parentCategory.type !== ChannelType.GuildCategory) {
+          parentCategory = guild.channels.cache.find(c => c.name.toLowerCase().includes('ticket') && c.type === ChannelType.GuildCategory);
+        }
         
         const ticketChannel = await guild.channels.create({
           name: ticketChannelName,
@@ -157,8 +160,27 @@ async function handleClaimWhitelist(interaction, itemName) {
             `Please post screenshots or proof of your whitelist requirements here so admins can assist you.`
           )
           .setTimestamp();
+
+        // Create close button
+        const closeButtonRow = new ActionRowBuilder()
+          .addComponents(
+            new ButtonBuilder()
+              .setCustomId('ticket_close')
+              .setLabel('Close Ticket')
+              .setEmoji('🔒')
+              .setStyle(ButtonStyle.Danger)
+          );
+
+        // Ping user and existing admin roles
+        const validAdminRoleIds = adminRoleIds.filter(roleId => guild.roles.cache.has(roleId));
+        const adminMentions = validAdminRoleIds.map(roleId => `<@&${roleId}>`).join(' ');
+        const pingContent = `<@${interaction.user.id}>${adminMentions ? ` | ${adminMentions}` : ''}`;
           
-        await ticketChannel.send({ content: `<@${interaction.user.id}> | Admins`, embeds: [ticketEmbed] });
+        await ticketChannel.send({ 
+          content: pingContent, 
+          embeds: [ticketEmbed], 
+          components: [closeButtonRow] 
+        });
       } catch (err) {
         console.error('❌ Failed to create ticket channel:', err);
       }
