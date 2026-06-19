@@ -102,6 +102,7 @@ async function handleClaimWhitelist(interaction, itemName) {
     // Create private ticket channel for the user
     let ticketCreated = false;
     let ticketChannelLink = '';
+    let ticketCreationError = '';
     const guild = interaction.guild;
     if (guild) {
       try {
@@ -183,6 +184,7 @@ async function handleClaimWhitelist(interaction, itemName) {
         });
       } catch (err) {
         console.error('❌ Failed to create ticket channel:', err);
+        ticketCreationError = err.message;
       }
     }
 
@@ -210,7 +212,7 @@ async function handleClaimWhitelist(interaction, itemName) {
     // Reply success to the claiming interaction
     const ticketDesc = ticketChannelLink 
       ? `\n🎟️ **A private support ticket channel ${ticketChannelLink} has been automatically created for you.**` 
-      : `\n🎟️ **Please open a ticket to submit your proof/screenshot.**`;
+      : `\n🎟️ **Please open a ticket to submit your proof/screenshot.**${ticketCreationError ? `\n\n⚠️ *Ticket creation error: ${ticketCreationError}*` : ''}`;
 
     const successEmbed = new EmbedBuilder()
       .setColor(0x00FF00) // Success green
