@@ -68,19 +68,71 @@ client.on('interactionCreate', async interaction => {
   }
 });
 
-// Handle button interactions
+// Handle button and modal interactions
 client.on('interactionCreate', async interaction => {
-  if (!interaction.isButton()) return;
+  if (interaction.isButton()) {
+    if (interaction.customId.startsWith('copy_tweet_id_')) {
+      const tweetId = interaction.customId.replace('copy_tweet_id_', '');
+      try {
+        await interaction.reply({
+          content: `${tweetId}`,
+          ephemeral: true
+        });
+      } catch (error) {
+        console.error('Error replying to copy button:', error);
+      }
+    } else if (interaction.customId.startsWith('submit_raid_btn_')) {
+      const tweetId = interaction.customId.replace('submit_raid_btn_', '');
+      try {
+        const User = require('./database/models/User');
+        const { EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 
-  if (interaction.customId.startsWith('copy_tweet_id_')) {
-    const tweetId = interaction.customId.replace('copy_tweet_id_', '');
-    try {
-      await interaction.reply({
-        content: `${tweetId}`,
-        ephemeral: true
-      });
-    } catch (error) {
-      console.error('Error replying to copy button:', error);
+        // Check if user has registered their Twitter handle
+        const userDoc = await User.findOne({ discordId: interaction.user.id });
+        if (!userDoc || !userDoc.twitter) {
+          return await interaction.reply({
+            embeds: [
+              new EmbedBuilder()
+                .setColor(0xFF0000)
+                .setDescription("❌ You must connect your Twitter/X account before submitting a raid!\n\nUse `/settwitter` to link your Twitter username first.")
+            ],
+            ephemeral: true
+          });
+        }
+
+        // Show submit raid modal
+        const modal = new ModalBuilder()
+          .setCustomId(`submit_raid_modal_${tweetId}`)
+          .setTitle(`Submit Raid #${tweetId}`);
+
+        const proofInput = new TextInputBuilder()
+          .setCustomId('proof_link')
+          .setLabel('Paste comment/reply proof link')
+          .setPlaceholder('https://x.com/yourhandle/status/com...')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(true);
+
+        const firstActionRow = new ActionRowBuilder().addComponents(proofInput);
+        modal.addComponents(firstActionRow);
+
+        await interaction.showModal(modal);
+      } catch (error) {
+        console.error('Error opening submit raid modal:', error);
+      }
+    }
+  } else if (interaction.isModalSubmit()) {
+    if (interaction.customId.startsWith('submit_raid_modal_')) {
+      const tweetId = interaction.customId.replace('submit_raid_modal_', '');
+      const link = interaction.fields.getTextInputValue('proof_link').trim();
+      try {
+        // Defer response ephemerally
+        await interaction.deferReply({ ephemeral: true });
+
+        const handleRaidSubmission = require('./utils/handleRaidSubmission');
+        await handleRaidSubmission(interaction, link, tweetId);
+      } catch (error) {
+        console.error('Error handling submit raid modal submission:', error);
+      }
     }
   }
 });

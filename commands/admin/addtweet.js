@@ -278,6 +278,15 @@ module.exports = {
             .setStyle(ButtonStyle.Secondary)
         );
 
+        // Add Submit Raid button (Chess emoji ♟️)
+        buttons.push(
+          new ButtonBuilder()
+            .setLabel('Submit Raid')
+            .setEmoji('♟️')
+            .setCustomId(`submit_raid_btn_${tweetId}`)
+            .setStyle(ButtonStyle.Success)
+        );
+
         const row = new ActionRowBuilder().addComponents(buttons);
 
         try {

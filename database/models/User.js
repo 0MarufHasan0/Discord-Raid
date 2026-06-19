@@ -22,6 +22,10 @@ const UserSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  twitter: {
+    type: String,
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now
