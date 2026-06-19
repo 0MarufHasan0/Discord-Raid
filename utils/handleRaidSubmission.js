@@ -71,6 +71,8 @@ async function handleRaidSubmission(interaction, link, tweetId) {
       });
     }
 
+    const rewardPoints = (tweetDoc && tweetDoc.points) ? tweetDoc.points : 10;
+
     // 3. Check if the Tweet has expired
     if (tweetDoc.expiresAt && new Date() > tweetDoc.expiresAt) {
       return sendReply(interaction, {
@@ -192,7 +194,8 @@ async function handleRaidSubmission(interaction, link, tweetId) {
       status: 'approved',
       submittedAt: new Date(),
       approvedAt: new Date(),
-      approvedBy: 'Auto-System'
+      approvedBy: 'Auto-System',
+      points: rewardPoints
     });
     await newRaid.save();
 
@@ -208,7 +211,7 @@ async function handleRaidSubmission(interaction, link, tweetId) {
     const updatedUserDoc = await User.findOneAndUpdate(
       { discordId: interaction.user.id },
       {
-        $inc: { points: 10, raidsSubmitted: 1, raidsApproved: 1 },
+        $inc: { points: rewardPoints, raidsSubmitted: 1, raidsApproved: 1 },
         $set: { username: interaction.user.username },
         $setOnInsert: { discordId: interaction.user.id, createdAt: new Date() }
       },
@@ -227,7 +230,7 @@ async function handleRaidSubmission(interaction, link, tweetId) {
         `📋 **Raid ID:** **${raidId}**\n` +
         `📋 **Tweet ID:** **${canonicalTweetId}**\n` +
         `🔗 **Link:** [View Submission](${finalLinkToSave})\n\n` +
-        `🎉 You received **10** points! Your total points: **${updatedUserDoc.points}**`
+        `🎉 You received **${rewardPoints}** points! Your total points: **${updatedUserDoc.points}**`
       )
       .setTimestamp();
 

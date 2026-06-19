@@ -43,11 +43,13 @@ module.exports = {
       raid.approvedAt = new Date();
       await raid.save();
 
-      // Find or create raider user, increment points by 10 and increment raidsApproved
+      const rewardPoints = raid.points || 10;
+
+      // Find or create raider user, increment points and increment raidsApproved
       const userDoc = await User.findOneAndUpdate(
         { discordId: raid.userId },
         {
-          $inc: { points: 10, raidsApproved: 1 },
+          $inc: { points: rewardPoints, raidsApproved: 1 },
           $set: { username: raid.username },
           $setOnInsert: { discordId: raid.userId, createdAt: new Date() }
         },
@@ -62,7 +64,7 @@ module.exports = {
       if (raiderUser) {
         const dmEmbed = new EmbedBuilder()
           .setColor(0x00FF00) // Success green
-          .setDescription(`✅ তোমার raid approve হয়েছে!\n🎉 তুমি **10** points পেয়েছো\n**Raid ID:** ${raidId}\n**মোট points:** ${userDoc.points}`)
+          .setDescription(`✅ তোমার raid approve হয়েছে!\n🎉 তুমি **${rewardPoints}** points পেয়েছো\n**Raid ID:** ${raidId}\n**মোট points:** ${userDoc.points}`)
           .setTimestamp();
 
         try {
@@ -75,7 +77,7 @@ module.exports = {
       // Reply to admin
       const replyEmbed = new EmbedBuilder()
         .setColor(0x00FF00) // Success green
-        .setDescription(`✅ Raid **${raidId}** approved! **${raid.username}** কে **10** points দেওয়া হয়েছে`);
+        .setDescription(`✅ Raid **${raidId}** approved! **${raid.username}** কে **${rewardPoints}** points দেওয়া হয়েছে`);
 
       await interaction.reply({ embeds: [replyEmbed], ephemeral: true });
 

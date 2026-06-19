@@ -38,6 +38,10 @@ const RaidSchema = new mongoose.Schema({
   },
   rejectedReason: {
     type: String
+  },
+  points: {
+    type: Number,
+    default: 10
   }
 });
 

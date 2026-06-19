@@ -49,13 +49,14 @@ module.exports = {
       raid.rejectedReason = reason;
       await raid.save();
 
-      // If the old status was approved, deduct 10 points and decrement raidsApproved from the user
+      // If the old status was approved, deduct points and decrement raidsApproved from the user
       let pointsDeducted = false;
       let newTotalPoints = 0;
+      const deductPoints = raid.points || 10;
       if (oldStatus === 'approved') {
         const userDoc = await User.findOne({ discordId: raid.userId });
         if (userDoc) {
-          userDoc.points = Math.max(0, userDoc.points - 10);
+          userDoc.points = Math.max(0, userDoc.points - deductPoints);
           userDoc.raidsApproved = Math.max(0, userDoc.raidsApproved - 1);
           await userDoc.save();
           newTotalPoints = userDoc.points;
@@ -71,7 +72,7 @@ module.exports = {
       if (raiderUser) {
         let dmDescription = `❌ তোমার raid reject হয়েছে\n**কারণ:** ${reason}\n**Raid ID:** ${raidId}`;
         if (pointsDeducted) {
-          dmDescription += `\n⚠️ **পয়েন্ট কর্তন:** -10 (বর্তমান পয়েন্ট: ${newTotalPoints})`;
+          dmDescription += `\n⚠️ **পয়েন্ট কর্তন:** -${deductPoints} (বর্তমান পয়েন্ট: ${newTotalPoints})`;
         }
         const dmEmbed = new EmbedBuilder()
           .setColor(0xFF0000) // Error red
@@ -88,7 +89,7 @@ module.exports = {
       // Reply to admin
       let replyDescription = `✅ Raid **${raidId}** reject করা হয়েছে।`;
       if (pointsDeducted) {
-        replyDescription += ` **${raid.username}** এর একাউন্ট থেকে 10 points কেটে নেওয়া হয়েছে (বর্তমানয় পয়েন্ট: **${newTotalPoints}**)।`;
+        replyDescription += ` **${raid.username}** এর একাউন্ট থেকে ${deductPoints} points কেটে নেওয়া হয়েছে (বর্তমানয় পয়েন্ট: **${newTotalPoints}**)।`;
       }
       const replyEmbed = new EmbedBuilder()
         .setColor(0x00FF00) // Success green

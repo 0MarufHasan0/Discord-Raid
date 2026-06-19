@@ -80,6 +80,10 @@ module.exports = {
     .addIntegerOption(option =>
       option.setName('duration_minutes')
         .setDescription('Number of minutes the raid remains active (optional)')
+        .setRequired(false))
+    .addIntegerOption(option =>
+      option.setName('points')
+        .setDescription('Points rewarded for completing this raid (default: 10)')
         .setRequired(false)),
   async execute(interaction) {
     try {
@@ -96,6 +100,7 @@ module.exports = {
       const durationDays = interaction.options.getInteger('duration_days') || 0;
       const durationHours = interaction.options.getInteger('duration_hours') || 0;
       const durationMinutes = interaction.options.getInteger('duration_minutes') || 0;
+      const points = interaction.options.getInteger('points') || 10;
 
       let durationMs = (durationDays * 24 * 60 * 60 * 1000) +
                        (durationHours * 60 * 60 * 1000) +
@@ -224,7 +229,7 @@ module.exports = {
             desc += `> ${tweetData.text.replace(/\n/g, '\n> ')}\n\n`;
           }
           
-          // Expiration time using Discord dynamic timestamps
+          desc += `💰 **Reward:** **${points} points** upon completion!\n`;
           desc += `⏰ **Raid Active Until:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)\n\n`;
 
           // Add Twitter stats line
@@ -247,7 +252,7 @@ module.exports = {
           });
 
           let desc = '';
-          // Expiration time using Discord dynamic timestamps
+          desc += `💰 **Reward:** **${points} points** upon completion!\n`;
           desc += `⏰ **Raid Active Until:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)\n\n`;
           announcementEmbed.setDescription(desc);
         }
@@ -326,7 +331,8 @@ module.exports = {
               imageUrl: originalTweetLink || null, // save tweet link/url under imageUrl
               postedBy: interaction.user.username,
               channelId: channelId,
-              expiresAt: expiresAt
+              expiresAt: expiresAt,
+              points: points
             });
             await newTweet.save();
             results.push({ channelId, success: true, channelName: channel.name });

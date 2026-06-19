@@ -7,7 +7,7 @@ const updateLeaderboard = require('../../utils/updateLeaderboard');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('removemyraid')
-    .setDescription('Remove a submitted raid to correct a mistake (deducts 10 points)')
+    .setDescription('Remove a submitted raid to correct a mistake (deducts rewarded points)')
     .addStringOption(option =>
       option.setName('tweet_id')
         .setDescription('The Tweet ID of the raid to remove')
@@ -54,12 +54,13 @@ module.exports = {
       // 3. Delete the raid from database
       await Raid.deleteOne({ _id: raid._id });
 
-      // 4. Find user and deduct 10 points (if approved) and decrement raid counters, clamping at 0
+      // 4. Find user and deduct points (if approved) and decrement raid counters, clamping at 0
       const userDoc = await User.findOne({ discordId: interaction.user.id });
+      const deductPoints = raid.points || 10;
       if (userDoc) {
         const wasApproved = raid.status === 'approved';
         if (wasApproved) {
-          userDoc.points = Math.max(0, userDoc.points - 10);
+          userDoc.points = Math.max(0, userDoc.points - deductPoints);
           userDoc.raidsApproved = Math.max(0, userDoc.raidsApproved - 1);
         }
         userDoc.raidsSubmitted = Math.max(0, userDoc.raidsSubmitted - 1);
@@ -79,7 +80,7 @@ module.exports = {
         .setDescription(
           `✅ Your raid submission has been successfully deleted!\n\n` +
           `📋 **Tweet ID:** **${canonicalTweetId}**\n` +
-          `💰 **Point Change:** **-10** (if it was approved)\n` +
+          `💰 **Point Change:** **-${deductPoints}** (if it was approved)\n` +
           `💰 **Your current total points:** **${totalPoints}**\n\n` +
           `You can now submit a new raid for this Tweet ID.`
         )

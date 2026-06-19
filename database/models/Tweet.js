@@ -25,6 +25,10 @@ const TweetSchema = new mongoose.Schema({
   },
   expiresAt: {
     type: Date
+  },
+  points: {
+    type: Number,
+    default: 10
   }
 });
 
