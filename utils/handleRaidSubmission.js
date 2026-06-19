@@ -97,7 +97,7 @@ async function handleRaidSubmission(interaction, link, tweetId) {
         embeds: [
           new EmbedBuilder()
             .setColor(0xFF0000)
-            .setDescription(`❌ You have already submitted a raid for this tweet.\n\nIf you submitted the wrong link and want to submit a new one, please delete your previous raid using \`/removemyraid tweet_id:${canonicalTweetId}\` first.`)
+            .setDescription("❌ You have already submitted a raid for this tweet.")
         ],
         ephemeral: true
       });

@@ -73,8 +73,12 @@ module.exports = {
                 value: 'View the server leaderboard containing the top 10 users ranked by points.'
               },
               {
-                name: '❌ `/removemyraid tweet_id:<tweet_id>`',
-                value: 'Delete a submitted raid to fix mistakes. Deducts 10 points (if approved) and lets you resubmit.'
+                name: '🐦 `/settwitter username:<handle>`',
+                value: 'Link your Twitter/X account username (without @) for automatic raid verification.'
+              },
+              {
+                name: '🔌 `/disconnecttwitter`',
+                value: 'Unlink your Twitter/X account from the bot.'
               }
             )
             .setTimestamp();

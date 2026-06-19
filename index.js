@@ -85,6 +85,8 @@ client.on('interactionCreate', async interaction => {
       const tweetId = interaction.customId.replace('submit_raid_btn_', '');
       try {
         const User = require('./database/models/User');
+        const Tweet = require('./database/models/Tweet');
+        const Raid = require('./database/models/Raid');
         const { EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 
         // Check if user has registered their Twitter handle
@@ -95,6 +97,56 @@ client.on('interactionCreate', async interaction => {
               new EmbedBuilder()
                 .setColor(0xFF0000)
                 .setDescription("❌ You must connect your Twitter/X account before submitting a raid!\n\nUse `/settwitter` to link your Twitter username first.")
+            ],
+            ephemeral: true
+          });
+        }
+
+        const escapedTweetId = tweetId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        // Check if the Tweet ID exists in database (case-insensitive)
+        const tweetDoc = await Tweet.findOne({ 
+          tweetId: { $regex: new RegExp(`^${escapedTweetId}$`, 'i') } 
+        }).sort({ postedAt: -1 });
+
+        if (!tweetDoc) {
+          return await interaction.reply({
+            embeds: [
+              new EmbedBuilder()
+                .setColor(0xFF0000)
+                .setDescription("❌ Invalid Tweet ID! Please provide a correct Tweet ID.")
+            ],
+            ephemeral: true
+          });
+        }
+
+        // Check if the Tweet has expired
+        if (tweetDoc.expiresAt && new Date() > tweetDoc.expiresAt) {
+          return await interaction.reply({
+            embeds: [
+              new EmbedBuilder()
+                .setColor(0xFF0000)
+                .setDescription("❌ This raid has expired! You can no longer submit a raid for this Tweet ID.")
+            ],
+            ephemeral: true
+          });
+        }
+
+        const canonicalTweetId = tweetDoc.tweetId;
+        const escapedCanonicalTweetId = canonicalTweetId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        // Check if this user has already submitted a raid for this specific tweet ID
+        const existingUserRaid = await Raid.findOne({ 
+          userId: interaction.user.id, 
+          tweetId: { $regex: new RegExp(`^${escapedCanonicalTweetId}$`, 'i') } 
+        });
+
+        if (existingUserRaid) {
+          return await interaction.reply({
+            embeds: [
+              new EmbedBuilder()
+                .setColor(0xFF0000)
+                .setDescription("❌ You have already submitted a raid for this tweet.")
             ],
             ephemeral: true
           });
