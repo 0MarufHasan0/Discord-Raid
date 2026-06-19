@@ -113,7 +113,7 @@ module.exports = {
                  `🔗 **Link:** [View Submission](${raid.link})\n` +
                  `${statusEmoji} **Status:** ${raid.status}\n` +
                  `📅 **Date:** ${formattedDate}\n` +
-                 `❌ **Remove ID:** \`${raid.raidId}\` (Use \`/rejectraid raid_id:${raid.raidId}\` to reject & deduct ${raid.points || 10} points)`
+                 `❌ **Remove ID:** \`${raid.raidId}\` (Use \`/rejectraid raid_id:${raid.raidId}\` to reject & deduct ${(raid && typeof raid.points === 'number') ? raid.points : 10} points)`
         });
       });
 

@@ -52,7 +52,7 @@ module.exports = {
       // If the old status was approved, deduct points and decrement raidsApproved from the user
       let pointsDeducted = false;
       let newTotalPoints = 0;
-      const deductPoints = raid.points || 10;
+      const deductPoints = (raid && typeof raid.points === 'number') ? raid.points : 10;
       if (oldStatus === 'approved') {
         const userDoc = await User.findOne({ discordId: raid.userId });
         if (userDoc) {

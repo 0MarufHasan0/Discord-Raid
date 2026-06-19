@@ -71,7 +71,7 @@ async function handleRaidSubmission(interaction, link, tweetId) {
       });
     }
 
-    const rewardPoints = (tweetDoc && tweetDoc.points) ? tweetDoc.points : 10;
+    const rewardPoints = (tweetDoc && typeof tweetDoc.points === 'number') ? tweetDoc.points : 10;
 
     // 3. Check if the Tweet has expired
     if (tweetDoc.expiresAt && new Date() > tweetDoc.expiresAt) {

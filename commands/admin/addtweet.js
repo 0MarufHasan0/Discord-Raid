@@ -100,7 +100,18 @@ module.exports = {
       const durationDays = interaction.options.getInteger('duration_days') || 0;
       const durationHours = interaction.options.getInteger('duration_hours') || 0;
       const durationMinutes = interaction.options.getInteger('duration_minutes') || 0;
-      const points = interaction.options.getInteger('points') || 10;
+      const pointsOption = interaction.options.getInteger('points');
+      const points = pointsOption !== null ? pointsOption : 10;
+
+      if (points < 0) {
+        return interaction.editReply({
+          embeds: [
+            new EmbedBuilder()
+              .setColor(0xFF0000)
+              .setDescription("❌ Points value cannot be negative.")
+          ]
+        });
+      }
 
       let durationMs = (durationDays * 24 * 60 * 60 * 1000) +
                        (durationHours * 60 * 60 * 1000) +
