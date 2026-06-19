@@ -242,13 +242,34 @@ client.on('interactionCreate', async interaction => {
 
         if (memberOverwrite) {
           await interaction.channel.permissionOverwrites.edit(memberOverwrite.id, {
+            ViewChannel: false,
             SendMessages: false
           });
+
+          // DM the user to let them know it was closed and provide a redirect link
+          try {
+            const memberUser = await interaction.client.users.fetch(memberOverwrite.id);
+            if (memberUser) {
+              const generalChannel = interaction.guild.channels.cache.find(
+                c => (c.name.toLowerCase().includes('general') || c.name.toLowerCase().includes('chat')) && c.isTextBased()
+              );
+              const redirectText = generalChannel ? `\n🔗 **Go back to chat:** <#${generalChannel.id}>` : '';
+              const closeDmEmbed = new EmbedBuilder()
+                .setColor(0xFF0000)
+                .setTitle('🔒 Ticket Closed')
+                .setDescription(`Your ticket **${interaction.channel.name}** has been closed by <@${interaction.user.id}>.${redirectText}`)
+                .setTimestamp();
+
+              await memberUser.send({ embeds: [closeDmEmbed] });
+            }
+          } catch (dmErr) {
+            console.log('Failed to DM user on ticket close:', dmErr.message);
+          }
         }
 
         const closedEmbed = new EmbedBuilder()
           .setColor(0xFF0000)
-          .setDescription(`🔒 **Ticket closed by <@${interaction.user.id}>**\nUsers can no longer send messages in this channel.`);
+          .setDescription(`🔒 **Ticket closed by <@${interaction.user.id}>**\nMember's view access was removed. They have been redirected to the general channel.`);
 
         const controlRow = new ActionRowBuilder()
           .addComponents(
@@ -291,13 +312,30 @@ client.on('interactionCreate', async interaction => {
 
         if (memberOverwrite) {
           await interaction.channel.permissionOverwrites.edit(memberOverwrite.id, {
+            ViewChannel: true,
             SendMessages: true
           });
+
+          // DM the user to let them know it was reopened
+          try {
+            const memberUser = await interaction.client.users.fetch(memberOverwrite.id);
+            if (memberUser) {
+              const reopenDmEmbed = new EmbedBuilder()
+                .setColor(0x00FF00)
+                .setTitle('🔓 Ticket Reopened')
+                .setDescription(`Your ticket **${interaction.channel.name}** has been reopened. You can access it here: <#${interaction.channel.id}>`)
+                .setTimestamp();
+
+              await memberUser.send({ embeds: [reopenDmEmbed] });
+            }
+          } catch (dmErr) {
+            console.log('Failed to DM user on ticket reopen:', dmErr.message);
+          }
         }
 
         const reopenedEmbed = new EmbedBuilder()
           .setColor(0x00FF00)
-          .setDescription(`🔓 **Ticket reopened by <@${interaction.user.id}>**\nUsers can now send messages again.`);
+          .setDescription(`🔓 **Ticket reopened by <@${interaction.user.id}>**\nMember's view access was restored.`);
 
         const closeButtonRow = new ActionRowBuilder()
           .addComponents(
