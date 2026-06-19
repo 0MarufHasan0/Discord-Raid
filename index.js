@@ -236,9 +236,8 @@ client.on('interactionCreate', async interaction => {
         const { ActionRowBuilder, ButtonBuilder, ButtonStyle, OverwriteType, EmbedBuilder } = require('discord.js');
         await interaction.deferReply({ ephemeral: false });
 
-        const memberType = OverwriteType ? OverwriteType.Member : 1;
         const memberOverwrite = interaction.channel.permissionOverwrites.cache.find(
-          o => o.type === memberType && o.id !== interaction.client.user.id
+          o => (o.type === 1 || o.type === 'member' || o.type === 'Member') && o.id !== interaction.client.user.id
         );
 
         if (memberOverwrite) {
@@ -286,9 +285,8 @@ client.on('interactionCreate', async interaction => {
         const { ActionRowBuilder, ButtonBuilder, ButtonStyle, OverwriteType, EmbedBuilder } = require('discord.js');
         await interaction.deferReply({ ephemeral: false });
 
-        const memberType = OverwriteType ? OverwriteType.Member : 1;
         const memberOverwrite = interaction.channel.permissionOverwrites.cache.find(
-          o => o.type === memberType && o.id !== interaction.client.user.id
+          o => (o.type === 1 || o.type === 'member' || o.type === 'Member') && o.id !== interaction.client.user.id
         );
 
         if (memberOverwrite) {
