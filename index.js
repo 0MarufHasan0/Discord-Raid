@@ -86,6 +86,7 @@ client.on('interactionCreate', async interaction => {
   if (interaction.isButton()) {
     if (interaction.customId.startsWith('copy_tweet_id_')) {
       const tweetId = interaction.customId.replace('copy_tweet_id_', '');
+      console.log(`[Button Click] User ${interaction.user.tag} (${interaction.user.id}) clicked Copy Tweet ID button for: ${tweetId}`);
       try {
         await interaction.reply({
           content: `\`${tweetId}\``,
