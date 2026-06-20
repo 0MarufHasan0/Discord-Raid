@@ -132,6 +132,37 @@ module.exports = {
         });
       }
 
+      // Filter channels to only include those belonging to the current guild
+      let guildChannelIds = new Set();
+      try {
+        const gc = await interaction.guild.channels.fetch();
+        for (const id of gc.keys()) {
+          guildChannelIds.add(id);
+        }
+      } catch (err) {
+        console.error("Error fetching guild channels:", err);
+      }
+
+      const guildTweetChannelIds = [];
+      for (const channelId of tweetChannelIds) {
+        let channel = interaction.client.channels.cache.get(channelId);
+        if (channel) {
+          if (channel.guildId === interaction.guildId) {
+            guildTweetChannelIds.push(channelId);
+          }
+        } else {
+          if (guildChannelIds.has(channelId)) {
+            guildTweetChannelIds.push(channelId);
+          }
+        }
+      }
+
+      if (guildTweetChannelIds.length === 0) {
+        return interaction.editReply({
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ এই সার্ভারের জন্য কোনো Tweet Channel কনফিগার করা নেই।")]
+        });
+      }
+
       const results = [];
 
       // Determine the original link, final embed link (fxtwitter), and cleaned content
@@ -172,7 +203,7 @@ module.exports = {
         }
       }
 
-      for (const channelId of tweetChannelIds) {
+      for (const channelId of guildTweetChannelIds) {
         let channel = interaction.client.channels.cache.get(channelId);
         let fetchErrorMsg = null;
 
