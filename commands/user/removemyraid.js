@@ -56,7 +56,7 @@ module.exports = {
 
       // 4. Find user and deduct points (if approved) and decrement raid counters, clamping at 0
       const userDoc = await User.findOne({ discordId: interaction.user.id });
-      const deductPoints = (raid && typeof raid.points === 'number') ? raid.points : 10;
+      const deductPoints = (raid && typeof raid.points === 'number') ? raid.points : 1;
       if (userDoc) {
         const wasApproved = raid.status === 'approved';
         if (wasApproved) {

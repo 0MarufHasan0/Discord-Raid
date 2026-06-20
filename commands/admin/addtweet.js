@@ -83,7 +83,7 @@ module.exports = {
         .setRequired(false))
     .addIntegerOption(option =>
       option.setName('points')
-        .setDescription('Points rewarded for completing this raid (default: 10)')
+        .setDescription('Points rewarded for completing this raid (default: 1)')
         .setRequired(false)),
   async execute(interaction) {
     try {
@@ -101,7 +101,7 @@ module.exports = {
       const durationHours = interaction.options.getInteger('duration_hours') || 0;
       const durationMinutes = interaction.options.getInteger('duration_minutes') || 0;
       const pointsOption = interaction.options.getInteger('points');
-      const points = pointsOption !== null ? pointsOption : 10;
+      const points = pointsOption !== null ? pointsOption : 1;
 
       if (points < 0) {
         return interaction.editReply({

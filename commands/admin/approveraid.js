@@ -43,7 +43,7 @@ module.exports = {
       raid.approvedAt = new Date();
       await raid.save();
 
-      const rewardPoints = (raid && typeof raid.points === 'number') ? raid.points : 10;
+      const rewardPoints = (raid && typeof raid.points === 'number') ? raid.points : 1;
 
       // Find or create raider user, increment points and increment raidsApproved
       const userDoc = await User.findOneAndUpdate(
