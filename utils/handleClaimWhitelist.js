@@ -140,8 +140,16 @@ async function handleClaimWhitelist(interaction, itemName) {
         });
         
         // Find category: prioritize config.ticketCategoryId, fallback to name check
-        let parentCategory = guild.channels.cache.get(config.ticketCategoryId);
-        if (!parentCategory || parentCategory.type !== ChannelType.GuildCategory) {
+        const ticketCategoryIds = (config.ticketCategoryId || '').split(',').map(id => id.trim()).filter(Boolean);
+        let parentCategory = null;
+        for (const id of ticketCategoryIds) {
+          const cat = guild.channels.cache.get(id);
+          if (cat && cat.type === ChannelType.GuildCategory) {
+            parentCategory = cat;
+            break;
+          }
+        }
+        if (!parentCategory) {
           parentCategory = guild.channels.cache.find(c => c.name.toLowerCase().includes('ticket') && c.type === ChannelType.GuildCategory);
         }
         

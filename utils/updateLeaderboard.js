@@ -9,26 +9,33 @@ const User = require('../database/models/User');
  */
 async function updateLeaderboard(client) {
   try {
-    const channelId = config.leaderboardChannelId;
-    if (!channelId) {
+    const channelIdsString = config.leaderboardChannelId || '';
+    const channelIds = channelIdsString.split(',').map(id => id.trim()).filter(Boolean);
+    if (channelIds.length === 0) {
       console.warn('⚠️ Warning: leaderboardChannelId is not configured.');
       return;
     }
 
-    let channel = client.channels.cache.get(channelId);
-    if (!channel) {
-      try {
-        channel = await client.channels.fetch(channelId);
-      } catch (err) {
-        console.error(`❌ Error fetching leaderboard channel (${channelId}):`, err.message);
-        return;
+    let channelList = [];
+    for (const channelId of channelIds) {
+      let channel = client.channels.cache.get(channelId);
+      if (!channel) {
+        try {
+          channel = await client.channels.fetch(channelId);
+        } catch (err) {
+          console.error(`❌ Error fetching leaderboard channel (${channelId}):`, err.message);
+          continue;
+        }
       }
+
+      if (!channel || !channel.isTextBased()) {
+        console.warn(`⚠️ Warning: Leaderboard channel (${channelId}) is not a text-based channel.`);
+        continue;
+      }
+      channelList.push(channel);
     }
 
-    if (!channel || !channel.isTextBased()) {
-      console.warn(`⚠️ Warning: Leaderboard channel (${channelId}) is not a text-based channel.`);
-      return;
-    }
+    if (channelList.length === 0) return;
 
     // Fetch top 10 users sorted by points descending
     const topUsers = await User.find({}).sort({ points: -1 }).limit(10);
@@ -56,41 +63,43 @@ async function updateLeaderboard(client) {
 
     embed.setFooter({ text: "🔴 Updates automatically when points change" });
 
-    // Fetch the last 50 messages to find the bot's previous leaderboard embed
-    let messages;
-    try {
-      messages = await channel.messages.fetch({ limit: 50 });
-    } catch (err) {
-      console.error(`❌ Error fetching messages from leaderboard channel:`, err.message);
-      if (err.code === 50001 || err.code === 50013) {
-        console.warn(`⚠️ Warning: Bot does not have permission (Missing Access/Permissions) to read/send in leaderboard channel.`);
-        return;
-      }
-      // Fallback: try to send a new message
+    for (const channel of channelList) {
+      // Fetch the last 50 messages to find the bot's previous leaderboard embed
+      let messages;
       try {
-        await channel.send({ embeds: [embed] });
-      } catch (sendErr) {
-        console.error(`❌ Fallback leaderboard send failed:`, sendErr.message);
+        messages = await channel.messages.fetch({ limit: 50 });
+      } catch (err) {
+        console.error(`❌ Error fetching messages from leaderboard channel (${channel.id}):`, err.message);
+        if (err.code === 50001 || err.code === 50013) {
+          console.warn(`⚠️ Warning: Bot does not have permission (Missing Access/Permissions) to read/send in leaderboard channel (${channel.id}).`);
+          continue;
+        }
+        // Fallback: try to send a new message
+        try {
+          await channel.send({ embeds: [embed] });
+        } catch (sendErr) {
+          console.error(`❌ Fallback leaderboard send failed in channel (${channel.id}):`, sendErr.message);
+        }
+        continue;
       }
-      return;
-    }
 
-    const botMessage = messages.find(msg => 
-      msg.author.id === client.user.id && 
-      msg.embeds.length > 0 && 
-      (msg.embeds[0].title === "🏆 Live Leaderboard — Top Raiders" || msg.embeds[0].title === "🏆 Leaderboard — Top Raiders")
-    );
+      const botMessage = messages.find(msg => 
+        msg.author.id === client.user.id && 
+        msg.embeds.length > 0 && 
+        (msg.embeds[0].title === "🏆 Live Leaderboard — Top Raiders" || msg.embeds[0].title === "🏆 Leaderboard — Top Raiders")
+      );
 
-    try {
-      if (botMessage) {
-        await botMessage.edit({ embeds: [embed] });
-        console.log(`✅ Live Leaderboard message updated in #${channel.name}`);
-      } else {
-        await channel.send({ embeds: [embed] });
-        console.log(`✅ New Live Leaderboard message sent in #${channel.name}`);
+      try {
+        if (botMessage) {
+          await botMessage.edit({ embeds: [embed] });
+          console.log(`✅ Live Leaderboard message updated in #${channel.name} (${channel.id})`);
+        } else {
+          await channel.send({ embeds: [embed] });
+          console.log(`✅ New Live Leaderboard message sent in #${channel.name} (${channel.id})`);
+        }
+      } catch (sendOrEditError) {
+        console.error(`❌ Error sending or editing message in leaderboard channel (${channel.id}):`, sendOrEditError.message);
       }
-    } catch (sendOrEditError) {
-      console.error(`❌ Error sending or editing message in leaderboard channel:`, sendOrEditError.message);
     }
 
   } catch (error) {

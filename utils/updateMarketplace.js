@@ -9,26 +9,33 @@ const MarketItem = require('../database/models/MarketItem');
  */
 async function updateMarketplace(client) {
   try {
-    const channelId = config.marketplaceChannelId;
-    if (!channelId) {
+    const channelIdsString = config.marketplaceChannelId || '';
+    const channelIds = channelIdsString.split(',').map(id => id.trim()).filter(Boolean);
+    if (channelIds.length === 0) {
       console.warn('⚠️ Warning: marketplaceChannelId is not configured.');
       return;
     }
 
-    let channel = client.channels.cache.get(channelId);
-    if (!channel) {
-      try {
-        channel = await client.channels.fetch(channelId);
-      } catch (err) {
-        console.error(`❌ Error fetching marketplace channel (${channelId}):`, err.message);
-        return;
+    let channelList = [];
+    for (const channelId of channelIds) {
+      let channel = client.channels.cache.get(channelId);
+      if (!channel) {
+        try {
+          channel = await client.channels.fetch(channelId);
+        } catch (err) {
+          console.error(`❌ Error fetching marketplace channel (${channelId}):`, err.message);
+          continue;
+        }
       }
+
+      if (!channel || !channel.isTextBased()) {
+        console.warn(`⚠️ Warning: Marketplace channel (${channelId}) is not a text-based channel.`);
+        continue;
+      }
+      channelList.push(channel);
     }
 
-    if (!channel || !channel.isTextBased()) {
-      console.warn(`⚠️ Warning: Marketplace channel (${channelId}) is not a text-based channel.`);
-      return;
-    }
+    if (channelList.length === 0) return;
 
     // Fetch active and non-expired items
     const now = new Date();
@@ -86,41 +93,43 @@ async function updateMarketplace(client) {
       components.push(row);
     }
 
-    // Fetch the last 50 messages to find the bot's previous marketplace embed
-    let messages;
-    try {
-      messages = await channel.messages.fetch({ limit: 50 });
-    } catch (err) {
-      console.error(`❌ Error fetching messages from marketplace channel:`, err.message);
-      if (err.code === 50001 || err.code === 50013) {
-        console.warn(`⚠️ Warning: Bot does not have permission (Missing Access/Permissions) to read/send in marketplace channel.`);
-        return;
-      }
-      // Fallback: try to send a new message
+    for (const channel of channelList) {
+      // Fetch the last 50 messages to find the bot's previous marketplace embed
+      let messages;
       try {
-        await channel.send({ embeds: [embed], components: components });
-      } catch (sendErr) {
-        console.error(`❌ Fallback send failed:`, sendErr.message);
+        messages = await channel.messages.fetch({ limit: 50 });
+      } catch (err) {
+        console.error(`❌ Error fetching messages from marketplace channel (${channel.id}):`, err.message);
+        if (err.code === 50001 || err.code === 50013) {
+          console.warn(`⚠️ Warning: Bot does not have permission (Missing Access/Permissions) to read/send in marketplace channel (${channel.id}).`);
+          continue;
+        }
+        // Fallback: try to send a new message
+        try {
+          await channel.send({ embeds: [embed], components: components });
+        } catch (sendErr) {
+          console.error(`❌ Fallback send failed in channel (${channel.id}):`, sendErr.message);
+        }
+        continue;
       }
-      return;
-    }
 
-    const botMessage = messages.find(msg => 
-      msg.author.id === client.user.id && 
-      msg.embeds.length > 0 && 
-      (msg.embeds[0].title === "🏪 Live Whitelist Marketplace" || msg.embeds[0].title === "🏪 Marketplace")
-    );
+      const botMessage = messages.find(msg => 
+        msg.author.id === client.user.id && 
+        msg.embeds.length > 0 && 
+        (msg.embeds[0].title === "🏪 Live Whitelist Marketplace" || msg.embeds[0].title === "🏪 Marketplace")
+      );
 
-    try {
-      if (botMessage) {
-        await botMessage.edit({ embeds: [embed], components: components });
-        console.log(`✅ Live Marketplace message updated in #${channel.name}`);
-      } else {
-        await channel.send({ embeds: [embed], components: components });
-        console.log(`✅ New Live Marketplace message sent in #${channel.name}`);
+      try {
+        if (botMessage) {
+          await botMessage.edit({ embeds: [embed], components: components });
+          console.log(`✅ Live Marketplace message updated in #${channel.name} (${channel.id})`);
+        } else {
+          await channel.send({ embeds: [embed], components: components });
+          console.log(`✅ New Live Marketplace message sent in #${channel.name} (${channel.id})`);
+        }
+      } catch (sendOrEditError) {
+        console.error(`❌ Error sending or editing message in marketplace channel (${channel.id}):`, sendOrEditError.message);
       }
-    } catch (sendOrEditError) {
-      console.error(`❌ Error sending or editing message in marketplace channel:`, sendOrEditError.message);
     }
 
   } catch (error) {
