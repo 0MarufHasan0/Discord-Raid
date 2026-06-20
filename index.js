@@ -55,7 +55,27 @@ client.on('interactionCreate', async interaction => {
   try {
     await command.execute(interaction);
     
-    // Auto-delete command reply after 5 seconds
+    // Determine auto-delete duration: 60 seconds for admins, 15 seconds for regular users
+    let deleteDelay = 15000; // 15 seconds default
+    
+    if (interaction.member && interaction.member.roles) {
+      const adminRoleIdString = config.adminRoleId || '';
+      const adminRoleIds = adminRoleIdString.split(',').map(id => id.trim()).filter(Boolean);
+      const isAdmin = adminRoleIds.some(roleId => {
+        if (Array.isArray(interaction.member.roles)) {
+          return interaction.member.roles.includes(roleId);
+        }
+        if (interaction.member.roles.cache) {
+          return interaction.member.roles.cache.has(roleId);
+        }
+        return false;
+      });
+      if (isAdmin) {
+        deleteDelay = 60000; // 1 minute (60 seconds)
+      }
+    }
+
+    // Auto-delete command reply after delay
     setTimeout(async () => {
       try {
         if (interaction.replied || interaction.deferred) {
@@ -64,7 +84,7 @@ client.on('interactionCreate', async interaction => {
       } catch (err) {
         // Silently ignore if ephemeral, already deleted, or interaction expired
       }
-    }, 5000);
+    }, deleteDelay);
   } catch (error) {
     console.error(`❌ Error executing /${interaction.commandName}:`, error);
     const errMessage = "❌ An error occurred. Please try again.";
