@@ -310,6 +310,7 @@ client.on('interactionCreate', async interaction => {
                   c => (c.name.toLowerCase().includes('general') || c.name.toLowerCase().includes('chat')) && c.isTextBased()
                 );
                 const redirectText = generalChannel ? `\n🔗 **Go back to chat:** <#${generalChannel.id}>` : '';
+                /*
                 const closeDmEmbed = new EmbedBuilder()
                   .setColor(0xFF0000)
                   .setTitle('🔒 Ticket Closed')
@@ -317,6 +318,7 @@ client.on('interactionCreate', async interaction => {
                   .setTimestamp();
 
                 await memberUser.send({ embeds: [closeDmEmbed] });
+                */
               }
             } catch (err) {
               console.log('Failed to complete ticket close background task:', err.message);
@@ -380,6 +382,7 @@ client.on('interactionCreate', async interaction => {
               }
 
               if (memberUser) {
+                /*
                 const reopenDmEmbed = new EmbedBuilder()
                   .setColor(0x00FF00)
                   .setTitle('🔓 Ticket Reopened')
@@ -387,6 +390,7 @@ client.on('interactionCreate', async interaction => {
                   .setTimestamp();
 
                 await memberUser.send({ embeds: [reopenDmEmbed] });
+                */
               }
             } catch (err) {
               console.log('Failed to complete ticket reopen background task:', err.message);

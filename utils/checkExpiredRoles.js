@@ -19,7 +19,6 @@ async function checkExpiredRoles(client) {
               await member.roles.remove(record.roleId, "Whitelist duration expired.");
               console.log(`[Expiration Check] Removed role ${record.roleId} from user ${member.user.tag} in guild ${guild.name}`);
               
-              /*
               // Try to DM user
               const dmEmbed = new EmbedBuilder()
                 .setColor(0xFF0000)
@@ -27,7 +26,6 @@ async function checkExpiredRoles(client) {
                 .setDescription(`Your whitelist role for **${record.itemName}** has expired in **${guild.name}** and has been removed.`)
                 .setTimestamp();
               await member.send({ embeds: [dmEmbed] }).catch(() => {});
-              */
             }
           }
         }

@@ -248,6 +248,7 @@ async function handleClaimWhitelist(interaction, itemName) {
       responseDescription = `✅ You have claimed '**${item.name}**'!\n💰 **${item.pointCost}** points deducted\n💳 Remaining points: **${userDoc.points}**\n${ticketText}`;
     }
 
+    /*
     // Try to DM the user a beautiful purchase receipt
     try {
       const dmEmbed = new EmbedBuilder()
@@ -260,6 +261,7 @@ async function handleClaimWhitelist(interaction, itemName) {
     } catch (dmError) {
       console.log(`Failed to DM user ${interaction.user.username} for purchase receipt.`);
     }
+    */
 
     // Reply success to the claiming interaction
     const successEmbed = new EmbedBuilder()

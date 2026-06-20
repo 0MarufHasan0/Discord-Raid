@@ -59,6 +59,7 @@ module.exports = {
       // Update live leaderboard channel
       updateLeaderboard(interaction.client);
 
+      /*
       // Try to DM the raider
       const raiderUser = await interaction.client.users.fetch(raid.userId).catch(() => null);
       if (raiderUser) {
@@ -73,6 +74,7 @@ module.exports = {
           console.log(`[DM Fail] Could not DM user ${raid.username} (${raid.userId}) for raid approval.`);
         }
       }
+      */
 
       // Reply to admin
       const replyEmbed = new EmbedBuilder()

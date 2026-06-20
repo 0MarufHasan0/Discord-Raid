@@ -50,6 +50,7 @@ module.exports = {
       // Update live leaderboard channel
       updateLeaderboard(interaction.client);
 
+      /*
       // Attempt to DM the user
       const dmEmbed = new EmbedBuilder()
         .setColor(0x00FF00) // Success green
@@ -62,6 +63,7 @@ module.exports = {
         // Silently ignore if user has DMs closed
         console.log(`[DM Fail] Could not DM user ${targetUser.username} (${targetUser.id}). DMs might be closed.`);
       }
+      */
 
       // Reply to admin
       const replyEmbed = new EmbedBuilder()
