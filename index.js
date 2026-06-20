@@ -240,15 +240,40 @@ client.on('interactionCreate', async interaction => {
           o => (o.type === 1 || o.type === 'member' || o.type === 'Member') && o.id !== interaction.client.user.id
         );
 
-        if (memberOverwrite) {
-          await interaction.channel.permissionOverwrites.edit(memberOverwrite.id, {
-            ViewChannel: false,
-            SendMessages: false
-          });
+        const closedEmbed = new EmbedBuilder()
+          .setColor(0xFF0000)
+          .setDescription(`🔒 **Ticket closed by <@${interaction.user.id}>**\nMember's view access was removed. They have been redirected to the general channel.`);
 
-          // DM the user to let them know it was closed and provide a redirect link (run in background to optimize response time)
+        const controlRow = new ActionRowBuilder()
+          .addComponents(
+            new ButtonBuilder()
+              .setCustomId('ticket_reopen')
+              .setLabel('Reopen Ticket')
+              .setEmoji('🔓')
+              .setStyle(ButtonStyle.Success),
+            new ButtonBuilder()
+              .setCustomId('ticket_delete')
+              .setLabel('Delete Ticket')
+              .setEmoji('⛔')
+              .setStyle(ButtonStyle.Danger)
+          );
+
+        // Edit original message to remove buttons and resolve the interaction reply first.
+        // This ensures the user's client receives the response immediately and does not hang on "thinking".
+        interaction.message.edit({ components: [] }).catch(() => {});
+        await interaction.editReply({ embeds: [closedEmbed], components: [controlRow] });
+
+        // Update channel permissions and DM the user in the background.
+        if (memberOverwrite) {
           (async () => {
             try {
+              // Edit permissions first
+              await interaction.channel.permissionOverwrites.edit(memberOverwrite.id, {
+                ViewChannel: false,
+                SendMessages: false
+              });
+
+              // DM the user to let them know it was closed and provide a redirect link
               let memberUser = interaction.guild.members.cache.get(memberOverwrite.id)?.user 
                 || interaction.client.users.cache.get(memberOverwrite.id);
               
@@ -269,34 +294,11 @@ client.on('interactionCreate', async interaction => {
 
                 await memberUser.send({ embeds: [closeDmEmbed] });
               }
-            } catch (dmErr) {
-              console.log('Failed to DM user on ticket close:', dmErr.message);
+            } catch (err) {
+              console.log('Failed to complete ticket close background task:', err.message);
             }
           })();
         }
-
-        const closedEmbed = new EmbedBuilder()
-          .setColor(0xFF0000)
-          .setDescription(`🔒 **Ticket closed by <@${interaction.user.id}>**\nMember's view access was removed. They have been redirected to the general channel.`);
-
-        const controlRow = new ActionRowBuilder()
-          .addComponents(
-            new ButtonBuilder()
-              .setCustomId('ticket_reopen')
-              .setLabel('Reopen Ticket')
-              .setEmoji('🔓')
-              .setStyle(ButtonStyle.Success),
-            new ButtonBuilder()
-              .setCustomId('ticket_delete')
-              .setLabel('Delete Ticket')
-              .setEmoji('⛔')
-              .setStyle(ButtonStyle.Danger)
-          );
-
-        // Edit original message to remove buttons in the background
-        interaction.message.edit({ components: [] }).catch(() => {});
-
-        await interaction.editReply({ embeds: [closedEmbed], components: [controlRow] });
 
       } catch (error) {
         console.error('Error closing ticket:', error);
@@ -317,15 +319,35 @@ client.on('interactionCreate', async interaction => {
           o => (o.type === 1 || o.type === 'member' || o.type === 'Member') && o.id !== interaction.client.user.id
         );
 
-        if (memberOverwrite) {
-          await interaction.channel.permissionOverwrites.edit(memberOverwrite.id, {
-            ViewChannel: true,
-            SendMessages: true
-          });
+        const reopenedEmbed = new EmbedBuilder()
+          .setColor(0x00FF00)
+          .setDescription(`🔓 **Ticket reopened by <@${interaction.user.id}>**\nMember's view access was restored.`);
 
-          // DM the user to let them know it was reopened (run in background to optimize response time)
+        const closeButtonRow = new ActionRowBuilder()
+          .addComponents(
+            new ButtonBuilder()
+              .setCustomId('ticket_close')
+              .setLabel('Close Ticket')
+              .setEmoji('🔒')
+              .setStyle(ButtonStyle.Danger)
+          );
+
+        // Edit original message to remove buttons and resolve the interaction reply first.
+        // This ensures the user's client receives the response immediately and does not hang on "thinking".
+        interaction.message.edit({ components: [] }).catch(() => {});
+        await interaction.editReply({ embeds: [reopenedEmbed], components: [closeButtonRow] });
+
+        // Update channel permissions and DM the user in the background.
+        if (memberOverwrite) {
           (async () => {
             try {
+              // Edit permissions first
+              await interaction.channel.permissionOverwrites.edit(memberOverwrite.id, {
+                ViewChannel: true,
+                SendMessages: true
+              });
+
+              // DM the user to let them know it was reopened
               let memberUser = interaction.guild.members.cache.get(memberOverwrite.id)?.user 
                 || interaction.client.users.cache.get(memberOverwrite.id);
               
@@ -342,29 +364,11 @@ client.on('interactionCreate', async interaction => {
 
                 await memberUser.send({ embeds: [reopenDmEmbed] });
               }
-            } catch (dmErr) {
-              console.log('Failed to DM user on ticket reopen:', dmErr.message);
+            } catch (err) {
+              console.log('Failed to complete ticket reopen background task:', err.message);
             }
           })();
         }
-
-        const reopenedEmbed = new EmbedBuilder()
-          .setColor(0x00FF00)
-          .setDescription(`🔓 **Ticket reopened by <@${interaction.user.id}>**\nMember's view access was restored.`);
-
-        const closeButtonRow = new ActionRowBuilder()
-          .addComponents(
-            new ButtonBuilder()
-              .setCustomId('ticket_close')
-              .setLabel('Close Ticket')
-              .setEmoji('🔒')
-              .setStyle(ButtonStyle.Danger)
-          );
-
-        // Edit original message to remove buttons in the background
-        interaction.message.edit({ components: [] }).catch(() => {});
-
-        await interaction.editReply({ embeds: [reopenedEmbed], components: [closeButtonRow] });
 
       } catch (error) {
         console.error('Error reopening ticket:', error);
