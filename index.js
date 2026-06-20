@@ -54,6 +54,17 @@ client.on('interactionCreate', async interaction => {
 
   try {
     await command.execute(interaction);
+    
+    // Auto-delete command reply after 5 seconds
+    setTimeout(async () => {
+      try {
+        if (interaction.replied || interaction.deferred) {
+          await interaction.deleteReply();
+        }
+      } catch (err) {
+        // Silently ignore if ephemeral, already deleted, or interaction expired
+      }
+    }, 5000);
   } catch (error) {
     console.error(`❌ Error executing /${interaction.commandName}:`, error);
     const errMessage = "❌ An error occurred. Please try again.";

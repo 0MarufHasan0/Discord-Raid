@@ -16,7 +16,13 @@ async function checkAdmin(interaction) {
     const embed = new EmbedBuilder()
       .setColor(0xFF0000)
       .setDescription("❌ You do not have permission to use this command.");
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    try {
+      if (interaction.deferred || interaction.replied) {
+        await interaction.followUp({ embeds: [embed], ephemeral: true });
+      } else {
+        await interaction.reply({ embeds: [embed], ephemeral: true });
+      }
+    } catch (err) {}
     return false;
   }
 
@@ -35,7 +41,13 @@ async function checkAdmin(interaction) {
       .setColor(0xFF0000) // Red
       .setDescription("❌ You do not have permission to use this command.");
     
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    try {
+      if (interaction.deferred || interaction.replied) {
+        await interaction.followUp({ embeds: [embed], ephemeral: true });
+      } else {
+        await interaction.reply({ embeds: [embed], ephemeral: true });
+      }
+    } catch (err) {}
     return false;
   }
   

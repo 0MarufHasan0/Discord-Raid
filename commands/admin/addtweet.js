@@ -272,7 +272,8 @@ module.exports = {
           }
           
           desc += `💰 **Reward:** **${points} points** upon completion!\n`;
-          desc += `⏰ **Raid Active Until:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)\n\n`;
+          desc += `⏰ **Raid Active Until:** <t:${unixTimestamp}:F>\n`;
+          desc += `⌛ **Time Left:** <t:${unixTimestamp}:R>\n\n`;
 
           // Add Twitter stats line
           desc += `💬 ${tweetData.replies || 0}   🔁 ${tweetData.retweets || 0}   ❤️ ${tweetData.likes || 0}   👁️ ${tweetData.views || 0}`;
@@ -295,7 +296,8 @@ module.exports = {
 
           let desc = '';
           desc += `💰 **Reward:** **${points} points** upon completion!\n`;
-          desc += `⏰ **Raid Active Until:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)\n\n`;
+          desc += `⏰ **Raid Active Until:** <t:${unixTimestamp}:F>\n`;
+          desc += `⌛ **Time Left:** <t:${unixTimestamp}:R>\n\n`;
           announcementEmbed.setDescription(desc);
         }
 
