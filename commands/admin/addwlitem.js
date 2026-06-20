@@ -27,6 +27,10 @@ module.exports = {
       option.setName('role')
         .setDescription('Role to automatically give to members who buy this item (optional)')
         .setRequired(false))
+    .addStringOption(option =>
+      option.setName('create_role_name')
+        .setDescription('Name of a new role to create on the server (optional)')
+        .setRequired(false))
     .addIntegerOption(option =>
       option.setName('claim_duration_days')
         .setDescription('Number of days the role remains active for the member (default: 30)')
@@ -55,7 +59,7 @@ module.exports = {
       const totalSlots = interaction.options.getInteger('total_slots');
 
       const role = interaction.options.getRole('role');
-      const roleId = role ? role.id : null;
+      const createRoleName = interaction.options.getString('create_role_name');
       const claimDurationDaysOption = interaction.options.getInteger('claim_duration_days');
       const claimDurationDays = claimDurationDaysOption !== null ? claimDurationDaysOption : 30;
 
@@ -75,6 +79,29 @@ module.exports = {
           embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Claim Duration অবশ্যই ০-এর চেয়ে বেশি হতে হবে।")],
           ephemeral: true
         });
+      }
+
+      let roleId = role ? role.id : null;
+
+      // Auto-create role if name is specified and role isn't selected
+      if (!roleId && createRoleName) {
+        let existingRole = interaction.guild.roles.cache.find(r => r.name.toLowerCase() === createRoleName.trim().toLowerCase());
+        if (!existingRole) {
+          try {
+            existingRole = await interaction.guild.roles.create({
+              name: createRoleName.trim(),
+              reason: `Auto-created for marketplace item: ${name}`
+            });
+            console.log(`[Auto Role Create] Created role '${existingRole.name}' with ID ${existingRole.id}`);
+          } catch (createErr) {
+            console.error(`❌ Failed to create role '${createRoleName}':`, createErr);
+            return interaction.reply({
+              embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ '${createRoleName}' রোলটি তৈরি করতে ব্যর্থ হয়েছে। বটের Role Manage করার পারমিশন চেক করুন।`)],
+              ephemeral: true
+            });
+          }
+        }
+        roleId = existingRole.id;
       }
 
       let expiresAt = null;
