@@ -99,7 +99,7 @@ async function handleClaimWhitelist(interaction, itemName) {
     // Update live leaderboard channel
     updateLeaderboard(interaction.client);
 
-    // Auto-assign Discord role if configured
+    // Auto-assign Discord role if configured (i.e. Role Item)
     let roleAdded = false;
     let roleAddError = '';
     const guild = interaction.guild;
@@ -126,11 +126,11 @@ async function handleClaimWhitelist(interaction, itemName) {
       }
     }
 
-    // Create private ticket channel for the user
+    // Create private ticket channel for the user (ONLY if it is NOT a Role Item)
     let ticketCreated = false;
     let ticketChannelLink = '';
     let ticketCreationError = '';
-    if (guild) {
+    if (guild && !item.roleId) {
       try {
         const cleanItemName = item.name.toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 15);
         const cleanUsername = interaction.user.username.toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 15);
@@ -154,7 +154,6 @@ async function handleClaimWhitelist(interaction, itemName) {
         ];
         
         adminRoleIds.forEach(roleId => {
-          // Only add permission overwrite if the role exists in the guild
           if (guild.roles.cache.has(roleId)) {
             permissionOverwrites.push({
               id: roleId,
@@ -165,7 +164,6 @@ async function handleClaimWhitelist(interaction, itemName) {
           }
         });
         
-        // Find category: prioritize config.ticketCategoryId, fallback to name check
         const ticketCategoryIds = (config.ticketCategoryId || '').split(',').map(id => id.trim()).filter(Boolean);
         let parentCategory = null;
         for (const id of ticketCategoryIds) {
@@ -189,7 +187,6 @@ async function handleClaimWhitelist(interaction, itemName) {
         ticketCreated = true;
         ticketChannelLink = `<#${ticketChannel.id}>`;
         
-        // Send a welcome message in the ticket channel
         const ticketEmbed = new EmbedBuilder()
           .setColor(0x5865F2)
           .setTitle(`🎟️ Whitelist Ticket — ${item.name}`)
@@ -200,7 +197,6 @@ async function handleClaimWhitelist(interaction, itemName) {
           )
           .setTimestamp();
 
-        // Create close button
         const closeButtonRow = new ActionRowBuilder()
           .addComponents(
             new ButtonBuilder()
@@ -210,7 +206,6 @@ async function handleClaimWhitelist(interaction, itemName) {
               .setStyle(ButtonStyle.Danger)
           );
 
-        // Ping user and existing admin roles
         const validAdminRoleIds = adminRoleIds.filter(roleId => guild.roles.cache.has(roleId));
         const adminMentions = validAdminRoleIds.map(roleId => `<@&${roleId}>`).join(' ');
         const pingContent = `<@${interaction.user.id}>${adminMentions ? ` | ${adminMentions}` : ''}`;
@@ -226,51 +221,50 @@ async function handleClaimWhitelist(interaction, itemName) {
       }
     }
 
-    // Role assignment details text
-    let roleStatusText = '';
+    // Prepare response messages dynamically
+    let receiptDescription = '';
+    let responseDescription = '';
+
     if (item.roleId) {
+      // Role Item response
       if (roleAdded) {
         const expiresAt = new Date(Date.now() + (item.claimDurationDays || 30) * 24 * 60 * 60 * 1000);
         const unixTimestamp = Math.floor(expiresAt.getTime() / 1000);
-        roleStatusText = `\n🎭 **Role Assigned:** <@&${item.roleId}>\n⏳ **Role Expiry:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)`;
+        const text = `\n🎭 **Role Assigned:** <@&${item.roleId}>\n⏳ **Role Expiry:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)`;
+        receiptDescription = `Congratulations! You have successfully claimed a role item from the server marketplace.\n\n🏷️ **Item Name:** **${item.name}**\n💰 **Cost:** \`${item.pointCost}\` points\n💳 **Remaining Points:** \`${userDoc.points}\` points${text}`;
+        responseDescription = `✅ You have claimed '**${item.name}**'!\n💰 **${item.pointCost}** points deducted\n💳 Remaining points: **${userDoc.points}**${text}`;
       } else {
-        roleStatusText = `\n⚠️ **Role Assignment Failed:** ${roleAddError || "বটের হয়তো Role দেওয়ার পারমিশন নেই।"}`;
+        const text = `\n⚠️ **Role Assignment Failed:** ${roleAddError || "বটের হয়তো Role দেওয়ার পারমিশন নেই।"}`;
+        receiptDescription = `You claimed a role item from the server marketplace, but the role assignment failed.\n\n🏷️ **Item Name:** **${item.name}**\n💰 **Cost:** \`${item.pointCost}\` points\n💳 **Remaining Points:** \`${userDoc.points}\` points${text}`;
+        responseDescription = `⚠️ You claimed '**${item.name}**', but role assignment failed.\n💰 **${item.pointCost}** points deducted\n💳 Remaining points: **${userDoc.points}**${text}`;
       }
+    } else {
+      // Whitelist Item response (Ticket-based)
+      const ticketText = ticketChannelLink 
+        ? `\n🎟️ **Ticket Channel:** ${ticketChannelLink}` 
+        : `\n⚠️ **Ticket creation failed. Please contact an admin to submit your proof.**${ticketCreationError ? `\n*Error: ${ticketCreationError}*` : ''}`;
+
+      receiptDescription = `Congratulations! You have successfully claimed a whitelist item from the server marketplace.\n\n🏷️ **Item Name:** **${item.name}**\n💰 **Cost:** \`${item.pointCost}\` points\n💳 **Remaining Points:** \`${userDoc.points}\` points${ticketText}`;
+      responseDescription = `✅ You have claimed '**${item.name}**'!\n💰 **${item.pointCost}** points deducted\n💳 Remaining points: **${userDoc.points}**\n${ticketText}`;
     }
 
     // Try to DM the user a beautiful purchase receipt
     try {
-      const ticketText = ticketChannelLink ? `\n🎟️ **Ticket Channel:** ${ticketChannelLink}` : '';
       const dmEmbed = new EmbedBuilder()
         .setColor(0x00FF00)
-        .setTitle("🎉 Whitelist Claimed Successfully!")
-        .setDescription(
-          `Congratulations! You have successfully claimed a whitelist item from the server marketplace.\n\n` +
-          `🏷️ **Item Name:** **${item.name}**\n` +
-          `💰 **Cost:** \`${item.pointCost}\` points\n` +
-          `💳 **Remaining Points:** \`${userDoc.points}\` points` +
-          `${roleStatusText}${ticketText}`
-        )
+        .setTitle(item.roleId ? "🎉 Role Claimed Successfully!" : "🎉 Whitelist Claimed Successfully!")
+        .setDescription(receiptDescription)
         .setTimestamp();
         
       await interaction.user.send({ embeds: [dmEmbed] });
     } catch (dmError) {
-      console.log(`Failed to DM user ${interaction.user.username} for whitelist purchase receipt.`);
+      console.log(`Failed to DM user ${interaction.user.username} for purchase receipt.`);
     }
 
     // Reply success to the claiming interaction
-    const ticketDesc = ticketChannelLink 
-      ? `\n🎟️ **A private support ticket channel ${ticketChannelLink} has been automatically created for you.**` 
-      : `\n⚠️ **Ticket creation failed. Please contact an admin to submit your proof.**${ticketCreationError ? `\n*Error: ${ticketCreationError}*` : ''}`;
-
     const successEmbed = new EmbedBuilder()
       .setColor(0x00FF00) // Success green
-      .setDescription(
-        `✅ You have claimed '**${item.name}**'!\n` +
-        `💰 **${item.pointCost}** points deducted\n` +
-        `💳 Remaining points: **${userDoc.points}**` +
-        `${roleStatusText}${ticketDesc}`
-      )
+      .setDescription(responseDescription)
       .setTimestamp();
 
     await sendReply(interaction, { embeds: [successEmbed], ephemeral: true });
