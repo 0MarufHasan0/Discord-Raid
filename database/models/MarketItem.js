@@ -37,6 +37,10 @@ const MarketItemSchema = new mongoose.Schema({
     type: Number,
     default: 30
   },
+  claimDurationMs: {
+    type: Number,
+    default: 30 * 24 * 60 * 60 * 1000
+  },
   createdAt: {
     type: Date,
     default: Date.now

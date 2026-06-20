@@ -112,7 +112,7 @@ async function handleClaimWhitelist(interaction, itemName) {
 
           // Save expiration to database
           const UserRoleExpiration = require('../database/models/UserRoleExpiration');
-          const expiresAt = new Date(Date.now() + (item.claimDurationDays || 30) * 24 * 60 * 60 * 1000);
+          const expiresAt = new Date(Date.now() + (item.claimDurationMs || (item.claimDurationDays || 30) * 24 * 60 * 60 * 1000));
           
           await UserRoleExpiration.findOneAndUpdate(
             { userId: interaction.user.id, guildId: guild.id, roleId: item.roleId },
@@ -228,7 +228,7 @@ async function handleClaimWhitelist(interaction, itemName) {
     if (item.roleId) {
       // Role Item response
       if (roleAdded) {
-        const expiresAt = new Date(Date.now() + (item.claimDurationDays || 30) * 24 * 60 * 60 * 1000);
+        const expiresAt = new Date(Date.now() + (item.claimDurationMs || (item.claimDurationDays || 30) * 24 * 60 * 60 * 1000));
         const unixTimestamp = Math.floor(expiresAt.getTime() / 1000);
         const text = `\n🎭 **Role Assigned:** <@&${item.roleId}>\n⏳ **Role Expiry:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)`;
         receiptDescription = `Congratulations! You have successfully claimed a role item from the server marketplace.\n\n🏷️ **Item Name:** **${item.name}**\n💰 **Cost:** \`${item.pointCost}\` points\n💳 **Remaining Points:** \`${userDoc.points}\` points${text}`;

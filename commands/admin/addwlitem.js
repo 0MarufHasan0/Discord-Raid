@@ -33,7 +33,15 @@ module.exports = {
         .setRequired(false))
     .addIntegerOption(option =>
       option.setName('claim_duration_days')
-        .setDescription('Number of days the role remains active for the member (default: 30)')
+        .setDescription('Number of days the role remains active for the member (optional)')
+        .setRequired(false))
+    .addIntegerOption(option =>
+      option.setName('claim_duration_hours')
+        .setDescription('Number of hours the role remains active for the member (optional)')
+        .setRequired(false))
+    .addIntegerOption(option =>
+      option.setName('claim_duration_minutes')
+        .setDescription('Number of minutes the role remains active for the member (optional)')
         .setRequired(false))
     .addIntegerOption(option =>
       option.setName('duration_days')
@@ -60,8 +68,21 @@ module.exports = {
 
       const role = interaction.options.getRole('role');
       const createRoleName = interaction.options.getString('create_role_name');
-      const claimDurationDaysOption = interaction.options.getInteger('claim_duration_days');
-      const claimDurationDays = claimDurationDaysOption !== null ? claimDurationDaysOption : 30;
+
+      const claimDurationDays = interaction.options.getInteger('claim_duration_days') || 0;
+      const claimDurationHours = interaction.options.getInteger('claim_duration_hours') || 0;
+      const claimDurationMinutes = interaction.options.getInteger('claim_duration_minutes') || 0;
+
+      let claimDurationMs = (claimDurationDays * 24 * 60 * 60 * 1000) +
+                            (claimDurationHours * 60 * 60 * 1000) +
+                            (claimDurationMinutes * 60 * 1000);
+
+      // Default to 30 days if no validity options are provided
+      if (interaction.options.getInteger('claim_duration_days') === null &&
+          interaction.options.getInteger('claim_duration_hours') === null &&
+          interaction.options.getInteger('claim_duration_minutes') === null) {
+        claimDurationMs = 30 * 24 * 60 * 60 * 1000;
+      }
 
       const durationDays = interaction.options.getInteger('duration_days') || 0;
       const durationHours = interaction.options.getInteger('duration_hours') || 0;
@@ -74,7 +95,7 @@ module.exports = {
         });
       }
 
-      if (claimDurationDays <= 0) {
+      if (claimDurationMs <= 0) {
         return interaction.reply({
           embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Claim Duration অবশ্যই ০-এর চেয়ে বেশি হতে হবে।")],
           ephemeral: true
@@ -126,7 +147,8 @@ module.exports = {
           existingItem.isActive = true;
           existingItem.expiresAt = expiresAt;
           existingItem.roleId = roleId;
-          existingItem.claimDurationDays = claimDurationDays;
+          existingItem.claimDurationDays = claimDurationDays || 30;
+          existingItem.claimDurationMs = claimDurationMs;
           await existingItem.save();
 
           // Update live marketplace channel
@@ -135,7 +157,12 @@ module.exports = {
           let successDesc = `✅ Inactive Marketplace item '${name}' পুনরায় active করা হয়েছে!\n💰 Cost: **${pointCost}** points\n🎟️ Slots: **${totalSlots}**`;
           if (roleId) {
             successDesc += `\n🎭 **Role:** <@&${roleId}>`;
-            successDesc += `\n⏳ **Duration:** **${claimDurationDays}** দিন`;
+            let durStr = '';
+            if (claimDurationDays > 0) durStr += `${claimDurationDays} দিন `;
+            if (claimDurationHours > 0) durStr += `${claimDurationHours} ঘণ্টা `;
+            if (claimDurationMinutes > 0) durStr += `${claimDurationMinutes} মিনিট `;
+            if (!durStr) durStr = '30 দিন';
+            successDesc += `\n⏳ **Duration:** **${durStr.trim()}**`;
           }
           if (expiresAt) {
             const unixTimestamp = Math.floor(expiresAt.getTime() / 1000);
@@ -164,7 +191,8 @@ module.exports = {
         isActive: true,
         expiresAt: expiresAt,
         roleId: roleId,
-        claimDurationDays: claimDurationDays
+        claimDurationDays: claimDurationDays || 30,
+        claimDurationMs: claimDurationMs
       });
       await newItem.save();
 
@@ -174,7 +202,12 @@ module.exports = {
       let replyDesc = `✅ Marketplace এ '**${name}**' add হয়েছে!\n💰 Cost: **${pointCost}** points\n🎟️ Slots: **${totalSlots}**`;
       if (roleId) {
         replyDesc += `\n🎭 **Role:** <@&${roleId}>`;
-        replyDesc += `\n⏳ **Duration:** **${claimDurationDays}** দিন`;
+        let durStr = '';
+        if (claimDurationDays > 0) durStr += `${claimDurationDays} দিন `;
+        if (claimDurationHours > 0) durStr += `${claimDurationHours} ঘণ্টা `;
+        if (claimDurationMinutes > 0) durStr += `${claimDurationMinutes} মিনিট `;
+        if (!durStr) durStr = '30 দিন';
+        replyDesc += `\n⏳ **Duration:** **${durStr.trim()}**`;
       }
       if (expiresAt) {
         const unixTimestamp = Math.floor(expiresAt.getTime() / 1000);
