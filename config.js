@@ -10,9 +10,9 @@ const config = {
   mongodbUrl: process.env.MONGODB_URL,
   adminRoleId: process.env.ADMIN_ROLE_ID,
   tweetChannelId: process.env.TWEET_CHANNEL_ID,
-  marketplaceChannelId: process.env.MARKETPLACE_CHANNEL_ID || '1517134759493374105',
-  leaderboardChannelId: process.env.LEADERBOARD_CHANNEL_ID || '1517134882738933943',
-  ticketCategoryId: process.env.TICKET_CATEGORY_ID || '1192961054196633610',
+  marketplaceChannelId: process.env.MARKETPLACE_CHANNEL_ID || '',
+  leaderboardChannelId: process.env.LEADERBOARD_CHANNEL_ID || '',
+  ticketCategoryId: process.env.TICKET_CATEGORY_ID || '',
 };
 
 // Check for missing configurations
