@@ -29,6 +29,14 @@ const MarketItemSchema = new mongoose.Schema({
   expiresAt: {
     type: Date
   },
+  roleId: {
+    type: String,
+    default: null
+  },
+  claimDurationDays: {
+    type: Number,
+    default: 30
+  },
   createdAt: {
     type: Date,
     default: Date.now

@@ -5,11 +5,13 @@ const config = require('./config');
 const connectDB = require('./database/db');
 const updateMarketplace = require('./utils/updateMarketplace');
 const updateLeaderboard = require('./utils/updateLeaderboard');
+const checkExpiredRoles = require('./utils/checkExpiredRoles');
 
 // Create a new client instance
 const client = new Client({
   intents: [
-    GatewayIntentBits.Guilds
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMembers
   ]
 });
 
@@ -433,6 +435,10 @@ client.once('ready', async () => {
   console.log("✅ Marketplace Boss Bot online!");
   await updateMarketplace(client);
   await updateLeaderboard(client);
+  
+  // Periodically check for expired whitelist roles (every 1 minute)
+  await checkExpiredRoles(client);
+  setInterval(() => checkExpiredRoles(client), 60 * 1000);
 });
 
 // Keep-alive HTTP Server for 24/7 Hosting (Render/Koyeb)

@@ -23,17 +23,25 @@ module.exports = {
       option.setName('total_slots')
         .setDescription('Total number of slots available')
         .setRequired(true))
+    .addRoleOption(option =>
+      option.setName('role')
+        .setDescription('Role to automatically give to members who buy this item (optional)')
+        .setRequired(false))
+    .addIntegerOption(option =>
+      option.setName('claim_duration_days')
+        .setDescription('Number of days the role remains active for the member (default: 30)')
+        .setRequired(false))
     .addIntegerOption(option =>
       option.setName('duration_days')
-        .setDescription('Number of days this item remains active (optional)')
+        .setDescription('Number of days this item remains active in market (optional)')
         .setRequired(false))
     .addIntegerOption(option =>
       option.setName('duration_hours')
-        .setDescription('Number of hours this item remains active (optional)')
+        .setDescription('Number of hours this item remains active in market (optional)')
         .setRequired(false))
     .addIntegerOption(option =>
       option.setName('duration_minutes')
-        .setDescription('Number of minutes this item remains active (optional)')
+        .setDescription('Number of minutes this item remains active in market (optional)')
         .setRequired(false)),
   async execute(interaction) {
     try {
@@ -46,6 +54,11 @@ module.exports = {
       const pointCost = interaction.options.getInteger('point_cost');
       const totalSlots = interaction.options.getInteger('total_slots');
 
+      const role = interaction.options.getRole('role');
+      const roleId = role ? role.id : null;
+      const claimDurationDaysOption = interaction.options.getInteger('claim_duration_days');
+      const claimDurationDays = claimDurationDaysOption !== null ? claimDurationDaysOption : 30;
+
       const durationDays = interaction.options.getInteger('duration_days') || 0;
       const durationHours = interaction.options.getInteger('duration_hours') || 0;
       const durationMinutes = interaction.options.getInteger('duration_minutes') || 0;
@@ -53,6 +66,13 @@ module.exports = {
       if (pointCost <= 0 || totalSlots <= 0) {
         return interaction.reply({
           embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Cost এবং Slots অবশ্যই ০-এর চেয়ে বেশি হতে হবে।")],
+          ephemeral: true
+        });
+      }
+
+      if (claimDurationDays <= 0) {
+        return interaction.reply({
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Claim Duration অবশ্যই ০-এর চেয়ে বেশি হতে হবে।")],
           ephemeral: true
         });
       }
@@ -75,18 +95,24 @@ module.exports = {
           existingItem.description = description;
           existingItem.pointCost = pointCost;
           existingItem.totalSlots = totalSlots;
-          existingItem.claimedSlots = 0; // reset claimed slots? Or keep them? Usually resetting is safer or keeping. Let's reset since it is re-added.
+          existingItem.claimedSlots = 0; 
           existingItem.isActive = true;
           existingItem.expiresAt = expiresAt;
+          existingItem.roleId = roleId;
+          existingItem.claimDurationDays = claimDurationDays;
           await existingItem.save();
 
           // Update live marketplace channel
           updateMarketplace(interaction.client);
 
           let successDesc = `✅ Inactive Marketplace item '${name}' পুনরায় active করা হয়েছে!\n💰 Cost: **${pointCost}** points\n🎟️ Slots: **${totalSlots}**`;
+          if (roleId) {
+            successDesc += `\n🎭 **Role:** <@&${roleId}>`;
+            successDesc += `\n⏳ **Duration:** **${claimDurationDays}** দিন`;
+          }
           if (expiresAt) {
             const unixTimestamp = Math.floor(expiresAt.getTime() / 1000);
-            successDesc += `\n⏰ **Expires:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)`;
+            successDesc += `\n⏰ **Market Expiry:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)`;
           }
 
           return interaction.reply({
@@ -109,7 +135,9 @@ module.exports = {
         totalSlots,
         claimedSlots: 0,
         isActive: true,
-        expiresAt: expiresAt
+        expiresAt: expiresAt,
+        roleId: roleId,
+        claimDurationDays: claimDurationDays
       });
       await newItem.save();
 
@@ -117,9 +145,13 @@ module.exports = {
       updateMarketplace(interaction.client);
 
       let replyDesc = `✅ Marketplace এ '**${name}**' add হয়েছে!\n💰 Cost: **${pointCost}** points\n🎟️ Slots: **${totalSlots}**`;
+      if (roleId) {
+        replyDesc += `\n🎭 **Role:** <@&${roleId}>`;
+        replyDesc += `\n⏳ **Duration:** **${claimDurationDays}** দিন`;
+      }
       if (expiresAt) {
         const unixTimestamp = Math.floor(expiresAt.getTime() / 1000);
-        replyDesc += `\n⏰ **Expires:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)`;
+        replyDesc += `\n⏰ **Market Expiry:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)`;
       }
 
       const replyEmbed = new EmbedBuilder()

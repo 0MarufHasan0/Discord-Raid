@@ -99,11 +99,37 @@ async function handleClaimWhitelist(interaction, itemName) {
     // Update live leaderboard channel
     updateLeaderboard(interaction.client);
 
+    // Auto-assign Discord role if configured
+    let roleAdded = false;
+    let roleAddError = '';
+    const guild = interaction.guild;
+    if (item.roleId && guild) {
+      try {
+        const member = await guild.members.fetch(interaction.user.id);
+        if (member) {
+          await member.roles.add(item.roleId, `Purchased whitelist item: ${item.name}`);
+          roleAdded = true;
+
+          // Save expiration to database
+          const UserRoleExpiration = require('../database/models/UserRoleExpiration');
+          const expiresAt = new Date(Date.now() + (item.claimDurationDays || 30) * 24 * 60 * 60 * 1000);
+          
+          await UserRoleExpiration.findOneAndUpdate(
+            { userId: interaction.user.id, guildId: guild.id, roleId: item.roleId },
+            { itemName: item.name, expiresAt: expiresAt, createdAt: new Date() },
+            { upsert: true, new: true }
+          );
+        }
+      } catch (roleErr) {
+        console.error(`❌ Failed to automatically add role ${item.roleId} to user ${interaction.user.id}:`, roleErr);
+        roleAddError = roleErr.message;
+      }
+    }
+
     // Create private ticket channel for the user
     let ticketCreated = false;
     let ticketChannelLink = '';
     let ticketCreationError = '';
-    const guild = interaction.guild;
     if (guild) {
       try {
         const cleanItemName = item.name.toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 15);
@@ -200,6 +226,18 @@ async function handleClaimWhitelist(interaction, itemName) {
       }
     }
 
+    // Role assignment details text
+    let roleStatusText = '';
+    if (item.roleId) {
+      if (roleAdded) {
+        const expiresAt = new Date(Date.now() + (item.claimDurationDays || 30) * 24 * 60 * 60 * 1000);
+        const unixTimestamp = Math.floor(expiresAt.getTime() / 1000);
+        roleStatusText = `\n🎭 **Role Assigned:** <@&${item.roleId}>\n⏳ **Role Expiry:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)`;
+      } else {
+        roleStatusText = `\n⚠️ **Role Assignment Failed:** ${roleAddError || "বটের হয়তো Role দেওয়ার পারমিশন নেই।"}`;
+      }
+    }
+
     // Try to DM the user a beautiful purchase receipt
     try {
       const ticketText = ticketChannelLink ? `\n🎟️ **Ticket Channel:** ${ticketChannelLink}` : '';
@@ -210,8 +248,8 @@ async function handleClaimWhitelist(interaction, itemName) {
           `Congratulations! You have successfully claimed a whitelist item from the server marketplace.\n\n` +
           `🏷️ **Item Name:** **${item.name}**\n` +
           `💰 **Cost:** \`${item.pointCost}\` points\n` +
-          `💳 **Remaining Points:** \`${userDoc.points}\` points\n` +
-          `${ticketText}`
+          `💳 **Remaining Points:** \`${userDoc.points}\` points` +
+          `${roleStatusText}${ticketText}`
         )
         .setTimestamp();
         
@@ -230,8 +268,8 @@ async function handleClaimWhitelist(interaction, itemName) {
       .setDescription(
         `✅ You have claimed '**${item.name}**'!\n` +
         `💰 **${item.pointCost}** points deducted\n` +
-        `💳 Remaining points: **${userDoc.points}**\n` +
-        `${ticketDesc}`
+        `💳 Remaining points: **${userDoc.points}**` +
+        `${roleStatusText}${ticketDesc}`
       )
       .setTimestamp();
 
