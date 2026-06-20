@@ -246,25 +246,33 @@ client.on('interactionCreate', async interaction => {
             SendMessages: false
           });
 
-          // DM the user to let them know it was closed and provide a redirect link
-          try {
-            const memberUser = await interaction.client.users.fetch(memberOverwrite.id);
-            if (memberUser) {
-              const generalChannel = interaction.guild.channels.cache.find(
-                c => (c.name.toLowerCase().includes('general') || c.name.toLowerCase().includes('chat')) && c.isTextBased()
-              );
-              const redirectText = generalChannel ? `\n🔗 **Go back to chat:** <#${generalChannel.id}>` : '';
-              const closeDmEmbed = new EmbedBuilder()
-                .setColor(0xFF0000)
-                .setTitle('🔒 Ticket Closed')
-                .setDescription(`Your ticket **${interaction.channel.name}** has been closed by <@${interaction.user.id}>.${redirectText}`)
-                .setTimestamp();
+          // DM the user to let them know it was closed and provide a redirect link (run in background to optimize response time)
+          (async () => {
+            try {
+              let memberUser = interaction.guild.members.cache.get(memberOverwrite.id)?.user 
+                || interaction.client.users.cache.get(memberOverwrite.id);
+              
+              if (!memberUser) {
+                memberUser = await interaction.client.users.fetch(memberOverwrite.id);
+              }
 
-              await memberUser.send({ embeds: [closeDmEmbed] });
+              if (memberUser) {
+                const generalChannel = interaction.guild.channels.cache.find(
+                  c => (c.name.toLowerCase().includes('general') || c.name.toLowerCase().includes('chat')) && c.isTextBased()
+                );
+                const redirectText = generalChannel ? `\n🔗 **Go back to chat:** <#${generalChannel.id}>` : '';
+                const closeDmEmbed = new EmbedBuilder()
+                  .setColor(0xFF0000)
+                  .setTitle('🔒 Ticket Closed')
+                  .setDescription(`Your ticket **${interaction.channel.name}** has been closed by <@${interaction.user.id}>.${redirectText}`)
+                  .setTimestamp();
+
+                await memberUser.send({ embeds: [closeDmEmbed] });
+              }
+            } catch (dmErr) {
+              console.log('Failed to DM user on ticket close:', dmErr.message);
             }
-          } catch (dmErr) {
-            console.log('Failed to DM user on ticket close:', dmErr.message);
-          }
+          })();
         }
 
         const closedEmbed = new EmbedBuilder()
@@ -285,9 +293,8 @@ client.on('interactionCreate', async interaction => {
               .setStyle(ButtonStyle.Danger)
           );
 
-        try {
-          await interaction.message.edit({ components: [] });
-        } catch (e) {}
+        // Edit original message to remove buttons in the background
+        interaction.message.edit({ components: [] }).catch(() => {});
 
         await interaction.editReply({ embeds: [closedEmbed], components: [controlRow] });
 
@@ -316,21 +323,29 @@ client.on('interactionCreate', async interaction => {
             SendMessages: true
           });
 
-          // DM the user to let them know it was reopened
-          try {
-            const memberUser = await interaction.client.users.fetch(memberOverwrite.id);
-            if (memberUser) {
-              const reopenDmEmbed = new EmbedBuilder()
-                .setColor(0x00FF00)
-                .setTitle('🔓 Ticket Reopened')
-                .setDescription(`Your ticket **${interaction.channel.name}** has been reopened. You can access it here: <#${interaction.channel.id}>`)
-                .setTimestamp();
+          // DM the user to let them know it was reopened (run in background to optimize response time)
+          (async () => {
+            try {
+              let memberUser = interaction.guild.members.cache.get(memberOverwrite.id)?.user 
+                || interaction.client.users.cache.get(memberOverwrite.id);
+              
+              if (!memberUser) {
+                memberUser = await interaction.client.users.fetch(memberOverwrite.id);
+              }
 
-              await memberUser.send({ embeds: [reopenDmEmbed] });
+              if (memberUser) {
+                const reopenDmEmbed = new EmbedBuilder()
+                  .setColor(0x00FF00)
+                  .setTitle('🔓 Ticket Reopened')
+                  .setDescription(`Your ticket **${interaction.channel.name}** has been reopened. You can access it here: <#${interaction.channel.id}>`)
+                  .setTimestamp();
+
+                await memberUser.send({ embeds: [reopenDmEmbed] });
+              }
+            } catch (dmErr) {
+              console.log('Failed to DM user on ticket reopen:', dmErr.message);
             }
-          } catch (dmErr) {
-            console.log('Failed to DM user on ticket reopen:', dmErr.message);
-          }
+          })();
         }
 
         const reopenedEmbed = new EmbedBuilder()
@@ -346,9 +361,8 @@ client.on('interactionCreate', async interaction => {
               .setStyle(ButtonStyle.Danger)
           );
 
-        try {
-          await interaction.message.edit({ components: [] });
-        } catch (e) {}
+        // Edit original message to remove buttons in the background
+        interaction.message.edit({ components: [] }).catch(() => {});
 
         await interaction.editReply({ embeds: [reopenedEmbed], components: [closeButtonRow] });
 
