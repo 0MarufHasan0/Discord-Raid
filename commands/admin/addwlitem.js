@@ -104,23 +104,48 @@ module.exports = {
 
       let roleId = role ? role.id : null;
 
+      if (roleId) {
+        // Check if this role is already linked to an active marketplace item
+        const duplicateRoleItem = await MarketItem.findOne({ roleId: roleId, isActive: true });
+        if (duplicateRoleItem) {
+          return interaction.reply({
+            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ <@&${roleId}> রোলটি ইতিমধ্যে '${duplicateRoleItem.name}' নামক একটি active আইটেমে ব্যবহৃত হচ্ছে।`)],
+            ephemeral: true
+          });
+        }
+      }
+
       // Auto-create role if name is specified and role isn't selected
       if (!roleId && createRoleName) {
         let existingRole = interaction.guild.roles.cache.find(r => r.name.toLowerCase() === createRoleName.trim().toLowerCase());
-        if (!existingRole) {
-          try {
-            existingRole = await interaction.guild.roles.create({
-              name: createRoleName.trim(),
-              reason: `Auto-created for marketplace item: ${name}`
-            });
-            console.log(`[Auto Role Create] Created role '${existingRole.name}' with ID ${existingRole.id}`);
-          } catch (createErr) {
-            console.error(`❌ Failed to create role '${createRoleName}':`, createErr);
-            return interaction.reply({
-              embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ '${createRoleName}' রোলটি তৈরি করতে ব্যর্থ হয়েছে। বটের Role Manage করার পারমিশন চেক করুন।`)],
-              ephemeral: true
-            });
-          }
+        if (existingRole) {
+          return interaction.reply({
+            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ '${createRoleName}' নামের একটি role ইতিমধ্যেই সার্ভারে বিদ্যমান রয়েছে। অনুগ্রহ করে অন্য কোনো নাম দিন অথবা সার্ভার থেকে আগের রোলটি ডিলিট করে চেষ্টা করুন।`)],
+            ephemeral: true
+          });
+        }
+
+        try {
+          existingRole = await interaction.guild.roles.create({
+            name: createRoleName.trim(),
+            reason: `Auto-created for marketplace item: ${name}`
+          });
+          console.log(`[Auto Role Create] Created role '${existingRole.name}' with ID ${existingRole.id}`);
+          
+          // Save to BotCreatedRole tracking collection
+          const BotCreatedRole = require('../../database/models/BotCreatedRole');
+          await BotCreatedRole.create({
+            roleId: existingRole.id,
+            roleName: existingRole.name,
+            itemName: name
+          }).catch(dbErr => console.error('Failed to log bot-created role to DB:', dbErr.message));
+          
+        } catch (createErr) {
+          console.error(`❌ Failed to create role '${createRoleName}':`, createErr);
+          return interaction.reply({
+            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ '${createRoleName}' রোলটি তৈরি করতে ব্যর্থ হয়েছে। বটের Role Manage করার পারমিশন চেক করুন।`)],
+            ephemeral: true
+          });
         }
         roleId = existingRole.id;
       }

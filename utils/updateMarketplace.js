@@ -67,17 +67,38 @@ async function updateMarketplace(client) {
         desc += `• **Cost:** \`${item.pointCost}\` points\n`;
         desc += `• **Slots:** ${item.claimedSlots}/${item.totalSlots} (${slotsText})\n`;
         
+        if (item.roleId) {
+          desc += `• **Role Reward:** <@&${item.roleId}>\n`;
+          let durationStr = '30 days';
+          if (item.claimDurationMs) {
+            const totalMinutes = Math.floor(item.claimDurationMs / (60 * 1000));
+            const d = Math.floor(totalMinutes / (24 * 60));
+            const h = Math.floor((totalMinutes % (24 * 60)) / 60);
+            const m = totalMinutes % 60;
+            let parts = [];
+            if (d > 0) parts.push(`${d} days`);
+            if (h > 0) parts.push(`${h} hours`);
+            if (m > 0) parts.push(`${m} minutes`);
+            if (parts.length > 0) durationStr = parts.join(' ');
+          } else if (item.claimDurationDays) {
+            durationStr = `${item.claimDurationDays} days`;
+          }
+          desc += `• **Role Duration:** \`${durationStr}\`\n`;
+        } else {
+          desc += `• **Type:** Whitelist Ticket (Opens private channel)\n`;
+        }
+        
         if (item.expiresAt) {
           const unixTimestamp = Math.floor(item.expiresAt.getTime() / 1000);
-          desc += `• **Expires:** <t:${unixTimestamp}:R>\n`;
+          desc += `• **Market Expiry:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)\n`;
         }
-        desc += `\n`;
+        desc += `───────────────────────────────\n\n`;
       });
       
       embed.setDescription(desc);
     }
 
-    embed.setFooter({ text: "🔴 Live updates enabled • Click 'Claim Whitelist' below to purchase" });
+    embed.setFooter({ text: "🔴 Live updates enabled • Click 'Claim Whitelist' or 'Claim Role' below to purchase" });
 
     // Build the components row
     const components = [];
@@ -85,10 +106,15 @@ async function updateMarketplace(client) {
       const row = new ActionRowBuilder()
         .addComponents(
           new ButtonBuilder()
-            .setCustomId('open_marketplace_claim_menu')
+            .setCustomId('open_marketplace_claim_menu_wl')
             .setLabel('Claim Whitelist')
             .setEmoji('🎟️')
-            .setStyle(ButtonStyle.Success)
+            .setStyle(ButtonStyle.Success),
+          new ButtonBuilder()
+            .setCustomId('open_marketplace_claim_menu_role')
+            .setLabel('Claim Role')
+            .setEmoji('🎭')
+            .setStyle(ButtonStyle.Primary)
         );
       components.push(row);
     }

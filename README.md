@@ -69,8 +69,10 @@ npm start
 
 ### Admin Commands (Requires Admin Role)
 * `/addtweet <content> [tweet_link] [duration_days] [duration_hours] [duration_minutes] [points]` - Post a premium Twitter announcement to all configured `TWEET_CHANNEL_ID`s with "Like", "Retweet" link buttons, "Copy Tweet ID" button, and "Submit Raid" (crossed swords emoji ⚔️) button. Supported durations specify how long the raid remains active, and points specifies the reward (default: 10).
-* `/addwlitem <name> <description> <point_cost> <total_slots> [role] [create_role_name] [claim_duration_days] [duration_days] [duration_hours] [duration_minutes]` - Add a new item/whitelist role to the marketplace. You can link an existing Discord role or specify `create_role_name` to automatically create a new role. `claim_duration_days` sets how long the role remains active for members (default: 30).
-* `/removewlitem [name]` - Deactivate a marketplace item.
+* `/addwlitem <name> <description> <point_cost> <total_slots> [role] [create_role_name] [claim_duration_days] [claim_duration_hours] [claim_duration_minutes] [duration_days] [duration_hours] [duration_minutes]` - Add a new item/whitelist role to the marketplace. You can link an existing Discord role or specify `create_role_name` to automatically create a new role. `claim_duration_days`/`hours`/`minutes` sets how long the role remains active for members (default: 30 days). `duration_days`/`hours`/`minutes` sets how long the item remains active in the market.
+* `/removewlitem <name> [delete_role]` - Deactivate a marketplace item. Setting `delete_role` to `True` will also delete the associated Discord role from the server.
+* `/botroles list` - List all existing Discord roles automatically created by the bot.
+* `/botroles delete <role>` - Delete a bot-created role from the server, clear its tracking, and deactivate any linked marketplace items.
 * `/approveraid [raid_id]` - Approve a pending raid and reward points.
 * `/rejectraid [raid_id] [reason]` - Reject a pending raid.
 * `/addpoints [user] [points]` - Manually reward points to a user.

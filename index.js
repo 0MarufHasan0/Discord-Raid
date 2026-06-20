@@ -173,35 +173,53 @@ client.on('interactionCreate', async interaction => {
       } catch (error) {
         console.error('Error opening submit raid modal:', error);
       }
-    } else if (interaction.customId === 'open_marketplace_claim_menu') {
+    } else if (interaction.customId === 'open_marketplace_claim_menu_wl' || interaction.customId === 'open_marketplace_claim_menu_role') {
       try {
         const MarketItem = require('./database/models/MarketItem');
         const { ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, EmbedBuilder } = require('discord.js');
 
+        const isWlOnly = interaction.customId === 'open_marketplace_claim_menu_wl';
         const now = new Date();
-        const items = await MarketItem.find({
+
+        const query = {
           isActive: true,
           $or: [
             { expiresAt: { $exists: false } },
             { expiresAt: null },
             { expiresAt: { $gt: now } }
           ]
-        }).sort({ name: 1 });
+        };
+
+        if (isWlOnly) {
+          query.$and = [
+            { $or: [
+              { roleId: null },
+              { roleId: { $exists: false } },
+              { roleId: "" }
+            ] }
+          ];
+        } else {
+          query.roleId = { $ne: null, $exists: true, $ne: "" };
+        }
+
+        const items = await MarketItem.find(query).sort({ name: 1 });
 
         if (items.length === 0) {
+          const typeStr = isWlOnly ? "whitelist ticket" : "role reward";
           return await interaction.reply({
             embeds: [
               new EmbedBuilder()
                 .setColor(0xFF0000)
-                .setDescription("❌ There are currently no active items available for claiming.")
+                .setDescription(`❌ There are currently no active ${typeStr} items available for claiming.`)
             ],
             ephemeral: true
           });
         }
 
+        const placeholderText = isWlOnly ? 'Select a Whitelist Ticket to claim...' : 'Select a Role Item to claim...';
         const selectMenu = new StringSelectMenuBuilder()
           .setCustomId('marketplace_claim_select')
-          .setPlaceholder('Select a Whitelist to claim...');
+          .setPlaceholder(placeholderText);
 
         items.slice(0, 25).forEach(item => {
           const availableSlots = Math.max(0, item.totalSlots - item.claimedSlots);
@@ -218,14 +236,18 @@ client.on('interactionCreate', async interaction => {
 
         const row = new ActionRowBuilder().addComponents(selectMenu);
 
+        const promptContent = isWlOnly 
+          ? 'Please choose a Whitelist Ticket to claim from the dropdown below:' 
+          : 'Please choose a Role Item to claim from the dropdown below:';
+
         await interaction.reply({
-          content: 'Please choose a Whitelist to claim from the dropdown below:',
+          content: promptContent,
           components: [row],
           ephemeral: true
         });
 
       } catch (error) {
-        console.error('Error opening claim whitelist menu:', error);
+        console.error('Error opening claim menu:', error);
         try {
           await interaction.reply({
             content: '❌ An error occurred while opening the claim menu.',

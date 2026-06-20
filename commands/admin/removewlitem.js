@@ -10,7 +10,11 @@ module.exports = {
     .addStringOption(option =>
       option.setName('name')
         .setDescription('Name of the item to remove')
-        .setRequired(true)),
+        .setRequired(true))
+    .addBooleanOption(option =>
+      option.setName('delete_role')
+        .setDescription('Also delete the associated Discord role from the server? (optional)')
+        .setRequired(false)),
   async execute(interaction) {
     try {
       // Check admin permissions
@@ -18,6 +22,7 @@ module.exports = {
       if (!isAdmin) return;
 
       const name = interaction.options.getString('name').trim();
+      const deleteRoleOpt = interaction.options.getBoolean('delete_role') || false;
       const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
       // Find the item (case-insensitive)
@@ -36,6 +41,24 @@ module.exports = {
         });
       }
 
+      let roleDeleteInfo = '';
+      if (deleteRoleOpt && item.roleId) {
+        try {
+          const role = interaction.guild.roles.cache.get(item.roleId) || await interaction.guild.roles.fetch(item.roleId).catch(() => null);
+          if (role) {
+            await role.delete(`Marketplace item '${item.name}' removed by ${interaction.user.tag}`);
+            roleDeleteInfo = `\n🎭 **Associated Discord role ('${role.name}') server থেকে delete করা হয়েছে।**`;
+          } else {
+            roleDeleteInfo = `\n⚠️ **Associated Discord role (ID: ${item.roleId}) server-এ খুঁজে পাওয়া যায়নি।**`;
+          }
+        } catch (roleErr) {
+          console.error(`❌ Failed to delete role ${item.roleId}:`, roleErr);
+          roleDeleteInfo = `\n⚠️ **Associated Discord role delete করতে ব্যর্থ হয়েছে।** (বটের পারমিশন অথবা রোল পজিশন চেক করুন)`;
+        }
+      } else if (deleteRoleOpt && !item.roleId) {
+        roleDeleteInfo = `\nℹ️ **এই item-টির সাথে কোনো Discord role যুক্ত ছিল না (এটি একটি Whitelist ticket item)।**`;
+      }
+
       // Deactivate item
       item.isActive = false;
       await item.save();
@@ -45,7 +68,7 @@ module.exports = {
 
       const replyEmbed = new EmbedBuilder()
         .setColor(0x00FF00) // Success green
-        .setDescription(`✅ '${item.name}' marketplace থেকে remove করা হয়েছে`);
+        .setDescription(`✅ '${item.name}' marketplace থেকে remove করা হয়েছে।${roleDeleteInfo}`);
 
       await interaction.reply({ embeds: [replyEmbed], ephemeral: true });
 
