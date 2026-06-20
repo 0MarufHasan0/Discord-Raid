@@ -27,11 +27,11 @@ module.exports = {
 
       const targetUser = interaction.options.getUser('user');
       const amount = interaction.options.getInteger('amount');
-      const reason = interaction.options.getString('reason') || 'Admin কর্তৃক প্রদত্ত';
+      const reason = interaction.options.getString('reason') || 'Admin Awarded';
 
       if (amount <= 0) {
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Points-এর পরিমাণ অবশ্যই ০-এর চেয়ে বেশি হতে হবে।")],
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Point amount must be greater than 0.")],
           ephemeral: true
         });
       }
@@ -53,7 +53,7 @@ module.exports = {
       // Attempt to DM the user
       const dmEmbed = new EmbedBuilder()
         .setColor(0x00FF00) // Success green
-        .setDescription(`🎉 তুমি **${amount}** points পেয়েছো!\n**কারণ:** ${reason}\n**তোমার মোট points:** ${userDoc.points}`)
+        .setDescription(`🎉 You have received **${amount}** points!\n**Reason:** ${reason}\n**Your total points:** ${userDoc.points}`)
         .setTimestamp();
 
       try {
@@ -66,7 +66,7 @@ module.exports = {
       // Reply to admin
       const replyEmbed = new EmbedBuilder()
         .setColor(0x00FF00) // Success green
-        .setDescription(`✅ **${targetUser.username}** কে **${amount}** points দেওয়া হয়েছে। মোট: **${userDoc.points}**`);
+        .setDescription(`✅ **${targetUser.username}** has been given **${amount}** points. Total: **${userDoc.points}**`);
 
       await interaction.reply({ embeds: [replyEmbed], ephemeral: true });
 
@@ -74,9 +74,9 @@ module.exports = {
       console.error('Error in /addpoints command:', error);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.followUp({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         } else {
-          await interaction.reply({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.reply({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         }
       } catch (err) {
         // Silently catch errors if interaction already finished/closed

@@ -234,7 +234,7 @@ async function handleClaimWhitelist(interaction, itemName) {
         receiptDescription = `Congratulations! You have successfully claimed a role item from the server marketplace.\n\n🏷️ **Item Name:** **${item.name}**\n💰 **Cost:** \`${item.pointCost}\` points\n💳 **Remaining Points:** \`${userDoc.points}\` points${text}`;
         responseDescription = `✅ You have claimed '**${item.name}**'!\n💰 **${item.pointCost}** points deducted\n💳 Remaining points: **${userDoc.points}**${text}`;
       } else {
-        const text = `\n⚠️ **Role Assignment Failed:** ${roleAddError || "বটের হয়তো Role দেওয়ার পারমিশন নেই।"}`;
+        const text = `\n⚠️ **Role Assignment Failed:** ${roleAddError || "The bot might not have permissions to assign this role. Please verify bot role positions and permissions."}`;
         receiptDescription = `You claimed a role item from the server marketplace, but the role assignment failed.\n\n🏷️ **Item Name:** **${item.name}**\n💰 **Cost:** \`${item.pointCost}\` points\n💳 **Remaining Points:** \`${userDoc.points}\` points${text}`;
         responseDescription = `⚠️ You claimed '**${item.name}**', but role assignment failed.\n💰 **${item.pointCost}** points deducted\n💳 Remaining points: **${userDoc.points}**${text}`;
       }

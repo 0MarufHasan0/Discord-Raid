@@ -29,14 +29,14 @@ module.exports = {
       const item = await MarketItem.findOne({ name: { $regex: new RegExp(`^${escapedName}$`, 'i') } });
       if (!item) {
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ '${name}' নামে কোনো item নেই`)],
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ No item found with the name '${name}'.`)],
           ephemeral: true
         });
       }
 
       if (!item.isActive) {
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0xFFA500).setDescription(`⚠️ '${item.name}' item-টি ইতিমধ্যেই marketplace থেকে removed/inactive অবস্থায় আছে`)],
+          embeds: [new EmbedBuilder().setColor(0xFFA500).setDescription(`⚠️ The item '${item.name}' is already inactive or removed from the marketplace.`)],
           ephemeral: true
         });
       }
@@ -47,16 +47,16 @@ module.exports = {
           const role = interaction.guild.roles.cache.get(item.roleId) || await interaction.guild.roles.fetch(item.roleId).catch(() => null);
           if (role) {
             await role.delete(`Marketplace item '${item.name}' removed by ${interaction.user.tag}`);
-            roleDeleteInfo = `\n🎭 **Associated Discord role ('${role.name}') server থেকে delete করা হয়েছে।**`;
+            roleDeleteInfo = `\n🎭 **Associated Discord role ('${role.name}') has been deleted from the server.**`;
           } else {
-            roleDeleteInfo = `\n⚠️ **Associated Discord role (ID: ${item.roleId}) server-এ খুঁজে পাওয়া যায়নি।**`;
+            roleDeleteInfo = `\n⚠️ **Associated Discord role (ID: ${item.roleId}) was not found on the server.**`;
           }
         } catch (roleErr) {
           console.error(`❌ Failed to delete role ${item.roleId}:`, roleErr);
-          roleDeleteInfo = `\n⚠️ **Associated Discord role delete করতে ব্যর্থ হয়েছে।** (বটের পারমিশন অথবা রোল পজিশন চেক করুন)`;
+          roleDeleteInfo = `\n⚠️ **Failed to delete associated Discord role.** (Please check bot permissions and role hierarchy)`;
         }
       } else if (deleteRoleOpt && !item.roleId) {
-        roleDeleteInfo = `\nℹ️ **এই item-টির সাথে কোনো Discord role যুক্ত ছিল না (এটি একটি Whitelist ticket item)।**`;
+        roleDeleteInfo = `\nℹ️ **No Discord role was associated with this item (this is a Whitelist Ticket item).**`;
       }
 
       // Deactivate item
@@ -68,7 +68,7 @@ module.exports = {
 
       const replyEmbed = new EmbedBuilder()
         .setColor(0x00FF00) // Success green
-        .setDescription(`✅ '${item.name}' marketplace থেকে remove করা হয়েছে।${roleDeleteInfo}`);
+        .setDescription(`✅ '${item.name}' has been removed from the marketplace.${roleDeleteInfo}`);
 
       await interaction.reply({ embeds: [replyEmbed], ephemeral: true });
 
@@ -76,9 +76,9 @@ module.exports = {
       console.error('Error in /removewlitem command:', error);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.followUp({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         } else {
-          await interaction.reply({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.reply({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         }
       } catch (err) {
         // Silently catch errors if interaction already finished/closed

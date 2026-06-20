@@ -43,7 +43,7 @@ module.exports = {
 
       if (action !== 'remove' && (days === null || days <= 0)) {
         return interaction.editReply({
-          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Validity পরিবর্তন করতে অবশ্যই `days` অপশনে ১ বা তার বেশি দিন প্রদান করতে হবে।")]
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ To change validity, you must specify 1 or more days.")]
         });
       }
 
@@ -62,7 +62,7 @@ module.exports = {
 
       if (activeRecords.length === 0) {
         return interaction.editReply({
-          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ প্রদত্ত রোলের জন্য কোনো সক্রিয় whitelist পাওয়া যায়নি ${targetUser ? `ইউজার <@${targetUser.id}> এর জন্য` : 'সার্ভারে'}`)]
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ No active whitelist found for this role${targetUser ? ` for user <@${targetUser.id}>` : ' in this server'}.`)]
         });
       }
 
@@ -110,14 +110,14 @@ module.exports = {
 
       let responseText = '';
       if (action === 'remove') {
-        responseText = `✅ সফলভাবে **${successCount}** জন ইউজারের থেকে <@&${role.id}> রোলটি সরানো হয়েছে এবং ডাটাবেজ থেকে মুছে দেওয়া হয়েছে।`;
+        responseText = `✅ Successfully removed role <@&${role.id}> from **${successCount}** user(s) and cleared database tracking.`;
       } else {
-        const actionWord = action === 'add_days' ? 'বৃদ্ধি' : action === 'reduce_days' ? 'হ্রাস' : 'সেট';
-        responseText = `✅ সফলভাবে **${successCount}** জন ইউজারের <@&${role.id}> রোলটির মেয়াদ **${days}** দিন ${actionWord} করা হয়েছে।`;
+        const actionWord = action === 'add_days' ? 'extended' : action === 'reduce_days' ? 'reduced' : 'set';
+        responseText = `✅ Successfully ${actionWord} the validity of role <@&${role.id}> by **${days}** days for **${successCount}** user(s).`;
       }
 
       if (failCount > 0) {
-        responseText += `\n⚠️ **${failCount}** জন ইউজারের মেয়াদ আপডেট করতে সমস্যা হয়েছে (বটের রোল পারমিশন চেক করুন)।`;
+        responseText += `\n⚠️ Failed to update validity for **${failCount}** user(s) (please check bot role permissions).`;
       }
 
       return interaction.editReply({
@@ -127,7 +127,7 @@ module.exports = {
     } catch (error) {
       console.error('Error in /edituserwl command:', error);
       try {
-        await interaction.editReply({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।" });
+        await interaction.editReply({ content: "❌ An error occurred. Please try again." });
       } catch (err) {}
     }
   }

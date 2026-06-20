@@ -29,7 +29,7 @@ module.exports = {
       const raid = await Raid.findOne({ raidId: raidId });
       if (!raid) {
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ Raid ID পাওয়া যায়নি: ${raidId}`)],
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ Raid ID not found: ${raidId}`)],
           ephemeral: true
         });
       }
@@ -37,7 +37,7 @@ module.exports = {
       // Check if already rejected
       if (raid.status === 'rejected') {
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0xFFA500).setDescription(`⚠️ এই raid already rejected`)],
+          embeds: [new EmbedBuilder().setColor(0xFFA500).setDescription(`⚠️ This raid has already been rejected.`)],
           ephemeral: true
         });
       }
@@ -70,9 +70,9 @@ module.exports = {
       // Try to DM the raider
       const raiderUser = await interaction.client.users.fetch(raid.userId).catch(() => null);
       if (raiderUser) {
-        let dmDescription = `❌ তোমার raid reject হয়েছে\n**কারণ:** ${reason}\n**Raid ID:** ${raidId}`;
+        let dmDescription = `❌ Your raid has been rejected.\n**Reason:** ${reason}\n**Raid ID:** ${raidId}`;
         if (pointsDeducted) {
-          dmDescription += `\n⚠️ **পয়েন্ট কর্তন:** -${deductPoints} (বর্তমান পয়েন্ট: ${newTotalPoints})`;
+          dmDescription += `\n⚠️ **Point Deduction:** -${deductPoints} points (Current Points: ${newTotalPoints})`;
         }
         const dmEmbed = new EmbedBuilder()
           .setColor(0xFF0000) // Error red
@@ -87,9 +87,9 @@ module.exports = {
       }
 
       // Reply to admin
-      let replyDescription = `✅ Raid **${raidId}** reject করা হয়েছে।`;
+      let replyDescription = `✅ Raid **${raidId}** has been rejected.`;
       if (pointsDeducted) {
-        replyDescription += ` **${raid.username}** এর একাউন্ট থেকে ${deductPoints} points কেটে নেওয়া হয়েছে (বর্তমানয় পয়েন্ট: **${newTotalPoints}**)।`;
+        replyDescription += ` **${raid.username}** had **${deductPoints}** points deducted from their account (Current Points: **${newTotalPoints}**).`;
       }
       const replyEmbed = new EmbedBuilder()
         .setColor(0x00FF00) // Success green
@@ -101,9 +101,9 @@ module.exports = {
       console.error('Error in /rejectraid command:', error);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.followUp({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         } else {
-          await interaction.reply({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.reply({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         }
       } catch (err) {
         // Silently catch errors if interaction already finished/closed

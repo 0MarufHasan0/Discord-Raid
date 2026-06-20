@@ -24,7 +24,7 @@ module.exports = {
       const raid = await Raid.findOne({ raidId: raidId });
       if (!raid) {
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ Raid ID পাওয়া যায়নি: ${raidId}`)],
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ Raid ID not found: ${raidId}`)],
           ephemeral: true
         });
       }
@@ -32,7 +32,7 @@ module.exports = {
       // Check if already approved
       if (raid.status === 'approved') {
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0xFFA500).setDescription(`⚠️ এই raid already approved`)],
+          embeds: [new EmbedBuilder().setColor(0xFFA500).setDescription(`⚠️ This raid has already been approved.`)],
           ephemeral: true
         });
       }
@@ -64,7 +64,7 @@ module.exports = {
       if (raiderUser) {
         const dmEmbed = new EmbedBuilder()
           .setColor(0x00FF00) // Success green
-          .setDescription(`✅ তোমার raid approve হয়েছে!\n🎉 তুমি **${rewardPoints}** points পেয়েছো\n**Raid ID:** ${raidId}\n**মোট points:** ${userDoc.points}`)
+          .setDescription(`✅ Your raid has been approved!\n🎉 You received **${rewardPoints}** points.\n**Raid ID:** ${raidId}\n**Total points:** ${userDoc.points}`)
           .setTimestamp();
 
         try {
@@ -77,7 +77,7 @@ module.exports = {
       // Reply to admin
       const replyEmbed = new EmbedBuilder()
         .setColor(0x00FF00) // Success green
-        .setDescription(`✅ Raid **${raidId}** approved! **${raid.username}** কে **${rewardPoints}** points দেওয়া হয়েছে`);
+        .setDescription(`✅ Raid **${raidId}** approved! **${raid.username}** has been rewarded with **${rewardPoints}** points.`);
 
       await interaction.reply({ embeds: [replyEmbed], ephemeral: true });
 
@@ -85,9 +85,9 @@ module.exports = {
       console.error('Error in /approveraid command:', error);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.followUp({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         } else {
-          await interaction.reply({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.reply({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         }
       } catch (err) {
         // Silently catch errors if interaction already finished/closed

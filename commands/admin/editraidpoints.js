@@ -112,7 +112,7 @@ module.exports = {
     } catch (error) {
       console.error('Error in /editraidpoints command:', error);
       try {
-        await interaction.editReply({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।" });
+        await interaction.editReply({ content: "❌ An error occurred. Please try again." });
       } catch (err) {
         // Silently catch errors if interaction already finished/closed
       }

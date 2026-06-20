@@ -27,11 +27,11 @@ module.exports = {
 
       const targetUser = interaction.options.getUser('user');
       const amount = interaction.options.getInteger('amount');
-      const reason = interaction.options.getString('reason') || 'Admin কর্তৃক কর্তন';
+      const reason = interaction.options.getString('reason') || 'Deducted by Admin';
 
       if (amount <= 0) {
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ points-এর পরিমাণ অবশ্যই ০-এর চেয়ে বেশি হতে হবে।")],
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Point amount must be greater than 0.")],
           ephemeral: true
         });
       }
@@ -62,7 +62,7 @@ module.exports = {
       // Attempt to DM the user
       const dmEmbed = new EmbedBuilder()
         .setColor(0xFFA500) // Warning Orange
-        .setDescription(`⚠️ তোমার **${amount}** points কাটা হয়েছে\n**কারণ:** ${reason}\n**বাকি points:** ${newTotal}`)
+        .setDescription(`⚠️ **${amount}** points have been deducted from your account.\n**Reason:** ${reason}\n**Remaining Points:** ${newTotal}`)
         .setTimestamp();
 
       try {
@@ -74,7 +74,7 @@ module.exports = {
       // Reply to admin
       const replyEmbed = new EmbedBuilder()
         .setColor(0x00FF00) // Success green
-        .setDescription(`✅ **${targetUser.username}** এর **${amount}** points কাটা হয়েছে। বাকি points: **${newTotal}**`);
+        .setDescription(`✅ Deducted **${amount}** points from **${targetUser.username}**'s account. Remaining Points: **${newTotal}**`);
 
       await interaction.reply({ embeds: [replyEmbed], ephemeral: true });
 
@@ -82,9 +82,9 @@ module.exports = {
       console.error('Error in /removepoints command:', error);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.followUp({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         } else {
-          await interaction.reply({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.reply({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         }
       } catch (err) {
         // Silently catch errors if interaction already finished/closed

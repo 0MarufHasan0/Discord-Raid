@@ -37,7 +37,7 @@ module.exports = {
 
         if (dbRoles.length === 0) {
           return interaction.editReply({
-            embeds: [new EmbedBuilder().setColor(0xFFA500).setDescription("ℹ️ বটের তৈরি করা কোনো রোলের রেকর্ড ডাটাবেজে নেই।")]
+            embeds: [new EmbedBuilder().setColor(0xFFA500).setDescription("ℹ️ No bot-created roles were found in the database.")]
           });
         }
 
@@ -46,7 +46,7 @@ module.exports = {
           .setColor(0x5865F2)
           .setTimestamp();
 
-        let desc = "বটের দ্বারা তৈরি হওয়া রোলগুলোর তালিকা নিচে দেওয়া হলো:\n\n";
+        let desc = "Below is the list of roles automatically created by the bot:\n\n";
         let count = 0;
 
         for (const dbRole of dbRoles) {
@@ -69,7 +69,7 @@ module.exports = {
         }
 
         if (count === 0) {
-          embed.setDescription("ℹ️ বটের তৈরি করা কোনো রোল বর্তমানে সার্ভারে বিদ্যমান নেই।");
+          embed.setDescription("ℹ️ No bot-created roles currently exist in the server.");
         } else {
           embed.setDescription(desc);
         }
@@ -84,7 +84,7 @@ module.exports = {
         const dbRole = await BotCreatedRole.findOne({ roleId: role.id });
         if (!dbRole) {
           return interaction.reply({
-            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ এই রোলটি বটের তৈরি করা রোলের লিস্টে নেই! আপনি শুধুমাত্র বটের তৈরি করা রোলগুলোই এই কমান্ডের মাধ্যমে ডিলিট করতে পারবেন।")],
+            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ This role is not in the bot-created roles tracking list! You can only delete bot-created roles with this command.")],
             ephemeral: true
           });
         }
@@ -97,7 +97,7 @@ module.exports = {
         } catch (discordErr) {
           console.error(`❌ Failed to delete role ${role.id} from guild:`, discordErr);
           return interaction.editReply({
-            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ '${role.name}' রোলটি সার্ভার থেকে ডিলিট করতে ব্যর্থ হয়েছে। বটের Role Manage করার পারমিশন চেক করুন।`)]
+            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ Failed to delete role '${role.name}' from the server. Please verify bot 'Manage Roles' permissions and role position/hierarchy.`)]
           });
         }
 
@@ -115,8 +115,8 @@ module.exports = {
           updateMarketplace(interaction.client);
         }
 
-        const successDesc = `✅ '**${dbRole.roleName}**' রোলটি সার্ভার থেকে চিরতরে ডিলিট করা হয়েছে এবং ট্র্যাকিং মুছে দেওয়া হয়েছে।` +
-          (affectedItems.modifiedCount > 0 ? `\n⚠️ এই রোলের সাথে সম্পর্কিত **${affectedItems.modifiedCount}টি** অ্যাক্টিভ মার্কেটপ্লেস আইটেমকে নিষ্ক্রিয় (Inactive) করা হয়েছে।` : '');
+        const successDesc = `✅ Role '**${dbRole.roleName}**' has been permanently deleted from the server and database tracking has been removed.` +
+          (affectedItems.modifiedCount > 0 ? `\n⚠️ **${affectedItems.modifiedCount}** active marketplace item(s) associated with this role have been set to inactive.` : '');
 
         return interaction.editReply({
           embeds: [new EmbedBuilder().setColor(0x00FF00).setDescription(successDesc)]
@@ -127,9 +127,9 @@ module.exports = {
       console.error('Error in /botroles command:', error);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.followUp({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         } else {
-          await interaction.reply({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.reply({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         }
       } catch (err) {}
     }

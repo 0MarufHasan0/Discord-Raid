@@ -17,7 +17,7 @@ module.exports = {
 
       const embed = new EmbedBuilder()
         .setColor(0x00FF00)
-        .setDescription('✅ Live Leaderboard সফলভাবে আপডেট করা হয়েছে!');
+        .setDescription('✅ Live Leaderboard successfully updated!');
 
       await interaction.editReply({ embeds: [embed] });
 
@@ -25,9 +25,9 @@ module.exports = {
       console.error('Error in /updateleaderboard command:', error);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: '❌ একটা error হয়েছে। আবার চেষ্টা করো।', ephemeral: true });
+          await interaction.followUp({ content: '❌ An error occurred. Please try again.', ephemeral: true });
         } else {
-          await interaction.reply({ content: '❌ একটা error হয়েছে। আবার চেষ্টা করো।', ephemeral: true });
+          await interaction.reply({ content: '❌ An error occurred. Please try again.', ephemeral: true });
         }
       } catch (err) {
         // Silently catch

@@ -64,7 +64,7 @@ module.exports = {
 
       if (!item) {
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ '${name}' নামে কোনো active marketplace item পাওয়া যায়নি।`)],
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ No active marketplace item found with the name '${name}'.`)],
           ephemeral: true
         });
       }
@@ -79,7 +79,7 @@ module.exports = {
         });
         if (duplicate && duplicate.isActive) {
           return interaction.reply({
-            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ '${newName}' নামে ইতিমধ্যেই আরেকটি active item রয়েছে।`)],
+            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ An active item named '${newName}' already exists.`)],
             ephemeral: true
           });
         }
@@ -93,7 +93,7 @@ module.exports = {
       if (pointCost !== null && pointCost !== undefined) {
         if (pointCost <= 0) {
           return interaction.reply({
-            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Point cost অবশ্যই ০-এর চেয়ে বেশি হতে হবে।")],
+            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Point cost must be greater than 0.")],
             ephemeral: true
           });
         }
@@ -103,13 +103,13 @@ module.exports = {
       if (totalSlots !== null && totalSlots !== undefined) {
         if (totalSlots <= 0) {
           return interaction.reply({
-            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Slots অবশ্যই ০-এর চেয়ে বেশি হতে হবে।")],
+            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Slots must be greater than 0.")],
             ephemeral: true
           });
         }
         if (totalSlots < item.claimedSlots) {
           return interaction.reply({
-            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ Total slots ইতিমধ্যে ক্লেইম হওয়া slots (${item.claimedSlots}) এর চেয়ে কম হতে পারে না।`)],
+            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ Total slots cannot be less than the already claimed slots (${item.claimedSlots}).`)],
             ephemeral: true
           });
         }
@@ -138,7 +138,7 @@ module.exports = {
       updateMarketplace(interaction.client);
 
       // Reply
-      let successMsg = `✅ Marketplace item '**${name}**' সফলভাবে আপডেট করা হয়েছে!\n`;
+      let successMsg = `✅ Marketplace item '**${name}**' has been successfully updated!\n`;
       successMsg += `🏷️ **Name:** ${item.name}\n`;
       successMsg += `📝 **Description:** ${item.description}\n`;
       successMsg += `💰 **Cost:** **${item.pointCost}** points\n`;
@@ -161,9 +161,9 @@ module.exports = {
       console.error('Error in /editwlitem command:', error);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.followUp({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         } else {
-          await interaction.reply({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.reply({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         }
       } catch (err) {
         // Silently catch errors

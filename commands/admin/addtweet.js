@@ -128,7 +128,7 @@ module.exports = {
 
       if (tweetChannelIds.length === 0) {
         return interaction.editReply({
-          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ TWEET_CHANNEL_ID config-এ সেট করা নেই।")]
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ TWEET_CHANNEL_ID is not configured in settings.")]
         });
       }
 
@@ -159,7 +159,7 @@ module.exports = {
 
       if (guildTweetChannelIds.length === 0) {
         return interaction.editReply({
-          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ এই সার্ভারের জন্য কোনো Tweet Channel কনফিগার করা নেই।")]
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ No Tweet Channels are configured for this server.")]
         });
       }
 
@@ -213,18 +213,18 @@ module.exports = {
           } catch (fetchError) {
             console.error(`❌ Error fetching channel ${channelId}:`, fetchError);
             if (fetchError.code === 50001 || fetchError.message.includes('Missing Access')) {
-              fetchErrorMsg = "বটের এই চ্যানেলটি দেখার পারমিশন নেই (Missing Access)।";
+              fetchErrorMsg = "The bot does not have permission to view this channel (Missing Access).";
             } else if (fetchError.code === 10003 || fetchError.message.includes('Unknown Channel')) {
-              fetchErrorMsg = "চ্যানেল আইডিটি সঠিক নয় বা চ্যানেলটি সার্ভারে খুঁজে পাওয়া যায়নি (Unknown Channel)।";
+              fetchErrorMsg = "The channel ID is invalid or the channel was not found in the server (Unknown Channel).";
             } else {
-              fetchErrorMsg = `টুইট চ্যানেল লোড করতে সমস্যা হয়েছে। বিবরণ: ${fetchError.message}`;
+              fetchErrorMsg = `Failed to load tweet channel. Details: ${fetchError.message}`;
             }
             channel = null;
           }
         }
 
         if (!channel) {
-          results.push({ channelId, success: false, reason: fetchErrorMsg || "Tweet channel-টি খুঁজে পাওয়া যায়নি!" });
+          results.push({ channelId, success: false, reason: fetchErrorMsg || "Tweet channel was not found!" });
           continue;
         }
 
@@ -359,9 +359,9 @@ module.exports = {
         } catch (sendError) {
           console.error(`❌ Error sending message to channel ${channelId}:`, sendError);
           if (sendError.code === 50013 || sendError.message.includes('Missing Permissions')) {
-            errorReason = "বটের এই চ্যানেলে মেসেজ পাঠানোর পারমিশন নেই (Missing Permissions)।";
+            errorReason = "The bot does not have permission to send messages in this channel (Missing Permissions).";
           } else {
-            errorReason = `মেসেজ পাঠাতে সমস্যা হয়েছে। বিবরণ: ${sendError.message}`;
+            errorReason = `Failed to send message. Details: ${sendError.message}`;
           }
         }
 
@@ -382,10 +382,10 @@ module.exports = {
             results.push({ channelId, success: true, channelName: channel.name });
           } catch (dbError) {
             console.error(`❌ Error saving tweet to database for channel ${channelId}:`, dbError);
-            results.push({ channelId, success: true, channelName: channel.name, note: "টুইট পাঠানো হয়েছে কিন্তু ডাটাবেসে সেভ করা যায়নি।" });
+            results.push({ channelId, success: true, channelName: channel.name, note: "Tweet posted successfully, but could not be saved to database." });
           }
         } else {
-          results.push({ channelId, success: false, reason: errorReason || "টুইট পোস্ট করা যায়নি।" });
+          results.push({ channelId, success: false, reason: errorReason || "Failed to post tweet." });
         }
       }
 
@@ -421,9 +421,9 @@ module.exports = {
       console.error('Error in /addtweet command:', error);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.followUp({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         } else {
-          await interaction.reply({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.reply({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         }
       } catch (err) {
         // Silently catch errors if interaction already finished/closed

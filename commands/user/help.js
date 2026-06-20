@@ -50,7 +50,7 @@ module.exports = {
             .addFields(
               {
                 name: '📋 `/submitraid link:<proof_link> tweet_id:<tweet_id>`',
-                value: 'Submit proof of a completed raid (like your reply, retweet, or quote link) along with the announcement Tweet ID. Auto-approves and rewards 10 points.'
+                value: 'Submit proof of a completed raid (like your reply, retweet, or quote link) along with the announcement Tweet ID. Auto-approves and rewards points.'
               },
               {
                 name: '🛒 `/claimwl item_name:<name>`',
@@ -82,7 +82,7 @@ module.exports = {
               },
               {
                 name: '❌ `/removemyraid tweet_id:<tweet_id>`',
-                value: 'Delete a submitted raid to fix mistakes (only if the raid is not expired). Deducts 10 points (if approved) and lets you resubmit.'
+                value: 'Delete a submitted raid to fix mistakes (only if the raid is not expired). Deducts the rewarded points (if approved) and lets you resubmit.'
               }
             )
             .setTimestamp();
@@ -94,7 +94,7 @@ module.exports = {
             .setColor(0x5865F2)
             .setDescription(
               `This bot helps automate twitter raids and reward users with points that can be redeemed for whitelist roles in the marketplace.\n\n` +
-              `• **Points Per Raid:** 10 points\n` +
+              `• **Points Per Raid:** Dynamic (Default: 1 point)\n` +
               `• **How to Claim Whitelists:** Use \`/claimwl\` to purchase roles. Once claimed, please open a ticket with proof.\n` +
               `• **Need Help?** Contact an Administrator or open a ticket in the server.`
             )

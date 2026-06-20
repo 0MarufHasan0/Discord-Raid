@@ -90,14 +90,14 @@ module.exports = {
 
       if (pointCost <= 0 || totalSlots <= 0) {
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Cost এবং Slots অবশ্যই ০-এর চেয়ে বেশি হতে হবে।")],
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Point cost and slots must be greater than 0.")],
           ephemeral: true
         });
       }
 
       if (claimDurationMs <= 0) {
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Claim Duration অবশ্যই ০-এর চেয়ে বেশি হতে হবে।")],
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Claim duration must be greater than 0.")],
           ephemeral: true
         });
       }
@@ -109,7 +109,7 @@ module.exports = {
         const duplicateRoleItem = await MarketItem.findOne({ roleId: roleId, isActive: true });
         if (duplicateRoleItem) {
           return interaction.reply({
-            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ <@&${roleId}> রোলটি ইতিমধ্যে '${duplicateRoleItem.name}' নামক একটি active আইটেমে ব্যবহৃত হচ্ছে।`)],
+            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ The role <@&${roleId}> is already in use by another active marketplace item ('${duplicateRoleItem.name}').`)],
             ephemeral: true
           });
         }
@@ -120,7 +120,7 @@ module.exports = {
         let existingRole = interaction.guild.roles.cache.find(r => r.name.toLowerCase() === createRoleName.trim().toLowerCase());
         if (existingRole) {
           return interaction.reply({
-            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ '${createRoleName}' নামের একটি role ইতিমধ্যেই সার্ভারে বিদ্যমান রয়েছে। অনুগ্রহ করে অন্য কোনো নাম দিন অথবা সার্ভার থেকে আগের রোলটি ডিলিট করে চেষ্টা করুন।`)],
+            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ A role named '${createRoleName}' already exists in this server. Please provide another name or delete the existing role.`)],
             ephemeral: true
           });
         }
@@ -143,7 +143,7 @@ module.exports = {
         } catch (createErr) {
           console.error(`❌ Failed to create role '${createRoleName}':`, createErr);
           return interaction.reply({
-            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ '${createRoleName}' রোলটি তৈরি করতে ব্যর্থ হয়েছে। বটের Role Manage করার পারমিশন চেক করুন।`)],
+            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ Failed to create role '${createRoleName}'. Please verify bot permissions and hierarchy to manage roles.`)],
             ephemeral: true
           });
         }
@@ -179,14 +179,14 @@ module.exports = {
           // Update live marketplace channel
           updateMarketplace(interaction.client);
 
-          let successDesc = `✅ Inactive Marketplace item '${name}' পুনরায় active করা হয়েছে!\n💰 Cost: **${pointCost}** points\n🎟️ Slots: **${totalSlots}**`;
+          let successDesc = `✅ Inactive Marketplace item '${name}' has been reactivated!\n💰 Cost: **${pointCost}** points\n🎟️ Slots: **${totalSlots}**`;
           if (roleId) {
             successDesc += `\n🎭 **Role:** <@&${roleId}>`;
             let durStr = '';
-            if (claimDurationDays > 0) durStr += `${claimDurationDays} দিন `;
-            if (claimDurationHours > 0) durStr += `${claimDurationHours} ঘণ্টা `;
-            if (claimDurationMinutes > 0) durStr += `${claimDurationMinutes} মিনিট `;
-            if (!durStr) durStr = '30 দিন';
+            if (claimDurationDays > 0) durStr += `${claimDurationDays} days `;
+            if (claimDurationHours > 0) durStr += `${claimDurationHours} hours `;
+            if (claimDurationMinutes > 0) durStr += `${claimDurationMinutes} minutes `;
+            if (!durStr) durStr = '30 days';
             successDesc += `\n⏳ **Duration:** **${durStr.trim()}**`;
           }
           if (expiresAt) {
@@ -201,7 +201,7 @@ module.exports = {
         }
 
         return interaction.reply({
-          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ '${name}' নামে একটি active item ইতিমধ্যেই রয়েছে।`)],
+          embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ An active marketplace item named '${name}' already exists.`)],
           ephemeral: true
         });
       }
@@ -224,14 +224,14 @@ module.exports = {
       // Update live marketplace channel
       updateMarketplace(interaction.client);
 
-      let replyDesc = `✅ Marketplace এ '**${name}**' add হয়েছে!\n💰 Cost: **${pointCost}** points\n🎟️ Slots: **${totalSlots}**`;
+      let replyDesc = `✅ Successfully added '**${name}**' to the marketplace!\n💰 Cost: **${pointCost}** points\n🎟️ Slots: **${totalSlots}**`;
       if (roleId) {
         replyDesc += `\n🎭 **Role:** <@&${roleId}>`;
         let durStr = '';
-        if (claimDurationDays > 0) durStr += `${claimDurationDays} দিন `;
-        if (claimDurationHours > 0) durStr += `${claimDurationHours} ঘণ্টা `;
-        if (claimDurationMinutes > 0) durStr += `${claimDurationMinutes} মিনিট `;
-        if (!durStr) durStr = '30 দিন';
+        if (claimDurationDays > 0) durStr += `${claimDurationDays} days `;
+        if (claimDurationHours > 0) durStr += `${claimDurationHours} hours `;
+        if (claimDurationMinutes > 0) durStr += `${claimDurationMinutes} minutes `;
+        if (!durStr) durStr = '30 days';
         replyDesc += `\n⏳ **Duration:** **${durStr.trim()}**`;
       }
       if (expiresAt) {
@@ -249,9 +249,9 @@ module.exports = {
       console.error('Error in /addwlitem command:', error);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.followUp({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         } else {
-          await interaction.reply({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।", ephemeral: true });
+          await interaction.reply({ content: "❌ An error occurred. Please try again.", ephemeral: true });
         }
       } catch (err) {
         // Silently catch errors if interaction already finished/closed

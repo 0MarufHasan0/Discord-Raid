@@ -88,7 +88,7 @@ module.exports = {
       embed.setDescription(description);
 
       if (raids.length === 0) {
-        embed.setDescription((description + "\n📭 কোনো raid পাওয়া যায়নি").trim());
+        embed.setDescription((description + "\n📭 No raids found.").trim());
         return interaction.editReply({ embeds: [embed] });
       }
 
@@ -122,7 +122,7 @@ module.exports = {
     } catch (error) {
       console.error('Error in /raidlist command:', error);
       try {
-        await interaction.editReply({ content: "❌ একটা error হয়েছে। আবার চেষ্টা করো।" });
+        await interaction.editReply({ content: "❌ An error occurred. Please try again." });
       } catch (err) {
         // Silently catch errors if interaction already finished/closed
       }
