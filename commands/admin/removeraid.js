@@ -7,7 +7,7 @@ const updateLeaderboard = require('../../utils/updateLeaderboard');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('removetweet')
+    .setName('removeraid')
     .setDescription('Delete a raid announcement and remove its database records')
     .addStringOption(option =>
       option.setName('tweet_id')
@@ -64,7 +64,7 @@ module.exports = {
               }
             }
           } catch (err) {
-            console.error(`[RemoveTweet] Failed to delete Discord message ${doc.messageId} in channel ${doc.channelId}:`, err.message);
+            console.error(`[RemoveRaid] Failed to delete Discord message ${doc.messageId} in channel ${doc.channelId}:`, err.message);
           }
         }
         // Delete Tweet document from database
@@ -120,12 +120,12 @@ module.exports = {
       await interaction.editReply({ embeds: [successEmbed] });
 
     } catch (error) {
-      console.error('Error in /removetweet command:', error);
+      console.error('Error in /removeraid command:', error);
       try {
         if (interaction.deferred || interaction.replied) {
-          await interaction.followUp({ content: "❌ An error occurred while removing the tweet announcement.", ephemeral: true });
+          await interaction.followUp({ content: "❌ An error occurred while removing the raid announcement.", ephemeral: true });
         } else {
-          await interaction.reply({ content: "❌ An error occurred while removing the tweet announcement.", ephemeral: true });
+          await interaction.reply({ content: "❌ An error occurred while removing the raid announcement.", ephemeral: true });
         }
       } catch (err) {}
     }
