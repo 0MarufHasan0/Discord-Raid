@@ -305,9 +305,7 @@ module.exports = {
 
         // Add Like and Retweet buttons if we have a tweet link
         if (originalTweetLink) {
-          const likeUrl = statusId 
-            ? `https://x.com/intent/like?tweet_id=${statusId}` 
-            : originalTweetLink;
+          const likeUrl = originalTweetLink;
           twitterRow.addComponents(
             new ButtonBuilder()
               .setLabel('Like')
@@ -316,9 +314,7 @@ module.exports = {
               .setStyle(ButtonStyle.Link)
           );
 
-          const retweetUrl = statusId 
-            ? `https://x.com/intent/retweet?tweet_id=${statusId}` 
-            : originalTweetLink;
+          const retweetUrl = originalTweetLink;
           twitterRow.addComponents(
             new ButtonBuilder()
               .setLabel('Retweet')
