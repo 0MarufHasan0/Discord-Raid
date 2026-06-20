@@ -88,7 +88,7 @@ client.on('interactionCreate', async interaction => {
       const tweetId = interaction.customId.replace('copy_tweet_id_', '');
       try {
         await interaction.reply({
-          content: `${tweetId}`,
+          content: `\`${tweetId}\``,
           ephemeral: true
         });
       } catch (error) {
