@@ -69,7 +69,7 @@ npm start
 
 ### Admin Commands (Requires Admin Role)
 * `/addtweet <content> [tweet_link] [duration_days] [duration_hours] [duration_minutes] [points]` - Post a premium Twitter announcement to all configured `TWEET_CHANNEL_ID`s with "Like", "Retweet" link buttons, "Copy Tweet ID" button, and "Submit Raid" (crossed swords emoji ⚔️) button. Supported durations specify how long the raid remains active, and points specifies the reward (default: 10).
-* `/addwlitem [name] [description] [point_cost] [total_slots]` - Add a new item/whitelist role to the marketplace.
+* `/addwlitem <name> <description> <point_cost> <total_slots> [role] [create_role_name] [claim_duration_days] [duration_days] [duration_hours] [duration_minutes]` - Add a new item/whitelist role to the marketplace. You can link an existing Discord role or specify `create_role_name` to automatically create a new role. `claim_duration_days` sets how long the role remains active for members (default: 30).
 * `/removewlitem [name]` - Deactivate a marketplace item.
 * `/approveraid [raid_id]` - Approve a pending raid and reward points.
 * `/rejectraid [raid_id] [reason]` - Reject a pending raid.
@@ -77,6 +77,7 @@ npm start
 * `/removepoints [user] [points]` - Manually deduct points from a user.
 * `/raidlist` - List recently submitted raids with date filters, user details, and remove instructions.
 * `/editraidpoints <tweet_id> <points>` - Edit the point value of an active (non-expired) raid announcement and dynamically update its Discord announcement embed.
+* `/edituserwl <role> <action> [days] [user]` - Edit or remove active whitelist role validity (duration) for a member or all members in the guild. Actions include removing role, reducing validity, extending validity, or setting validity.
 
 ### User Commands
 * `/settwitter <username>` - Link your Twitter/X account handle (without `@`) for automated verification of raid proof.
