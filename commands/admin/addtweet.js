@@ -271,9 +271,10 @@ module.exports = {
             desc += `> ${tweetData.text.replace(/\n/g, '\n> ')}\n\n`;
           }
           
-          desc += `💰 **Reward:** **${points} points** upon completion!\n`;
-          desc += `⏰ **Raid Active Until:** <t:${unixTimestamp}:F>\n`;
-          desc += `⌛ **Time Left:** <t:${unixTimestamp}:R>\n\n`;
+          desc += `📊 **Raid Details:**\n`;
+          desc += `> 💰 **Reward:** \`${points} Points\`\n`;
+          desc += `> ⏰ **Ends At:** <t:${unixTimestamp}:F> *(Your Local Time)*\n`;
+          desc += `> ⌛ **Time Left:** <t:${unixTimestamp}:R>\n\n`;
 
           // Add Twitter stats line
           desc += `💬 ${tweetData.replies || 0}   🔁 ${tweetData.retweets || 0}   ❤️ ${tweetData.likes || 0}   👁️ ${tweetData.views || 0}`;
@@ -295,9 +296,10 @@ module.exports = {
           });
 
           let desc = '';
-          desc += `💰 **Reward:** **${points} points** upon completion!\n`;
-          desc += `⏰ **Raid Active Until:** <t:${unixTimestamp}:F>\n`;
-          desc += `⌛ **Time Left:** <t:${unixTimestamp}:R>\n\n`;
+          desc += `📊 **Raid Details:**\n`;
+          desc += `> 💰 **Reward:** \`${points} Points\`\n`;
+          desc += `> ⏰ **Ends At:** <t:${unixTimestamp}:F> *(Your Local Time)*\n`;
+          desc += `> ⌛ **Time Left:** <t:${unixTimestamp}:R>\n\n`;
           announcementEmbed.setDescription(desc);
         }
 
