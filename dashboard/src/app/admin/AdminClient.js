@@ -474,13 +474,31 @@ export default function AdminClient({ initialTweets, initialPendingRaids, initia
         </button>
       </div>
 
-      <button
-        onClick={() => setShowResetModal(true)}
-        className="px-6 py-2.5 rounded-full border border-rose-500/25 bg-rose-950/10 hover:bg-rose-950/20 text-[10px] font-extrabold uppercase tracking-widest text-rose-400 hover:text-rose-300 transition-all flex items-center space-x-1.5 cursor-pointer glow-card-rose shadow-md"
-      >
-        <Trash2 className="w-3.5 h-3.5" />
-        <span>Delete All Data</span>
-      </button>
+      <div className="flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={handleOpenCopyModal}
+          className="px-6 py-2.5 rounded-full border border-indigo-500/20 bg-indigo-950/10 hover:bg-indigo-600/30 text-[10px] font-extrabold uppercase tracking-widest text-indigo-400 hover:text-white transition-all flex items-center space-x-1.5 cursor-pointer"
+        >
+          <Copy className="w-3.5 h-3.5" />
+          <span>Copy Raiders</span>
+        </button>
+        <button
+          type="button"
+          onClick={handleOpenRaffleModal}
+          className="px-6 py-2.5 rounded-full border border-purple-500/20 bg-purple-950/10 hover:bg-purple-600/30 text-[10px] font-extrabold uppercase tracking-widest text-purple-400 hover:text-white transition-all flex items-center space-x-1.5 cursor-pointer"
+        >
+          <Trophy className="w-3.5 h-3.5" />
+          <span>Raffle Raider</span>
+        </button>
+        <button
+          onClick={() => setShowResetModal(true)}
+          className="px-6 py-2.5 rounded-full border border-rose-500/25 bg-rose-950/10 hover:bg-rose-950/20 text-[10px] font-extrabold uppercase tracking-widest text-rose-400 hover:text-rose-300 transition-all flex items-center space-x-1.5 cursor-pointer glow-card-rose shadow-md"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+          <span>Delete All Data</span>
+        </button>
+      </div>
     </div>
 
       {/* Tab Contents: 1. Submissions */}
