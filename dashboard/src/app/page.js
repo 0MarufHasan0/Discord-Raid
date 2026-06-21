@@ -35,9 +35,51 @@ async function getStatsAndTweets() {
       ]
     }).sort({ postedAt: -1 }).limit(10) || [];
 
+    // Parse out any Discord user mentions (<@123456789>)
+    const mentionIds = [];
+    const mentionRegex = /<@!?(\d+)>/g;
+    activeTweets.forEach(t => {
+      let match;
+      mentionRegex.lastIndex = 0;
+      while ((match = mentionRegex.exec(t.content || '')) !== null) {
+        mentionIds.push(match[1]);
+      }
+    });
+
+    const mentionedUsers = {};
+    if (mentionIds.length > 0) {
+      const usersList = await User.find({ discordId: { $in: mentionIds } });
+      usersList.forEach(u => {
+        mentionedUsers[u.discordId] = u.username;
+      });
+    }
+
+    const processedTweets = activeTweets.map(t => {
+      const tweetObj = t.toObject ? t.toObject() : t;
+      
+      // 1. Resolve mentions dynamically
+      if (tweetObj.content) {
+        mentionRegex.lastIndex = 0;
+        tweetObj.content = tweetObj.content.replace(mentionRegex, (match, id) => {
+          return mentionedUsers[id] ? `@${mentionedUsers[id]}` : "@Member";
+        });
+      }
+
+      // 2. Filter image URL (if it's a tweet link status status, set to null)
+      const url = tweetObj.imageUrl || '';
+      const isRealImage = url.startsWith('http') && 
+                          !url.includes('twitter.com/status/') && 
+                          !url.includes('x.com/status/') &&
+                          !url.includes('twitter.com/i/status/') &&
+                          !url.includes('x.com/i/status/');
+      tweetObj.imageUrl = isRealImage ? url : null;
+
+      return tweetObj;
+    });
+
     return {
       stats: { totalUsers, totalPoints, totalRaids, totalMarketItems },
-      tweets: JSON.parse(JSON.stringify(activeTweets))
+      tweets: JSON.parse(JSON.stringify(processedTweets))
     };
   } catch (error) {
     console.error("Error fetching stats and tweets:", error);
@@ -47,6 +89,7 @@ async function getStatsAndTweets() {
     };
   }
 }
+
 
 export default async function Home() {
   const { stats, tweets } = await getStatsAndTweets();
