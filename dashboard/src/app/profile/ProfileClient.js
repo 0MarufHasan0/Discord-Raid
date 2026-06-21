@@ -20,7 +20,7 @@ const Twitter = (props) => (
 );
 
 
-export default function ProfileClient({ initialUser, raids, claims }) {
+export default function ProfileClient({ initialUser, raids, claims, discordInfo }) {
   const [user, setUser] = useState(initialUser || { points: 0, raidsSubmitted: 0, raidsApproved: 0, twitter: "" });
   const [twitterHandle, setTwitterHandle] = useState(user.twitter || "");
   const [loading, setLoading] = useState(false);
@@ -64,14 +64,31 @@ export default function ProfileClient({ initialUser, raids, claims }) {
         <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-indigo-500/10 to-purple-500/5 rounded-full blur-3xl pointer-events-none" />
         
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-indigo-400 bg-indigo-950/40 border border-indigo-900/50 px-3 py-1 rounded-full">
-              Member Profile
-            </span>
-            <h1 className="text-2xl md:text-4xl font-extrabold font-outfit text-white">
-              Hello, {user.username}
-            </h1>
-            <p className="text-xs text-slate-500">ID: {user.discordId}</p>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+            {discordInfo?.avatarUrl && (
+              <img 
+                src={discordInfo.avatarUrl} 
+                alt="Discord Avatar" 
+                className="w-16 h-16 rounded-full border border-indigo-500/20 shadow-[0_0_15px_rgba(99,102,241,0.15)] object-cover" 
+              />
+            )}
+            <div className="space-y-1">
+              <span className="text-xs font-semibold uppercase tracking-wider text-indigo-400 bg-indigo-950/45 border border-indigo-900/50 px-3 py-1 rounded-full">
+                Member Profile
+              </span>
+              <h1 className="text-2xl md:text-3xl font-extrabold font-outfit text-white">
+                Hello, {user.username}
+              </h1>
+              <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 mt-1.5">
+                <span>ID: {user.discordId}</span>
+                {discordInfo?.joinDate && (
+                  <>
+                    <span>•</span>
+                    <span>Joined Server: {new Date(discordInfo.joinDate).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</span>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center space-x-2 bg-amber-500/10 border border-amber-500/25 px-5 py-2.5 rounded-2xl">
@@ -82,6 +99,25 @@ export default function ProfileClient({ initialUser, raids, claims }) {
             </div>
           </div>
         </div>
+
+        {/* Live Discord server roles listing */}
+        {discordInfo?.discordRoles && discordInfo.discordRoles.length > 0 && (
+          <div className="mt-6 pt-6 border-t border-indigo-950/30">
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2.5">Active Server Roles</p>
+            <div className="flex flex-wrap gap-2">
+              {discordInfo.discordRoles.map(role => (
+                <span
+                  key={role.id}
+                  style={{ borderColor: `${role.color}33`, color: role.color, backgroundColor: `${role.color}0d` }}
+                  className="text-[9px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full border transition-all duration-300 hover:brightness-110"
+                >
+                  {role.name}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
 
         <div className="grid grid-cols-3 gap-4 border-t border-indigo-950/40 mt-8 pt-8">
           <div className="text-center md:text-left">
