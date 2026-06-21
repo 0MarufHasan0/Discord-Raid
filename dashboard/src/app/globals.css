@@ -193,3 +193,64 @@ body {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
+
+/* Premium Card Light Top Border Highlight */
+.glass-panel {
+  position: relative;
+}
+
+.glass-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.15), transparent);
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.glass-panel:hover::before {
+  background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.5), rgba(6, 182, 212, 0.5), transparent);
+}
+
+/* Custom glowing card themes */
+.glow-card-indigo:hover {
+  box-shadow: 0 10px 40px 0 rgba(99, 102, 241, 0.1), 0 0 25px 0 rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.45) !important;
+}
+
+.glow-card-amber:hover {
+  box-shadow: 0 10px 40px 0 rgba(245, 158, 11, 0.08), 0 0 25px 0 rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.4) !important;
+}
+
+.glow-card-rose:hover {
+  box-shadow: 0 10px 40px 0 rgba(244, 63, 94, 0.08), 0 0 25px 0 rgba(244, 63, 94, 0.12);
+  border-color: rgba(244, 63, 94, 0.4) !important;
+}
+
+.glow-card-cyan:hover {
+  box-shadow: 0 10px 40px 0 rgba(6, 182, 212, 0.1), 0 0 25px 0 rgba(6, 182, 212, 0.15);
+  border-color: rgba(6, 182, 212, 0.45) !important;
+}
+
+/* Moving Text Gradients */
+@keyframes gradient-move {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-text-gradient {
+  background-size: 200% auto;
+  animation: gradient-move 4s linear infinite;
+}

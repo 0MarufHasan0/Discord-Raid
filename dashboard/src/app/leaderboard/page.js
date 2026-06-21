@@ -9,8 +9,7 @@ async function getLeaderboardUsers() {
   try {
     await dbConnect();
     const users = await User.find()
-      .sort({ points: -1, raidsApproved: -1 })
-      .limit(100) || [];
+      .sort({ points: -1, raidsApproved: -1 }) || [];
     return JSON.parse(JSON.stringify(users));
   } catch (error) {
     console.error("Error fetching leaderboard users:", error);

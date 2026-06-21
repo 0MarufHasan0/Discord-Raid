@@ -165,3 +165,14 @@ To prevent Out-Of-Memory (OOM) crashes and cold-starts on free hosting tiers, we
 - **Next.js Web Dashboard**: Deploy on **Vercel** (connect your GitHub repository, set root directory to `dashboard`, and define environment variables). Vercel is free, fast, and serverless.
 - **Discord Bot**: Host on **Render** (monitored with a keep-alive service like UptimeRobot). 
 Both services connect to the same remote MongoDB Atlas database, syncing your members' point values instantly.
+
+### 5. Custom Features & Design Enhancements
+
+The Next.js dashboard has been customized with premium visual aesthetics and enhanced ranking features:
+* **Custom Brand Identity**: Fully integrated the circular **Chess DAO Logo** into the floating navigation header, browser `favicon.ico`, and meta shortcuts.
+- **Dynamic Text Gradients**: Implemented an animating hue-shift gradient (`animate-text-gradient`) on key headings and branding elements for a modern, fluid visual style.
+* **Themed Hover Glow Cards**: Customized the statistics grid with theme-specific neon card reflections (`glow-card-indigo`, `glow-card-amber`, `glow-card-rose`, `glow-card-cyan`) that light up smoothly when hovered.
+* **Homepage Mini-Leaderboard**: Added a "Top Raiders" sidebar widget on the landing page showing the top 5 members with medals, avatars, points, and a link to the full leaderboard.
+* **Full-Scope Global Rankings**: Removed the limit of 100 on the leaderboard page. Now, every single raider who joins a raid is ranked, searchable, and visible on the leaderboard.
+* **Smart Asset Filtering**: Prevents broken image placeholders on raid cards by detecting and filtering out tweet/post link structures from image tags, while retaining direct image media.
+* **Vercel Build Stability**: Patched configuration issues to prevent build cold-starts and infinite loader screens on serverless deploys.

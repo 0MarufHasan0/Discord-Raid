@@ -15,6 +15,11 @@ const inter = Inter({
 export const metadata = {
   title: "Chess Raid Dashboard",
   description: "Verify, track points, browse whitelists, and see who dominates the Chess DAO raid leaderboard.",
+  icons: {
+    icon: "/logo.jpg",
+    shortcut: "/logo.jpg",
+    apple: "/logo.jpg",
+  },
 };
 
 export default function RootLayout({ children }) {

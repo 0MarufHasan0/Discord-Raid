@@ -66,33 +66,56 @@ async function getStatsAndTweets() {
         });
       }
 
-      // 2. Filter image URL (if it's a tweet link status status, set to null)
+      // 2. Filter image URL (if it's a tweet link, set to null)
       const url = tweetObj.imageUrl || '';
-      const isRealImage = url.startsWith('http') && 
-                          !url.includes('twitter.com/status/') && 
-                          !url.includes('x.com/status/') &&
-                          !url.includes('twitter.com/i/status/') &&
-                          !url.includes('x.com/i/status/');
+      let isRealImage = false;
+      if (url.startsWith('http')) {
+        const lowerUrl = url.toLowerCase();
+        const isTweetLink = lowerUrl.includes('/status/') || 
+                            lowerUrl.includes('/statuses/') || 
+                            lowerUrl.includes('/i/status/');
+        
+        if (!isTweetLink) {
+          try {
+            const parsedUrl = new URL(url);
+            const hostname = parsedUrl.hostname.toLowerCase();
+            const isTwitterHost = hostname === 'x.com' || 
+                                  hostname === 'www.x.com' || 
+                                  hostname === 'twitter.com' || 
+                                  hostname === 'www.twitter.com';
+            isRealImage = !isTwitterHost;
+          } catch (e) {
+            isRealImage = false;
+          }
+        }
+      }
       tweetObj.imageUrl = isRealImage ? url : null;
 
       return tweetObj;
     });
 
+    // Fetch top 5 raiders
+    const topUsers = await User.find()
+      .sort({ points: -1, raidsApproved: -1 })
+      .limit(5) || [];
+
     return {
       stats: { totalUsers, totalPoints, totalRaids, totalMarketItems },
-      tweets: JSON.parse(JSON.stringify(processedTweets))
+      tweets: JSON.parse(JSON.stringify(processedTweets)),
+      topUsers: JSON.parse(JSON.stringify(topUsers))
     };
   } catch (error) {
     console.error("Error fetching stats and tweets:", error);
     return {
       stats: { totalUsers: 0, totalPoints: 0, totalRaids: 0, totalMarketItems: 0 },
-      tweets: []
+      tweets: [],
+      topUsers: []
     };
   }
 }
 
 export default async function Home() {
-  const { stats, tweets } = await getStatsAndTweets();
+  const { stats, tweets, topUsers } = await getStatsAndTweets();
 
   return (
     <>
@@ -111,7 +134,7 @@ export default async function Home() {
           <FadeInUp delay={0.2}>
             <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 font-outfit">
               Dominate the Raids, <br />
-              <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent text-glow">
+              <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent text-glow animate-text-gradient">
                 Claim Premium Rewards
               </span>
             </h1>
@@ -146,7 +169,7 @@ export default async function Home() {
         {/* Stats Grid */}
         <StaggerContainer delay={0.5} className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-16">
           <StaggerItem>
-            <div className="glass-panel p-6 rounded-2xl relative group overflow-hidden">
+            <div className="glass-panel glow-card-indigo p-6 rounded-2xl relative group overflow-hidden">
               <div className="absolute top-0 right-0 w-16 h-16 bg-indigo-500/5 rounded-full blur-xl group-hover:scale-150 transition-all duration-500" />
               <div className="flex items-center justify-between mb-4">
                 <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Active Members</span>
@@ -158,7 +181,7 @@ export default async function Home() {
           </StaggerItem>
 
           <StaggerItem>
-            <div className="glass-panel p-6 rounded-2xl relative group overflow-hidden">
+            <div className="glass-panel glow-card-amber p-6 rounded-2xl relative group overflow-hidden">
               <div className="absolute top-0 right-0 w-16 h-16 bg-amber-500/5 rounded-full blur-xl group-hover:scale-150 transition-all duration-500" />
               <div className="flex items-center justify-between mb-4">
                 <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Total Points</span>
@@ -170,7 +193,7 @@ export default async function Home() {
           </StaggerItem>
 
           <StaggerItem>
-            <div className="glass-panel p-6 rounded-2xl relative group overflow-hidden">
+            <div className="glass-panel glow-card-rose p-6 rounded-2xl relative group overflow-hidden">
               <div className="absolute top-0 right-0 w-16 h-16 bg-rose-500/5 rounded-full blur-xl group-hover:scale-150 transition-all duration-500" />
               <div className="flex items-center justify-between mb-4">
                 <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Approved Raids</span>
@@ -182,7 +205,7 @@ export default async function Home() {
           </StaggerItem>
 
           <StaggerItem>
-            <div className="glass-panel p-6 rounded-2xl relative group overflow-hidden">
+            <div className="glass-panel glow-card-cyan p-6 rounded-2xl relative group overflow-hidden">
               <div className="absolute top-0 right-0 w-16 h-16 bg-cyan-500/5 rounded-full blur-xl group-hover:scale-150 transition-all duration-500" />
               <div className="flex items-center justify-between mb-4">
                 <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Shop Items</span>
@@ -279,6 +302,61 @@ export default async function Home() {
 
           {/* Quick FAQ / Info (Right 1 col) */}
           <div className="space-y-6">
+            {/* Top Raiders Mini-Leaderboard */}
+            <FadeInUp delay={0.6}>
+              <h2 className="text-xl md:text-2xl font-extrabold font-outfit text-slate-100 flex items-center space-x-2">
+                <Trophy className="w-5 h-5 text-amber-400 animate-pulse" />
+                <span>Top Raiders</span>
+              </h2>
+            </FadeInUp>
+
+            <FadeInUp delay={0.7}>
+              <div className="glass-panel p-5 rounded-2xl border border-indigo-950/20 space-y-4">
+                {topUsers.length > 0 ? (
+                  <div className="space-y-2">
+                    {topUsers.map((user, idx) => {
+                      const rank = idx + 1;
+                      let rankBadge = (
+                        <span className="text-[10px] font-extrabold text-slate-500 w-5 text-center">#{rank}</span>
+                      );
+                      if (rank === 1) rankBadge = <span className="text-amber-400 font-extrabold w-5 text-center">🥇</span>;
+                      if (rank === 2) rankBadge = <span className="text-slate-300 font-extrabold w-5 text-center">🥈</span>;
+                      if (rank === 3) rankBadge = <span className="text-amber-700 font-extrabold w-5 text-center">🥉</span>;
+
+                      const firstLetter = (user.username || 'U').charAt(0).toUpperCase();
+                      return (
+                        <div key={user._id} className="flex items-center justify-between p-2 rounded-xl hover:bg-indigo-950/15 border border-transparent hover:border-indigo-950/10 transition-all duration-300">
+                          <div className="flex items-center space-x-2.5">
+                            {rankBadge}
+                            <div className="w-7 h-7 rounded-full bg-indigo-950/40 border border-indigo-500/20 flex items-center justify-center text-[10px] font-bold text-indigo-400">
+                              {firstLetter}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-xs font-bold text-slate-200">{user.username}</span>
+                              <span className="text-[9px] text-slate-500 font-semibold">{user.raidsApproved ?? 0} approved</span>
+                            </div>
+                          </div>
+                          <span className="text-xs font-extrabold text-amber-400 text-glow-amber">
+                            {user.points.toLocaleString()} PTS
+                          </span>
+                        </div>
+                      );
+                    })}
+                    <div className="pt-2 border-t border-indigo-950/25">
+                      <Link
+                        href="/leaderboard"
+                        className="w-full py-2 rounded-xl border border-indigo-500/20 bg-indigo-950/15 hover:bg-indigo-950/30 text-[10px] font-bold text-indigo-300 hover:text-indigo-200 transition-all flex items-center justify-center space-x-1.5 uppercase tracking-wider cursor-pointer"
+                      >
+                        <span>View Full Leaderboard</span>
+                        <ArrowUpRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500 text-center py-4">No raiders ranked yet.</p>
+                )}
+              </div>
+            </FadeInUp>
             <FadeInUp delay={0.6}>
               <h2 className="text-xl md:text-2xl font-extrabold font-outfit text-slate-100 flex items-center space-x-2">
                 <span>How it Works</span>

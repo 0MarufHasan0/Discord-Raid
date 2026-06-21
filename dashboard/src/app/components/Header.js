@@ -23,13 +23,16 @@ export default function Header() {
         <div className="flex items-center justify-between h-12">
           {/* Logo / Brand */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2 group">
-              <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent tracking-wide font-outfit group-hover:brightness-110 transition-all duration-300">
-                CHESS RAID
-              </span>
-              <span className="hidden sm:inline-block text-[9px] uppercase tracking-widest px-2 py-0.5 rounded border border-indigo-500/30 text-indigo-400 bg-indigo-950/30 font-bold group-hover:border-indigo-400/50 transition-all duration-300">
-                DAO
-              </span>
+            <Link href="/" className="flex items-center space-x-3 group">
+              <img src="/logo.jpg" alt="Chess DAO Logo" className="w-8 h-8 rounded-full border border-indigo-500/30 group-hover:border-indigo-400/50 transition-all duration-300 object-cover" />
+              <div className="flex items-center space-x-2">
+                <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent tracking-wide font-outfit group-hover:brightness-110 transition-all duration-300 animate-text-gradient">
+                  CHESS RAID
+                </span>
+                <span className="hidden sm:inline-block text-[9px] uppercase tracking-widest px-2 py-0.5 rounded border border-indigo-500/30 text-indigo-400 bg-indigo-950/30 font-bold group-hover:border-indigo-400/50 transition-all duration-300">
+                  DAO
+                </span>
+              </div>
             </Link>
           </div>
 
