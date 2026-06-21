@@ -813,7 +813,8 @@ client.on('interactionCreate', async interaction => {
 
           const roleInput = new TextInputBuilder()
             .setCustomId('role_or_create_name')
-            .setLabel('Role ID, Mention, or Create Name (optional)')
+            .setLabel('Role Name (or ID/Mention if existing)')
+            .setPlaceholder('e.g. VIP Role (links existing or creates new)')
             .setStyle(TextInputStyle.Short)
             .setRequired(false);
 
@@ -1295,7 +1296,10 @@ client.on('interactionCreate', async interaction => {
             const cleanRoleId = roleOrCreate.replace(/[<@&>]/g, '');
             role = interaction.guild.roles.cache.get(cleanRoleId) || await interaction.guild.roles.fetch(cleanRoleId).catch(() => null);
             if (!role) {
-              createRoleName = roleOrCreate;
+              role = interaction.guild.roles.cache.find(r => r.name.toLowerCase() === roleOrCreate.toLowerCase());
+              if (!role) {
+                createRoleName = roleOrCreate;
+              }
             }
           }
 
