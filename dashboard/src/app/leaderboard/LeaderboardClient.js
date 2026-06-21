@@ -6,6 +6,12 @@ import { motion } from "framer-motion";
 
 export default function LeaderboardClient({ initialUsers }) {
   const [search, setSearch] = useState("");
+  const [visibleCount, setVisibleCount] = useState(50);
+
+  const handleSearchChange = (val) => {
+    setSearch(val);
+    setVisibleCount(50);
+  };
 
   const filteredUsers = initialUsers.filter((user) => {
     const q = search.toLowerCase();
@@ -27,7 +33,7 @@ export default function LeaderboardClient({ initialUsers }) {
           type="text"
           placeholder="Search by username, Discord ID, or Twitter..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => handleSearchChange(e.target.value)}
           className="w-full pl-11 pr-4 py-2.5 rounded-full border border-indigo-950/40 bg-[#0d0d1b]/40 text-xs font-semibold text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/10 transition-all font-sans"
         />
       </div>
@@ -38,12 +44,12 @@ export default function LeaderboardClient({ initialUsers }) {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-indigo-950/45 bg-[#080814] text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                <th className="px-6 py-4 text-center w-24">Rank</th>
-                <th className="px-6 py-4">Raider</th>
-                <th className="px-6 py-4 text-right">Raid Points</th>
-                <th className="px-6 py-4 text-center">Approved</th>
-                <th className="px-6 py-4 text-center">Submitted</th>
-                <th className="px-6 py-4">Twitter Account</th>
+                <th className="px-4 sm:px-6 py-4 text-center w-16 sm:w-24">Rank</th>
+                <th className="px-4 sm:px-6 py-4">Raider</th>
+                <th className="px-4 sm:px-6 py-4 text-right">Raid Points</th>
+                <th className="hidden sm:table-cell px-6 py-4 text-center">Approved</th>
+                <th className="hidden md:table-cell px-6 py-4 text-center">Submitted</th>
+                <th className="hidden md:table-cell px-6 py-4">Twitter Account</th>
               </tr>
             </thead>
             <motion.tbody 
@@ -60,7 +66,7 @@ export default function LeaderboardClient({ initialUsers }) {
               className="divide-y divide-indigo-950/15"
             >
               {filteredUsers.length > 0 ? (
-                filteredUsers.map((user, idx) => {
+                filteredUsers.slice(0, visibleCount).map((user, idx) => {
                   const rank = idx + 1;
                   
                   // Top 3 highlighting classes
@@ -106,28 +112,28 @@ export default function LeaderboardClient({ initialUsers }) {
                       transition={{ type: "spring", stiffness: 260, damping: 22 }}
                       className={rowClass}
                     >
-                      <td className="px-6 py-4 text-center">{rankCell}</td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 sm:px-6 py-4 text-center">{rankCell}</td>
+                      <td className="px-4 sm:px-6 py-4">
                         <div className="flex items-center space-x-3">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${initialColor}`}>
                             {firstLetter}
                           </div>
                           <div className="flex flex-col">
                             <span className="text-xs font-bold text-slate-200">{user.username}</span>
-                            <span className="text-[9px] text-slate-500 font-semibold tracking-wider">ID: {user.discordId}</span>
+                            <span className="hidden sm:inline-block text-[9px] text-slate-500 font-semibold tracking-wider">ID: {user.discordId}</span>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-right font-extrabold text-amber-400 text-xs tracking-wider text-glow-amber">
+                      <td className="px-4 sm:px-6 py-4 text-right font-extrabold text-amber-400 text-xs tracking-wider text-glow-amber">
                         {user.points.toLocaleString()}
                       </td>
-                      <td className="px-6 py-4 text-center text-xs text-cyan-400 font-bold">
+                      <td className="hidden sm:table-cell px-6 py-4 text-center text-xs text-cyan-400 font-bold">
                         {user.raidsApproved ?? 0}
                       </td>
-                      <td className="px-6 py-4 text-center text-xs text-slate-500 font-semibold">
+                      <td className="hidden md:table-cell px-6 py-4 text-center text-xs text-slate-500 font-semibold">
                         {user.raidsSubmitted ?? 0}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="hidden md:table-cell px-6 py-4">
                         {user.twitter ? (
                           <a
                             href={`https://x.com/${user.twitter}`}
@@ -162,6 +168,17 @@ export default function LeaderboardClient({ initialUsers }) {
           </table>
         </div>
       </div>
+
+      {filteredUsers.length > visibleCount && (
+        <div className="flex justify-center pt-4">
+          <button
+            onClick={() => setVisibleCount((prev) => prev + 50)}
+            className="px-6 py-2.5 rounded-full border border-indigo-500/20 bg-indigo-950/10 hover:bg-indigo-950/30 text-xs font-bold text-indigo-300 transition-all cursor-pointer hover:border-indigo-400/40"
+          >
+            Load More Raiders
+          </button>
+        </div>
+      )}
     </div>
   );
 }
