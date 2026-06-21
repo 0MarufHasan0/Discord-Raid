@@ -799,15 +799,10 @@ client.on('interactionCreate', async interaction => {
             .setStyle(TextInputStyle.Paragraph)
             .setRequired(true);
 
-          const costInput = new TextInputBuilder()
-            .setCustomId('point_cost')
-            .setLabel('Point Cost')
-            .setStyle(TextInputStyle.Short)
-            .setRequired(true);
-
-          const slotsInput = new TextInputBuilder()
-            .setCustomId('total_slots')
-            .setLabel('Total Slots')
+          const costAndSlotsInput = new TextInputBuilder()
+            .setCustomId('cost_and_slots')
+            .setLabel('Cost / Slots (format: Cost/Slots)')
+            .setPlaceholder('e.g. 500/10')
             .setStyle(TextInputStyle.Short)
             .setRequired(true);
 
@@ -818,12 +813,19 @@ client.on('interactionCreate', async interaction => {
             .setStyle(TextInputStyle.Short)
             .setRequired(false);
 
+          const durationsInput = new TextInputBuilder()
+            .setCustomId('durations')
+            .setLabel('Durations (Role / Market)')
+            .setPlaceholder('e.g. Role: 30d | Market: 7d')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false);
+
           modal.addComponents(
             new ActionRowBuilder().addComponents(nameInput),
             new ActionRowBuilder().addComponents(descInput),
-            new ActionRowBuilder().addComponents(costInput),
-            new ActionRowBuilder().addComponents(slotsInput),
-            new ActionRowBuilder().addComponents(roleInput)
+            new ActionRowBuilder().addComponents(costAndSlotsInput),
+            new ActionRowBuilder().addComponents(roleInput),
+            new ActionRowBuilder().addComponents(durationsInput)
           );
 
           await interaction.showModal(modal);
@@ -1289,6 +1291,21 @@ client.on('interactionCreate', async interaction => {
           const mocked = mockInteraction(interaction, options);
           await command.execute(mocked);
         } else if (interaction.customId === 'admin_add_wl_item_modal') {
+          const name = interaction.fields.getTextInputValue('name').trim();
+          const description = interaction.fields.getTextInputValue('description').trim();
+          
+          const costAndSlotsInput = interaction.fields.getTextInputValue('cost_and_slots').trim();
+          const costSlotsParts = costAndSlotsInput.split('/');
+          let pointCost = 0;
+          let totalSlots = 0;
+          if (costSlotsParts.length >= 2) {
+            pointCost = parseInt(costSlotsParts[0].trim()) || 0;
+            totalSlots = parseInt(costSlotsParts[1].trim()) || 0;
+          } else {
+            pointCost = parseInt(costAndSlotsInput) || 0;
+            totalSlots = 9999;
+          }
+
           const roleOrCreate = interaction.fields.getTextInputValue('role_or_create_name')?.trim();
           let role = null;
           let createRoleName = null;
@@ -1303,13 +1320,80 @@ client.on('interactionCreate', async interaction => {
             }
           }
 
+          // Helper to parse duration string (e.g. 30d 12h 30m)
+          const parseDurationStringToMs = (str) => {
+            if (!str) return null;
+            const regex = /(\d+)\s*(d|h|m|days|hours|minutes|day|hour|minute)/gi;
+            let matches = [...str.matchAll(regex)];
+            if (matches.length === 0) {
+              const num = parseInt(str);
+              if (!isNaN(num) && num > 0) {
+                return num * 24 * 60 * 60 * 1000;
+              }
+              return null;
+            }
+            let totalMs = 0;
+            for (const match of matches) {
+              const value = parseInt(match[1]);
+              const unit = match[2].toLowerCase();
+              if (unit.startsWith('d')) {
+                totalMs += value * 24 * 60 * 60 * 1000;
+              } else if (unit.startsWith('h')) {
+                totalMs += value * 60 * 60 * 1000;
+              } else if (unit.startsWith('m')) {
+                totalMs += value * 60 * 1000;
+              }
+            }
+            return totalMs;
+          };
+
+          const durationsInput = interaction.fields.getTextInputValue('durations')?.trim();
+          let claimDurationMs = 30 * 24 * 60 * 60 * 1000; // default 30 days
+          let marketDurationMs = null;
+
+          if (durationsInput) {
+            const parts = durationsInput.split('|');
+            for (const part of parts) {
+              const cleanPart = part.trim().toLowerCase();
+              if (cleanPart.startsWith('role:')) {
+                const val = cleanPart.replace('role:', '').trim();
+                claimDurationMs = parseDurationStringToMs(val) || claimDurationMs;
+              } else if (cleanPart.startsWith('market:')) {
+                const val = cleanPart.replace('market:', '').trim();
+                marketDurationMs = parseDurationStringToMs(val);
+              } else {
+                const parsed = parseDurationStringToMs(cleanPart);
+                if (parsed) claimDurationMs = parsed;
+              }
+            }
+          }
+
+          const claimDays = Math.floor(claimDurationMs / (24 * 60 * 60 * 1000));
+          const claimHours = Math.floor((claimDurationMs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+          const claimMinutes = Math.floor((claimDurationMs % (60 * 60 * 1000)) / (60 * 1000));
+
+          let marketDays = 0;
+          let marketHours = 0;
+          let marketMinutes = 0;
+          if (marketDurationMs) {
+            marketDays = Math.floor(marketDurationMs / (24 * 60 * 60 * 1000));
+            marketHours = Math.floor((marketDurationMs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+            marketMinutes = Math.floor((marketDurationMs % (60 * 60 * 1000)) / (60 * 1000));
+          }
+
           const options = {
-            name: interaction.fields.getTextInputValue('name').trim(),
-            description: interaction.fields.getTextInputValue('description').trim(),
-            point_cost: parseInt(interaction.fields.getTextInputValue('point_cost')),
-            total_slots: parseInt(interaction.fields.getTextInputValue('total_slots')),
+            name,
+            description,
+            point_cost: pointCost,
+            total_slots: totalSlots,
             role,
-            create_role_name: createRoleName
+            create_role_name: createRoleName,
+            claim_duration_days: claimDays,
+            claim_duration_hours: claimHours,
+            claim_duration_minutes: claimMinutes,
+            duration_days: marketDays || null,
+            duration_hours: marketHours || null,
+            duration_minutes: marketMinutes || null
           };
 
           const command = require('./commands/admin/addwlitem');
