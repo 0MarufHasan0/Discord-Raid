@@ -6,7 +6,7 @@ const Tweet = require('../../database/models/Tweet');
 
 function extractTweetInfo(url) {
   if (!url) return null;
-  const regex = /https?:\/\/([a-zA-Z0-9-]+\.)?(twitter|x)\.com\/([a-zA-Z0-9_]+)\/status\/(\d+)/i;
+  const regex = /https?:\/\/([a-zA-Z0-9-]+\.)?(twitter|x)\.com\/([a-zA-Z0-9_]+)\/(?:web\/)?status\/(\d+)/i;
   const match = url.match(regex);
   if (!match) return null;
   return {

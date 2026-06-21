@@ -3,13 +3,14 @@ const Raid = require('../database/models/Raid');
 const User = require('../database/models/User');
 const Tweet = require('../database/models/Tweet');
 const updateLeaderboard = require('./updateLeaderboard');
+const https = require('https');
 
 /**
  * Normalizes Twitter/X status links and extracts the status ID.
  */
 function getTweetIdAndNormalize(url) {
   if (!url) return null;
-  const regex = /https?:\/\/([a-zA-Z0-9-]+\.)?(twitter|x)\.com\/([a-zA-Z0-9_]+)\/status\/(\d+)/i;
+  const regex = /https?:\/\/([a-zA-Z0-9-]+\.)?(twitter|x)\.com\/([a-zA-Z0-9_]+)\/(?:web\/)?status\/(\d+)/i;
   const match = url.match(regex);
   if (!match) return null;
   return {
@@ -17,6 +18,89 @@ function getTweetIdAndNormalize(url) {
     normalized: `https://x.com/${match[3]}/status/${match[4]}`,
     statusId: match[4]
   };
+}
+
+/**
+ * Resolves the actual screen name of the tweet author if the URL uses a placeholder like 'i' or 'web'.
+ */
+function fetchTweetAuthor(username, statusId) {
+  return new Promise((resolve, reject) => {
+    const url = `https://api.fxtwitter.com/${username}/status/${statusId}`;
+    const options = {
+      headers: {
+        'User-Agent': 'MarketplaceBossBot/1.0 (Discord Bot)'
+      },
+      timeout: 4000
+    };
+    https.get(url, options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        if (res.statusCode === 200) {
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed && parsed.tweet && parsed.tweet.author && parsed.tweet.author.screen_name) {
+              resolve(parsed.tweet.author.screen_name);
+            } else {
+              reject(new Error('Invalid structure'));
+            }
+          } catch (e) {
+            reject(e);
+          }
+        } else {
+          reject(new Error(`HTTP status code ${res.statusCode}`));
+        }
+      });
+    }).on('error', reject).on('timeout', () => reject(new Error('Request timeout')));
+  });
+}
+
+function followTwitterRedirect(url) {
+  return new Promise((resolve, reject) => {
+    const options = {
+      method: 'HEAD',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      },
+      timeout: 4000
+    };
+    const req = https.request(url, options, (res) => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        resolve(res.headers.location);
+      } else {
+        resolve(null);
+      }
+    });
+    req.on('error', reject);
+    req.on('timeout', () => req.destroy());
+    req.end();
+  });
+}
+
+async function resolveRealUsername(url, statusId) {
+  // Try FxTwitter first
+  try {
+    const username = await fetchTweetAuthor('i', statusId);
+    if (username) return username;
+  } catch (err) {
+    console.error(`⚠️ FxTwitter resolution failed for status ${statusId}: ${err.message}. Trying redirect fallback.`);
+  }
+
+  // Try redirect fallback
+  try {
+    const redirectUrl = await followTwitterRedirect(url);
+    if (redirectUrl) {
+      const fullRedirectUrl = redirectUrl.startsWith('http') ? redirectUrl : `https://x.com${redirectUrl}`;
+      const resolvedInfo = getTweetIdAndNormalize(fullRedirectUrl);
+      if (resolvedInfo && resolvedInfo.username.toLowerCase() !== 'i') {
+        return resolvedInfo.username;
+      }
+    }
+  } catch (err) {
+    console.error(`⚠️ Redirect fallback resolution failed for status ${statusId}: ${err.message}`);
+  }
+
+  return null;
 }
 
 /**
@@ -140,6 +224,16 @@ async function handleRaidSubmission(interaction, link, tweetId) {
         ephemeral: true
       });
     }
+
+    // Resolve real username if username is 'i' or 'web' (typical for mobile comment links)
+    if (tweetInfo.username.toLowerCase() === 'i' || tweetInfo.username.toLowerCase() === 'web') {
+      const resolvedUsername = await resolveRealUsername(link, tweetInfo.statusId);
+      if (resolvedUsername) {
+        tweetInfo.username = resolvedUsername;
+        tweetInfo.normalized = `https://x.com/${resolvedUsername}/status/${tweetInfo.statusId}`;
+      }
+    }
+
     const finalLinkToSave = tweetInfo.normalized;
 
     // 6. Check if the user is trying to submit the original announcement tweet link
