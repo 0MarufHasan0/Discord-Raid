@@ -309,7 +309,7 @@ module.exports = {
             });
         }
 
-        // Add Like and Retweet buttons if we have a tweet link
+        // Add Like, Retweet, and Reply buttons if we have a tweet link
         if (originalTweetLink) {
           const likeUrl = originalTweetLink;
           twitterRow.addComponents(
@@ -326,6 +326,15 @@ module.exports = {
               .setLabel('Retweet')
               .setEmoji('🔁')
               .setURL(retweetUrl)
+              .setStyle(ButtonStyle.Link)
+          );
+
+          const replyUrl = `https://x.com/intent/tweet?in_reply_to=${tweetId}`;
+          twitterRow.addComponents(
+            new ButtonBuilder()
+              .setLabel('Reply')
+              .setEmoji('💬')
+              .setURL(replyUrl)
               .setStyle(ButtonStyle.Link)
           );
         }

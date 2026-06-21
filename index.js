@@ -1697,6 +1697,13 @@ client.once('ready', async () => {
   } catch (err) {
     console.error('Error running updateMemberPanel on startup:', err);
   }
+
+  try {
+    const updateActiveRaidButtons = require('./utils/updateActiveRaidButtons');
+    await updateActiveRaidButtons(client);
+  } catch (err) {
+    console.error('Error running updateActiveRaidButtons on startup:', err);
+  }
   
   // Periodically check for expired whitelist roles (every 1 minute)
   await checkExpiredRoles(client);
