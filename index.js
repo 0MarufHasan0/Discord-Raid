@@ -1088,6 +1088,51 @@ client.on('interactionCreate', async interaction => {
             embeds: [new EmbedBuilder().setColor(0x00FF00).setDescription("✅ Leaderboard successfully updated!")],
             ephemeral: true
           });
+        } else if (interaction.customId === 'admin_delete_all_data') {
+          const { ButtonBuilder, ButtonStyle } = require('discord.js');
+          const warningEmbed = new EmbedBuilder()
+            .setColor(0xFF0000)
+            .setTitle("⚠️ Danger Zone: Delete All Data")
+            .setDescription(
+              "**This action is irreversible.** The following database records will be permanently deleted:\n\n" +
+              "• All raid submission records (`raids` collection)\n" +
+              "• All posted tweet target announcements (`tweets` collection)\n" +
+              "• Reset all user points, raidsSubmitted, and raidsApproved to 0 (`users` collection)\n" +
+              "• All whitelist role expiration tracking (`userroleexpirations` collection)\n\n" +
+              "To proceed, click the **Confirm Delete** button below and type the confirmation phrase."
+            )
+            .setTimestamp();
+
+          const confirmButton = new ButtonBuilder()
+            .setCustomId('admin_delete_all_data_confirm_btn')
+            .setLabel('Confirm Delete')
+            .setEmoji('🗑️')
+            .setStyle(ButtonStyle.Danger);
+
+          const actionRow = new ActionRowBuilder().addComponents(confirmButton);
+
+          await interaction.reply({
+            embeds: [warningEmbed],
+            components: [actionRow],
+            ephemeral: true
+          });
+        } else if (interaction.customId === 'admin_delete_all_data_confirm_btn') {
+          const modal = new ModalBuilder()
+            .setCustomId('admin_delete_all_data_modal')
+            .setTitle('Confirm Database Wipe');
+
+          const confirmInput = new TextInputBuilder()
+            .setCustomId('confirmation')
+            .setLabel('Type: confirm confirm confirm confirm Chess Dao')
+            .setPlaceholder('Type the confirmation phrase here...')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+
+          modal.addComponents(
+            new ActionRowBuilder().addComponents(confirmInput)
+          );
+
+          await interaction.showModal(modal);
         }
       } catch (error) {
         console.error('Error handling admin button click:', error);
@@ -1562,6 +1607,66 @@ client.on('interactionCreate', async interaction => {
           const command = require('./commands/admin/edituserwl');
           const mocked = mockInteraction(interaction, options);
           await command.execute(mocked);
+        } else if (interaction.customId === 'admin_delete_all_data_modal') {
+          const confirmation = interaction.fields.getTextInputValue('confirmation').trim();
+          if (confirmation !== "confirm confirm confirm confirm Chess Dao") {
+            return await interaction.reply({
+              embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Invalid confirmation phrase. Action cancelled.")],
+              ephemeral: true
+            });
+          }
+
+          await interaction.deferReply({ ephemeral: true });
+
+          const Raid = require('./database/models/Raid');
+          const Tweet = require('./database/models/Tweet');
+          const User = require('./database/models/User');
+          const UserRoleExpiration = require('./database/models/UserRoleExpiration');
+          const updateLeaderboard = require('./utils/updateLeaderboard');
+
+          try {
+            // Delete all raids
+            const raidsDelete = await Raid.deleteMany({});
+            // Delete all tweets
+            const tweetsDelete = await Tweet.deleteMany({});
+            // Reset points and stats for all users
+            const usersReset = await User.updateMany(
+              {},
+              {
+                $set: {
+                  points: 0,
+                  raidsSubmitted: 0,
+                  raidsApproved: 0
+                }
+              }
+            );
+            // Delete all expirations
+            const expirationsDelete = await UserRoleExpiration.deleteMany({});
+
+            // Update leaderboard
+            updateLeaderboard(interaction.client);
+
+            await interaction.editReply({
+              embeds: [
+                new EmbedBuilder()
+                  .setColor(0x00FF00)
+                  .setTitle("🗑️ Database Reset Successful")
+                  .setDescription(
+                    "✅ All database raid points and target data have been successfully deleted/reset.\n\n" +
+                    `• **Deleted Raids:** \`${raidsDelete.deletedCount}\`\n` +
+                    `• **Deleted Tweets:** \`${tweetsDelete.deletedCount}\`\n` +
+                    `• **Reset Users:** \`${usersReset.modifiedCount}\`\n` +
+                    `• **Deleted Expirations:** \`${expirationsDelete.deletedCount}\``
+                  )
+                  .setTimestamp()
+              ]
+            });
+          } catch (dbErr) {
+            console.error('Error resetting database in modal submission:', dbErr);
+            await interaction.editReply({
+              embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ Failed to reset database: ${dbErr.message}`)]
+            });
+          }
         }
       } catch (error) {
         console.error('Error handling admin modal submission:', error);

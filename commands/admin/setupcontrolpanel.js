@@ -109,7 +109,8 @@ module.exports = {
             "❌ **Reject Raid** — Manually reject a raid submission\n" +
             "🗑️ **Delete Announcement** — Delete a raid announcement and its records\n" +
             "🎭 **Edit User WL** — Modify or remove a member's whitelist validity\n" +
-            "🔄 **Update Leaderboard** — Force update the leaderboard embed"
+            "🔄 **Update Leaderboard** — Force update the leaderboard embed\n" +
+            "🗑️ **Delete All Data** — Reset database, clear all point and raid records"
           )
           .setColor(0xE91E63)
           .setTimestamp();
@@ -187,7 +188,12 @@ module.exports = {
               .setCustomId('admin_update_leaderboard')
               .setLabel('Update Leaderboard')
               .setEmoji('🔄')
-              .setStyle(ButtonStyle.Secondary)
+              .setStyle(ButtonStyle.Secondary),
+            new ButtonBuilder()
+              .setCustomId('admin_delete_all_data')
+              .setLabel('Delete All Data')
+              .setEmoji('🗑️')
+              .setStyle(ButtonStyle.Danger)
           );
 
         await targetChannel.send({ embeds: [embed], components: [row1, row2, row3, row4] });
