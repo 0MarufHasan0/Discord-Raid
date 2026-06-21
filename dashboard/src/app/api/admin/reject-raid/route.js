@@ -49,6 +49,26 @@ export async function POST(req) {
     // 4. Trigger bot update
     await triggerBotSync({ action: "update_all" });
 
+    // Send admin log
+    try {
+      await triggerBotSync({
+        action: "log_action",
+        details: {
+          action: "Raid Rejected (Web)",
+          executor: session.user.username,
+          target: `${raid.username} (${raid.userId})`,
+          details: `Raid **${raidId}** rejected via Web Dashboard.\n**Reason:** *${raid.rejectedReason}*`,
+          fields: [
+            { name: 'Raid Link', value: raid.link || 'N/A', inline: false },
+            { name: 'Tweet ID', value: raid.tweetId || 'N/A', inline: true }
+          ],
+          color: 0xE74C3C // Red
+        }
+      });
+    } catch (logErr) {
+      console.warn("Failed to trigger admin log for web raid rejection:", logErr);
+    }
+
     return NextResponse.json({
       success: true,
       message: "Raid submission rejected"

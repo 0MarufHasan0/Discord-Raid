@@ -72,6 +72,17 @@ module.exports = {
 
       await interaction.reply({ embeds: [replyEmbed], ephemeral: true });
 
+      // Send admin log
+      const sendAdminLog = require('../../utils/sendAdminLog');
+      await sendAdminLog(interaction.client, {
+        action: 'Manual Add Points',
+        executor: interaction.user.tag,
+        target: `${targetUser.username} (${targetUser.id})`,
+        details: `Awarded **${amount}** points.\n**Reason:** *${reason}*`,
+        fields: [{ name: 'New Balance', value: `${userDoc.points} pts`, inline: true }],
+        color: 0x2ECC71 // Green
+      });
+
     } catch (error) {
       console.error('Error in /addpoints command:', error);
       try {

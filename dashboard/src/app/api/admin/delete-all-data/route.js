@@ -48,6 +48,24 @@ export async function POST(req) {
     // 5. Trigger bot sync
     try {
       await triggerBotSync({ action: "update_all" });
+
+      // Send admin log
+      await triggerBotSync({
+        action: "log_action",
+        details: {
+          action: "Database Wipe (Web)",
+          executor: session.user.username,
+          target: "Entire Database",
+          details: `Reset/cleared all database collections via Web Dashboard.`,
+          fields: [
+            { name: 'Deleted Raids', value: `${raidsDelete.deletedCount}`, inline: true },
+            { name: 'Deleted Tweets', value: `${tweetsDelete.deletedCount}`, inline: true },
+            { name: 'Reset Users', value: `${usersReset.modifiedCount}`, inline: true },
+            { name: 'Deleted Expirations', value: `${expirationsDelete.deletedCount}`, inline: true }
+          ],
+          color: 0xE74C3C // Red
+        }
+      });
     } catch (botErr) {
       console.error("Error triggering bot sync after DB reset:", botErr);
       // Don't fail the request if bot sync fails (e.g. if bot is offline)

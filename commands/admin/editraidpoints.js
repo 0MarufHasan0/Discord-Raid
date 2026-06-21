@@ -150,6 +150,20 @@ module.exports = {
 
       await interaction.editReply({ embeds: [successEmbed] });
 
+      // Send admin log
+      const sendAdminLog = require('../../utils/sendAdminLog');
+      await sendAdminLog(interaction.client, {
+        action: 'Raid Points Edited',
+        executor: interaction.user.tag,
+        target: `Tweet ID: ${canonicalTweetId}`,
+        details: `Raid points updated to **${newPoints}** points.`,
+        fields: [
+          { name: 'Active Postings Updated', value: `${updatedCount}`, inline: true },
+          { name: 'Submissions Recalculated', value: `${recalculatedCount}`, inline: true }
+        ],
+        color: 0x3498DB // Blue
+      });
+
     } catch (error) {
       console.error('Error in /editraidpoints command:', error);
       try {

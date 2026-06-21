@@ -83,6 +83,21 @@ module.exports = {
 
       await interaction.reply({ embeds: [replyEmbed], ephemeral: true });
 
+      // Send admin log
+      const sendAdminLog = require('../../utils/sendAdminLog');
+      await sendAdminLog(interaction.client, {
+        action: 'Raid Approved',
+        executor: interaction.user.tag,
+        target: `${raid.username} (${raid.userId})`,
+        details: `Raid **${raidId}** approved. Rewarded **${rewardPoints}** points.`,
+        fields: [
+          { name: 'Raid Link', value: raid.link || 'N/A', inline: false },
+          { name: 'Tweet ID', value: raid.tweetId || 'N/A', inline: true },
+          { name: 'New Balance', value: `${userDoc.points} pts`, inline: true }
+        ],
+        color: 0x2ECC71 // Green
+      });
+
     } catch (error) {
       console.error('Error in /approveraid command:', error);
       try {

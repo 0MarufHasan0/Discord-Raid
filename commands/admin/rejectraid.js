@@ -99,6 +99,21 @@ module.exports = {
 
       await interaction.reply({ embeds: [replyEmbed], ephemeral: true });
 
+      // Send admin log
+      const sendAdminLog = require('../../utils/sendAdminLog');
+      await sendAdminLog(interaction.client, {
+        action: 'Raid Rejected',
+        executor: interaction.user.tag,
+        target: `${raid.username} (${raid.userId})`,
+        details: `Raid **${raidId}** rejected.\n**Reason:** *${reason}*`,
+        fields: [
+          { name: 'Raid Link', value: raid.link || 'N/A', inline: false },
+          { name: 'Tweet ID', value: raid.tweetId || 'N/A', inline: true },
+          { name: 'Points Deducted?', value: pointsDeducted ? `Yes (-${deductPoints} pts)` : 'No', inline: true }
+        ],
+        color: 0xE74C3C // Red
+      });
+
     } catch (error) {
       console.error('Error in /rejectraid command:', error);
       try {

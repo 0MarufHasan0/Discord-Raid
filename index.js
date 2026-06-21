@@ -1783,6 +1783,21 @@ client.on('interactionCreate', async interaction => {
               embeds: [embed]
             });
 
+            // Send admin log
+            const sendAdminLog = require('./utils/sendAdminLog');
+            await sendAdminLog(interaction.client, {
+              action: 'Raffle Draw (Discord)',
+              executor: interaction.user.tag,
+              target: 'Server Raiders',
+              details: `Drew **${winners.length}** winner(s) from **${eligible.length}** eligible participant(s).`,
+              fields: [
+                { name: 'Min Points Filter', value: `${minPoints} pts`, inline: true },
+                { name: 'Tweet ID Filter', value: tweetId || 'None', inline: true },
+                { name: 'Winners List', value: winners.map((w, i) => `**${i + 1}.** ${w.username} (${w.twitter ? (w.twitter.startsWith('@') ? w.twitter : `@${w.twitter}`) : 'N/A'})`).join('\n'), inline: false }
+              ],
+              color: 0x9B59B6 // Purple
+            });
+
           } catch (error) {
             console.error('Error executing Discord raffle draw:', error);
             await interaction.editReply({
@@ -1842,6 +1857,22 @@ client.on('interactionCreate', async interaction => {
                   )
                   .setTimestamp()
               ]
+            });
+
+            // Send admin log
+            const sendAdminLog = require('./utils/sendAdminLog');
+            await sendAdminLog(interaction.client, {
+              action: 'Database Wipe (Discord)',
+              executor: interaction.user.tag,
+              target: 'Entire Database',
+              details: `Reset/cleared all database collections.`,
+              fields: [
+                { name: 'Deleted Raids', value: `${raidsDelete.deletedCount}`, inline: true },
+                { name: 'Deleted Tweets', value: `${tweetsDelete.deletedCount}`, inline: true },
+                { name: 'Reset Users', value: `${usersReset.modifiedCount}`, inline: true },
+                { name: 'Deleted Expirations', value: `${expirationsDelete.deletedCount}`, inline: true }
+              ],
+              color: 0xE74C3C // Red
             });
           } catch (dbErr) {
             console.error('Error resetting database in modal submission:', dbErr);
@@ -1931,6 +1962,17 @@ http.createServer(async (req, res) => {
           await updateLeaderboard(client);
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: true, message: 'Marketplace and Leaderboard sync triggered' }));
+          return;
+        }
+
+        if (data.action === 'log_action') {
+          const { details } = data;
+          if (details) {
+            const sendAdminLog = require('./utils/sendAdminLog');
+            await sendAdminLog(client, details);
+          }
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true, logged: true }));
           return;
         }
 
