@@ -174,6 +174,7 @@ module.exports = {
           existingItem.roleId = roleId;
           existingItem.claimDurationDays = claimDurationDays || 30;
           existingItem.claimDurationMs = claimDurationMs;
+          existingItem.createdAt = new Date();
           await existingItem.save();
 
           // Update live marketplace channel

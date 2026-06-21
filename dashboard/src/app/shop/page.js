@@ -22,7 +22,7 @@ async function getShopData(userId) {
         { expiresAt: null },
         { expiresAt: { $gt: now } }
       ]
-    }).sort({ createdAt: -1 }) || [];
+    }).sort({ createdAt: 1 }) || [];
 
     // Fetch user's current points
     const user = await User.findOne({ discordId: userId }) || null;

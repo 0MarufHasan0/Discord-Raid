@@ -7,8 +7,8 @@ module.exports = {
     .setDescription('Show all active marketplace items'),
   async execute(interaction) {
     try {
-      // Fetch active items sorted by name
-      const items = await MarketItem.find({ isActive: true }).sort({ name: 1 });
+      // Fetch active items sorted by creation date (first listed first)
+      const items = await MarketItem.find({ isActive: true }).sort({ createdAt: 1 });
 
       // Sort items: roles on top, whitelists below
       items.sort((a, b) => {
@@ -16,7 +16,7 @@ module.exports = {
         const bIsRole = typeof b.roleId === 'string' && b.roleId.trim() !== '';
         if (aIsRole && !bIsRole) return -1;
         if (!aIsRole && bIsRole) return 1;
-        return 0; // maintain relative name-based order
+        return 0; // maintain relative creation-based order
       });
 
       const embed = new EmbedBuilder()

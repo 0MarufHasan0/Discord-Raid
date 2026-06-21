@@ -46,7 +46,7 @@ async function updateMarketplace(client) {
         { expiresAt: null },
         { expiresAt: { $gt: now } }
       ]
-    }).sort({ name: 1 });
+    }).sort({ createdAt: 1 });
 
     // Sort items: roles on top, whitelists below
     items.sort((a, b) => {
@@ -54,7 +54,7 @@ async function updateMarketplace(client) {
       const bIsRole = typeof b.roleId === 'string' && b.roleId.trim() !== '';
       if (aIsRole && !bIsRole) return -1;
       if (!aIsRole && bIsRole) return 1;
-      return 0; // maintain relative name-based order
+      return 0; // maintain relative creation-based order
     });
 
     const embed = new EmbedBuilder()
@@ -141,7 +141,7 @@ async function updateMarketplace(client) {
         }
         // Fallback: try to send a new message
         try {
-          await channel.send({ embeds: [embed], components: components });
+          await channel.send({ content: "<@&1478383117776715970>", embeds: [embed], components: components });
         } catch (sendErr) {
           console.error(`❌ Fallback send failed in channel (${channel.id}):`, sendErr.message);
         }
@@ -156,10 +156,10 @@ async function updateMarketplace(client) {
 
       try {
         if (botMessage) {
-          await botMessage.edit({ embeds: [embed], components: components });
+          await botMessage.edit({ content: "<@&1478383117776715970>", embeds: [embed], components: components });
           console.log(`✅ Live Marketplace message updated in #${channel.name} (${channel.id})`);
         } else {
-          await channel.send({ embeds: [embed], components: components });
+          await channel.send({ content: "<@&1478383117776715970>", embeds: [embed], components: components });
           console.log(`✅ New Live Marketplace message sent in #${channel.name} (${channel.id})`);
         }
       } catch (sendOrEditError) {

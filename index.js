@@ -268,7 +268,7 @@ client.on('interactionCreate', async interaction => {
           query.roleId = { $ne: null, $exists: true, $ne: "" };
         }
 
-        const items = await MarketItem.find(query).sort({ name: 1 });
+        const items = await MarketItem.find(query).sort({ createdAt: 1 });
 
         if (items.length === 0) {
           const typeStr = isWlOnly ? "whitelist ticket" : "role reward";
