@@ -103,6 +103,40 @@ client.on('interactionCreate', async interaction => {
 
 // Handle button and modal interactions
 client.on('interactionCreate', async interaction => {
+  const mockInteraction = (originalInteraction, options) => {
+    return new Proxy(originalInteraction, {
+      get(target, prop) {
+        if (prop === 'options') {
+          return {
+            getString(name) {
+              return options[name] !== undefined && options[name] !== null ? String(options[name]) : null;
+            },
+            getInteger(name) {
+              return options[name] !== undefined && options[name] !== null ? Number(options[name]) : null;
+            },
+            getBoolean(name) {
+              return options[name] !== undefined && options[name] !== null ? Boolean(options[name]) : null;
+            },
+            getUser(name) {
+              return options[name] || null;
+            },
+            getRole(name) {
+              return options[name] || null;
+            },
+            getChannel(name) {
+              return options[name] || null;
+            }
+          };
+        }
+        const val = target[prop];
+        if (typeof val === 'function') {
+          return val.bind(target);
+        }
+        return val;
+      }
+    });
+  };
+
   if (interaction.isButton()) {
     if (interaction.customId.startsWith('copy_tweet_id_')) {
       const tweetId = interaction.customId.replace('copy_tweet_id_', '');
@@ -460,6 +494,601 @@ client.on('interactionCreate', async interaction => {
           await interaction.reply({ content: '❌ Failed to delete the ticket.', ephemeral: true });
         } catch (e) {}
       }
+    } else if (interaction.customId === 'panel_submit_raid') {
+      try {
+        const User = require('./database/models/User');
+        const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, EmbedBuilder } = require('discord.js');
+
+        // Check if user has registered their Twitter handle
+        const userDoc = await User.findOne({ discordId: interaction.user.id });
+        if (!userDoc || !userDoc.twitter) {
+          return await interaction.reply({
+            embeds: [
+              new EmbedBuilder()
+                .setColor(0xFF0000)
+                .setDescription("❌ You must connect your Twitter/X account before submitting a raid!\n\nClick the **Set Twitter** button to link your Twitter username first.")
+            ],
+            ephemeral: true
+          });
+        }
+
+        // Show submit raid modal
+        const modal = new ModalBuilder()
+          .setCustomId('panel_submit_raid_modal')
+          .setTitle('Submit Raid Submission');
+
+        const tweetIdInput = new TextInputBuilder()
+          .setCustomId('panel_tweet_id')
+          .setLabel('Raid Tweet ID')
+          .setPlaceholder('Enter the Tweet ID of the raid (e.g. 180252...)')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(true);
+
+        const proofInput = new TextInputBuilder()
+          .setCustomId('panel_proof_link')
+          .setLabel('Paste your reply/comment link (Proof)')
+          .setPlaceholder('https://x.com/yourhandle/status/...')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(true);
+
+        const row1 = new ActionRowBuilder().addComponents(tweetIdInput);
+        const row2 = new ActionRowBuilder().addComponents(proofInput);
+        modal.addComponents(row1, row2);
+
+        await interaction.showModal(modal);
+      } catch (error) {
+        console.error('Error opening panel submit raid modal:', error);
+      }
+    } else if (interaction.customId === 'panel_set_twitter') {
+      try {
+        const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+
+        const modal = new ModalBuilder()
+          .setCustomId('panel_set_twitter_modal')
+          .setTitle('Set Twitter Username');
+
+        const usernameInput = new TextInputBuilder()
+          .setCustomId('panel_twitter_username')
+          .setLabel('Twitter Handle (Without @)')
+          .setPlaceholder('username')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(true);
+
+        const row = new ActionRowBuilder().addComponents(usernameInput);
+        modal.addComponents(row);
+
+        await interaction.showModal(modal);
+      } catch (error) {
+        console.error('Error opening panel set twitter modal:', error);
+      }
+    } else if (interaction.customId === 'panel_disconnect_twitter') {
+      try {
+        const User = require('./database/models/User');
+        const { EmbedBuilder } = require('discord.js');
+
+        const userDoc = await User.findOne({ discordId: interaction.user.id });
+
+        if (!userDoc || !userDoc.twitter) {
+          return interaction.reply({
+            embeds: [
+              new EmbedBuilder()
+                .setColor(0xFF0000)
+                .setDescription("❌ You don't have a Twitter/X account connected to disconnect!")
+            ],
+            ephemeral: true
+          });
+        }
+
+        const connectedHandle = userDoc.twitter;
+        userDoc.twitter = null;
+        await userDoc.save();
+
+        const successEmbed = new EmbedBuilder()
+          .setColor(0x00FF00)
+          .setTitle("🐦 Twitter Account Disconnected")
+          .setDescription(`✅ Successfully disconnected **@${connectedHandle}** from your profile.`)
+          .setTimestamp();
+
+        return interaction.reply({ embeds: [successEmbed], ephemeral: true });
+      } catch (error) {
+        console.error('Error handling panel disconnect twitter button:', error);
+      }
+    } else if (interaction.customId === 'panel_my_points') {
+      try {
+        const User = require('./database/models/User');
+        const { EmbedBuilder } = require('discord.js');
+
+        let userDoc = await User.findOne({ discordId: interaction.user.id });
+        if (!userDoc) {
+          userDoc = new User({
+            discordId: interaction.user.id,
+            username: interaction.user.username,
+            points: 0,
+            raidsSubmitted: 0,
+            raidsApproved: 0
+          });
+          await userDoc.save();
+        }
+
+        const embed = new EmbedBuilder()
+          .setTitle(`💰 Your Points — ${interaction.user.username}`)
+          .setColor(0x00FF00)
+          .addFields(
+            { name: 'Total Points', value: String(userDoc.points), inline: true },
+            { name: 'Raids Submitted', value: String(userDoc.raidsSubmitted), inline: true },
+            { name: 'Raids Approved', value: String(userDoc.raidsApproved), inline: true }
+          )
+          .setTimestamp();
+
+        await interaction.reply({ embeds: [embed], ephemeral: true });
+      } catch (error) {
+        console.error('Error handling panel my points button:', error);
+      }
+    } else if (interaction.customId === 'panel_my_raid_history') {
+      try {
+        const Raid = require('./database/models/Raid');
+        const { EmbedBuilder } = require('discord.js');
+
+        const raids = await Raid.find({ userId: interaction.user.id })
+          .sort({ submittedAt: -1 })
+          .limit(5);
+
+        if (raids.length === 0) {
+          return interaction.reply({
+            embeds: [new EmbedBuilder().setColor(0x5865F2).setDescription("You have not submitted any raids yet.")],
+            ephemeral: true
+          });
+        }
+
+        const embed = new EmbedBuilder()
+          .setTitle("📜 Your Raid History")
+          .setColor(0x5865F2)
+          .setTimestamp();
+
+        raids.forEach(raid => {
+          const formattedDate = raid.submittedAt ? new Date(raid.submittedAt).toLocaleString('en-US', { timeZone: 'Asia/Dhaka' }) : 'Unknown';
+          
+          let extraInfo = '';
+          let statusEmoji = '🟡';
+          if (raid.status === 'rejected') {
+            statusEmoji = '🔴';
+            if (raid.rejectedReason) {
+              extraInfo = `\n❌ **Reason:** ${raid.rejectedReason}`;
+            }
+          } else if (raid.status === 'approved') {
+            statusEmoji = '🟢';
+            if (raid.approvedBy) {
+              extraInfo = `\n✅ **Approved By:** ${raid.approvedBy}`;
+            }
+          }
+
+          embed.addFields({
+            name: raid.raidId,
+            value: `${statusEmoji} **Status:** ${raid.status}\n📋 **Tweet ID:** ${raid.tweetId || 'N/A'}\n🔗 **Link:** ${raid.link}\n📅 **Date:** ${formattedDate}${extraInfo}`
+          });
+        });
+
+        await interaction.reply({ embeds: [embed], ephemeral: true });
+      } catch (error) {
+        console.error('Error handling panel raid history button:', error);
+      }
+    } else if (interaction.customId === 'panel_remove_raid') {
+      try {
+        const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+
+        const modal = new ModalBuilder()
+          .setCustomId('panel_remove_raid_modal')
+          .setTitle('Remove Raid Submission');
+
+        const tweetIdInput = new TextInputBuilder()
+          .setCustomId('panel_remove_tweet_id')
+          .setLabel('Raid Tweet ID')
+          .setPlaceholder('Enter the Tweet ID of the raid to remove')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(true);
+
+        const row = new ActionRowBuilder().addComponents(tweetIdInput);
+        modal.addComponents(row);
+
+        await interaction.showModal(modal);
+      } catch (error) {
+        console.error('Error opening panel remove raid modal:', error);
+      }
+    } else if (interaction.customId === 'panel_leaderboard') {
+      try {
+        const User = require('./database/models/User');
+        const { EmbedBuilder } = require('discord.js');
+
+        const topUsers = await User.find({}).sort({ points: -1 }).limit(10);
+
+        const embed = new EmbedBuilder()
+          .setTitle("🏆 Leaderboard — Top Raiders")
+          .setColor(0xFFD700)
+          .setTimestamp();
+
+        if (topUsers.length === 0) {
+          embed.setDescription("📭 No users found on the leaderboard.");
+          return interaction.reply({ embeds: [embed], ephemeral: true });
+        }
+
+        const rankEmojis = ['🥇', '🥈', '🥉'];
+
+        topUsers.forEach((user, index) => {
+          const rank = index + 1;
+          const emoji = rank <= 3 ? rankEmojis[index] : `#${rank}`;
+          
+          embed.addFields({
+            name: `${emoji} Position ${rank}`,
+            value: `${user.username} — ${user.points} points`
+          });
+        });
+
+        await interaction.reply({ embeds: [embed], ephemeral: true });
+      } catch (error) {
+        console.error('Error handling panel leaderboard button:', error);
+      }
+    } else if (interaction.customId.startsWith('admin_')) {
+      // Security check for all admin buttons
+      try {
+        const checkAdmin = require('./utils/checkAdmin');
+        const isAdmin = await checkAdmin(interaction);
+        if (!isAdmin) {
+          return await interaction.reply({
+            content: "❌ You do not have permission to use admin commands.",
+            ephemeral: true
+          });
+        }
+
+        const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, EmbedBuilder } = require('discord.js');
+
+        if (interaction.customId === 'admin_add_tweet') {
+          const modal = new ModalBuilder()
+            .setCustomId('admin_add_tweet_modal')
+            .setTitle('Add Tweet for Raid');
+
+          const contentInput = new TextInputBuilder()
+            .setCustomId('content')
+            .setLabel('Tweet Content / Tags')
+            .setPlaceholder('Enter tweet content or tags...')
+            .setStyle(TextInputStyle.Paragraph)
+            .setRequired(true);
+
+          const linkInput = new TextInputBuilder()
+            .setCustomId('tweet_link')
+            .setLabel('Tweet Link / URL (optional)')
+            .setPlaceholder('https://x.com/username/status/...')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false);
+
+          const durationInput = new TextInputBuilder()
+            .setCustomId('duration_hours')
+            .setLabel('Raid Duration (Hours, default: 24)')
+            .setPlaceholder('24')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false);
+
+          const pointsInput = new TextInputBuilder()
+            .setCustomId('points')
+            .setLabel('Points Rewarded (default: 1)')
+            .setPlaceholder('1')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false);
+
+          modal.addComponents(
+            new ActionRowBuilder().addComponents(contentInput),
+            new ActionRowBuilder().addComponents(linkInput),
+            new ActionRowBuilder().addComponents(durationInput),
+            new ActionRowBuilder().addComponents(pointsInput)
+          );
+
+          await interaction.showModal(modal);
+        } else if (interaction.customId === 'admin_add_wl_item') {
+          const modal = new ModalBuilder()
+            .setCustomId('admin_add_wl_item_modal')
+            .setTitle('Add Marketplace Item');
+
+          const nameInput = new TextInputBuilder()
+            .setCustomId('name')
+            .setLabel('Item Name')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+
+          const descInput = new TextInputBuilder()
+            .setCustomId('description')
+            .setLabel('Item Description')
+            .setStyle(TextInputStyle.Paragraph)
+            .setRequired(true);
+
+          const costInput = new TextInputBuilder()
+            .setCustomId('point_cost')
+            .setLabel('Point Cost')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+
+          const slotsInput = new TextInputBuilder()
+            .setCustomId('total_slots')
+            .setLabel('Total Slots')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+
+          const roleInput = new TextInputBuilder()
+            .setCustomId('role_or_create_name')
+            .setLabel('Role ID, Mention, or Create Name (optional)')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false);
+
+          modal.addComponents(
+            new ActionRowBuilder().addComponents(nameInput),
+            new ActionRowBuilder().addComponents(descInput),
+            new ActionRowBuilder().addComponents(costInput),
+            new ActionRowBuilder().addComponents(slotsInput),
+            new ActionRowBuilder().addComponents(roleInput)
+          );
+
+          await interaction.showModal(modal);
+        } else if (interaction.customId === 'admin_edit_wl_item') {
+          const modal = new ModalBuilder()
+            .setCustomId('admin_edit_wl_item_modal')
+            .setTitle('Edit Marketplace Item');
+
+          const nameInput = new TextInputBuilder()
+            .setCustomId('name')
+            .setLabel('Item Name to Edit')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+
+          const newNameInput = new TextInputBuilder()
+            .setCustomId('new_name')
+            .setLabel('New Name (optional)')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false);
+
+          const descInput = new TextInputBuilder()
+            .setCustomId('description')
+            .setLabel('New Description (optional)')
+            .setStyle(TextInputStyle.Paragraph)
+            .setRequired(false);
+
+          const costInput = new TextInputBuilder()
+            .setCustomId('point_cost')
+            .setLabel('New Point Cost (optional)')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false);
+
+          const slotsInput = new TextInputBuilder()
+            .setCustomId('total_slots')
+            .setLabel('New Total Slots (optional)')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false);
+
+          modal.addComponents(
+            new ActionRowBuilder().addComponents(nameInput),
+            new ActionRowBuilder().addComponents(newNameInput),
+            new ActionRowBuilder().addComponents(descInput),
+            new ActionRowBuilder().addComponents(costInput),
+            new ActionRowBuilder().addComponents(slotsInput)
+          );
+
+          await interaction.showModal(modal);
+        } else if (interaction.customId === 'admin_remove_wl_item') {
+          const modal = new ModalBuilder()
+            .setCustomId('admin_remove_wl_item_modal')
+            .setTitle('Remove Marketplace Item');
+
+          const nameInput = new TextInputBuilder()
+            .setCustomId('name')
+            .setLabel('Item Name to Remove')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+
+          const deleteRoleInput = new TextInputBuilder()
+            .setCustomId('delete_role')
+            .setLabel('Delete Associated Role? (true/false)')
+            .setPlaceholder('false')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false);
+
+          modal.addComponents(
+            new ActionRowBuilder().addComponents(nameInput),
+            new ActionRowBuilder().addComponents(deleteRoleInput)
+          );
+
+          await interaction.showModal(modal);
+        } else if (interaction.customId === 'admin_add_points') {
+          const modal = new ModalBuilder()
+            .setCustomId('admin_add_points_modal')
+            .setTitle('Add Points to User');
+
+          const userInput = new TextInputBuilder()
+            .setCustomId('user')
+            .setLabel('Target Username or User ID')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+
+          const amountInput = new TextInputBuilder()
+            .setCustomId('amount')
+            .setLabel('Point Amount to Add')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+
+          const reasonInput = new TextInputBuilder()
+            .setCustomId('reason')
+            .setLabel('Reason (optional)')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false);
+
+          modal.addComponents(
+            new ActionRowBuilder().addComponents(userInput),
+            new ActionRowBuilder().addComponents(amountInput),
+            new ActionRowBuilder().addComponents(reasonInput)
+          );
+
+          await interaction.showModal(modal);
+        } else if (interaction.customId === 'admin_remove_points') {
+          const modal = new ModalBuilder()
+            .setCustomId('admin_remove_points_modal')
+            .setTitle('Remove Points from User');
+
+          const userInput = new TextInputBuilder()
+            .setCustomId('user')
+            .setLabel('Target Username or User ID')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+
+          const amountInput = new TextInputBuilder()
+            .setCustomId('amount')
+            .setLabel('Point Amount to Deduct')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+
+          const reasonInput = new TextInputBuilder()
+            .setCustomId('reason')
+            .setLabel('Reason (optional)')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false);
+
+          modal.addComponents(
+            new ActionRowBuilder().addComponents(userInput),
+            new ActionRowBuilder().addComponents(amountInput),
+            new ActionRowBuilder().addComponents(reasonInput)
+          );
+
+          await interaction.showModal(modal);
+        } else if (interaction.customId === 'admin_edit_raid_points') {
+          const modal = new ModalBuilder()
+            .setCustomId('admin_edit_raid_points_modal')
+            .setTitle('Edit Raid Points');
+
+          const tweetIdInput = new TextInputBuilder()
+            .setCustomId('tweet_id')
+            .setLabel('Raid Tweet ID')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+
+          const pointsInput = new TextInputBuilder()
+            .setCustomId('points')
+            .setLabel('New Points Value')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+
+          modal.addComponents(
+            new ActionRowBuilder().addComponents(tweetIdInput),
+            new ActionRowBuilder().addComponents(pointsInput)
+          );
+
+          await interaction.showModal(modal);
+        } else if (interaction.customId === 'admin_approve_raid') {
+          const modal = new ModalBuilder()
+            .setCustomId('admin_approve_raid_modal')
+            .setTitle('Approve Raid Submission');
+
+          const raidIdInput = new TextInputBuilder()
+            .setCustomId('raid_id')
+            .setLabel('Raid ID (RAID-xxxxxx)')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+
+          modal.addComponents(
+            new ActionRowBuilder().addComponents(raidIdInput)
+          );
+
+          await interaction.showModal(modal);
+        } else if (interaction.customId === 'admin_reject_raid') {
+          const modal = new ModalBuilder()
+            .setCustomId('admin_reject_raid_modal')
+            .setTitle('Reject Raid Submission');
+
+          const raidIdInput = new TextInputBuilder()
+            .setCustomId('raid_id')
+            .setLabel('Raid ID (RAID-xxxxxx)')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+
+          const reasonInput = new TextInputBuilder()
+            .setCustomId('reason')
+            .setLabel('Rejection Reason (optional)')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false);
+
+          modal.addComponents(
+            new ActionRowBuilder().addComponents(raidIdInput),
+            new ActionRowBuilder().addComponents(reasonInput)
+          );
+
+          await interaction.showModal(modal);
+        } else if (interaction.customId === 'admin_removeraid') {
+          const modal = new ModalBuilder()
+            .setCustomId('admin_removeraid_modal')
+            .setTitle('Delete Raid Announcement');
+
+          const tweetIdInput = new TextInputBuilder()
+            .setCustomId('tweet_id')
+            .setLabel('Raid Tweet ID')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+
+          const deleteMsgInput = new TextInputBuilder()
+            .setCustomId('delete_message')
+            .setLabel('Delete Discord Announcement Message? (true/false)')
+            .setPlaceholder('true')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false);
+
+          modal.addComponents(
+            new ActionRowBuilder().addComponents(tweetIdInput),
+            new ActionRowBuilder().addComponents(deleteMsgInput)
+          );
+
+          await interaction.showModal(modal);
+        } else if (interaction.customId === 'admin_edit_user_wl') {
+          const modal = new ModalBuilder()
+            .setCustomId('admin_edit_user_wl_modal')
+            .setTitle('Edit User Whitelist Validity');
+
+          const roleInput = new TextInputBuilder()
+            .setCustomId('role')
+            .setLabel('Whitelist Role ID or Mention')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+
+          const actionInput = new TextInputBuilder()
+            .setCustomId('action')
+            .setLabel('Action (remove/add_days/reduce_days/set_days)')
+            .setPlaceholder('set_days')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+
+          const daysInput = new TextInputBuilder()
+            .setCustomId('days')
+            .setLabel('Number of Days (optional/as needed)')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false);
+
+          const userInput = new TextInputBuilder()
+            .setCustomId('user')
+            .setLabel('Target Username or User ID (optional)')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false);
+
+          modal.addComponents(
+            new ActionRowBuilder().addComponents(roleInput),
+            new ActionRowBuilder().addComponents(actionInput),
+            new ActionRowBuilder().addComponents(daysInput),
+            new ActionRowBuilder().addComponents(userInput)
+          );
+
+          await interaction.showModal(modal);
+        } else if (interaction.customId === 'admin_update_leaderboard') {
+          const updateLeaderboard = require('./utils/updateLeaderboard');
+          updateLeaderboard(interaction.client);
+          await interaction.reply({
+            embeds: [new EmbedBuilder().setColor(0x00FF00).setDescription("✅ Leaderboard successfully updated!")],
+            ephemeral: true
+          });
+        }
+      } catch (error) {
+        console.error('Error handling admin button click:', error);
+      }
     }
   } else if (interaction.isModalSubmit()) {
     if (interaction.customId.startsWith('submit_raid_modal_')) {
@@ -473,6 +1102,342 @@ client.on('interactionCreate', async interaction => {
         await handleRaidSubmission(interaction, link, tweetId);
       } catch (error) {
         console.error('Error handling submit raid modal submission:', error);
+      }
+    } else if (interaction.customId === 'panel_submit_raid_modal') {
+      const tweetId = interaction.fields.getTextInputValue('panel_tweet_id').trim();
+      const link = interaction.fields.getTextInputValue('panel_proof_link').trim();
+      try {
+        await interaction.deferReply({ ephemeral: true });
+        const handleRaidSubmission = require('./utils/handleRaidSubmission');
+        await handleRaidSubmission(interaction, link, tweetId);
+      } catch (error) {
+        console.error('Error handling panel submit raid modal submission:', error);
+      }
+    } else if (interaction.customId === 'panel_set_twitter_modal') {
+      let twitterHandle = interaction.fields.getTextInputValue('panel_twitter_username').trim();
+      try {
+        const User = require('./database/models/User');
+        const { EmbedBuilder } = require('discord.js');
+
+        if (twitterHandle.startsWith('@')) {
+          twitterHandle = twitterHandle.substring(1);
+        }
+        twitterHandle = twitterHandle.trim();
+
+        if (!/^[a-zA-Z0-9_]{1,15}$/.test(twitterHandle)) {
+          return interaction.reply({
+            embeds: [
+              new EmbedBuilder()
+                .setColor(0xFF0000)
+                .setDescription("❌ Invalid Twitter/X username! Twitter handles should be 1-15 characters long and contain only letters, numbers, and underscores.")
+            ],
+            ephemeral: true
+          });
+        }
+
+        const lowercasedHandle = twitterHandle.toLowerCase();
+
+        const existingUser = await User.findOne({ 
+          twitter: lowercasedHandle, 
+          discordId: { $ne: interaction.user.id } 
+        });
+
+        if (existingUser) {
+          return interaction.reply({
+            embeds: [
+              new EmbedBuilder()
+                .setColor(0xFF0000)
+                .setDescription(`❌ The Twitter handle **@${twitterHandle}** is already linked to another user!`)
+            ],
+            ephemeral: true
+          });
+        }
+
+        const userDoc = await User.findOneAndUpdate(
+          { discordId: interaction.user.id },
+          {
+            $set: { 
+              twitter: lowercasedHandle,
+              username: interaction.user.username
+            },
+            $setOnInsert: { 
+              discordId: interaction.user.id, 
+              createdAt: new Date() 
+            }
+          },
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+
+        const successEmbed = new EmbedBuilder()
+          .setColor(0x00FF00)
+          .setTitle("🐦 Twitter Account Connected")
+          .setDescription(`✅ Successfully linked your Twitter/X account: **@${twitterHandle}**!\n\nYou can now submit raids for approval.`)
+          .setTimestamp();
+
+        return interaction.reply({ embeds: [successEmbed], ephemeral: true });
+
+      } catch (error) {
+        console.error('Error handling panel set twitter modal submission:', error);
+      }
+    } else if (interaction.customId === 'panel_remove_raid_modal') {
+      const tweetId = interaction.fields.getTextInputValue('panel_remove_tweet_id').trim();
+      try {
+        await interaction.deferReply({ ephemeral: true });
+        const Raid = require('./database/models/Raid');
+        const User = require('./database/models/User');
+        const Tweet = require('./database/models/Tweet');
+        const updateLeaderboard = require('./utils/updateLeaderboard');
+        const { EmbedBuilder } = require('discord.js');
+
+        const escapedTweetId = tweetId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        const tweetDoc = await Tweet.findOne({ 
+          tweetId: { $regex: new RegExp(`^${escapedTweetId}$`, 'i') } 
+        }).sort({ postedAt: -1 });
+
+        if (tweetDoc && tweetDoc.expiresAt && new Date() > tweetDoc.expiresAt) {
+          return interaction.editReply({
+            embeds: [
+              new EmbedBuilder()
+                .setColor(0xFF0000)
+                .setDescription(`❌ This raid has expired! You cannot remove your submission for an expired raid.`)
+            ]
+          });
+        }
+
+        const raid = await Raid.findOne({ 
+          userId: interaction.user.id, 
+          tweetId: { $regex: new RegExp(`^${escapedTweetId}$`, 'i') } 
+        });
+
+        if (!raid) {
+          return interaction.editReply({
+            embeds: [
+              new EmbedBuilder()
+                .setColor(0xFF0000)
+                .setDescription(`❌ No raid submission found for this Tweet ID (\`${tweetId}\`).`)
+            ]
+          });
+        }
+
+        await Raid.deleteOne({ _id: raid._id });
+
+        const userDoc = await User.findOne({ discordId: interaction.user.id });
+        const deductPoints = (raid && typeof raid.points === 'number') ? raid.points : 1;
+        if (userDoc) {
+          const wasApproved = raid.status === 'approved';
+          if (wasApproved) {
+            userDoc.points = Math.max(0, userDoc.points - deductPoints);
+            userDoc.raidsApproved = Math.max(0, userDoc.raidsApproved - 1);
+          }
+          userDoc.raidsSubmitted = Math.max(0, userDoc.raidsSubmitted - 1);
+          await userDoc.save();
+
+          if (wasApproved) {
+            updateLeaderboard(interaction.client);
+          }
+        }
+
+        const totalPoints = userDoc ? userDoc.points : 0;
+        const canonicalTweetId = tweetDoc ? tweetDoc.tweetId : raid.tweetId || tweetId;
+
+        const replyEmbed = new EmbedBuilder()
+          .setColor(0x00FF00)
+          .setDescription(
+            `✅ Your raid submission has been successfully deleted!\n\n` +
+            `📋 **Tweet ID:** **${canonicalTweetId}**\n` +
+            `💰 **Point Change:** **-${deductPoints}** (if it was approved)\n` +
+            `💰 **Your current total points:** **${totalPoints}**\n\n` +
+            `You can now submit a new raid for this Tweet ID.`
+          )
+          .setTimestamp();
+
+        await interaction.editReply({ embeds: [replyEmbed] });
+
+      } catch (error) {
+        console.error('Error handling panel remove raid modal submission:', error);
+      }
+    } else if (interaction.customId.startsWith('admin_')) {
+      // Security check for all admin modal submissions
+      try {
+        const checkAdmin = require('./utils/checkAdmin');
+        const isAdmin = await checkAdmin(interaction);
+        if (!isAdmin) {
+          return await interaction.reply({
+            content: "❌ You do not have permission to use admin commands.",
+            ephemeral: true
+          });
+        }
+
+        const { EmbedBuilder } = require('discord.js');
+
+        if (interaction.customId === 'admin_add_tweet_modal') {
+          const content = interaction.fields.getTextInputValue('content').trim();
+          const tweetLink = interaction.fields.getTextInputValue('tweet_link')?.trim() || null;
+          const durationHours = parseInt(interaction.fields.getTextInputValue('duration_hours')) || 0;
+          const points = interaction.fields.getTextInputValue('points')?.trim();
+          
+          const options = {
+            content,
+            tweet_link: tweetLink,
+            duration_hours: durationHours,
+            points: points ? parseInt(points) : null
+          };
+
+          const command = require('./commands/admin/addtweet');
+          const mocked = mockInteraction(interaction, options);
+          await command.execute(mocked);
+        } else if (interaction.customId === 'admin_add_wl_item_modal') {
+          const roleOrCreate = interaction.fields.getTextInputValue('role_or_create_name')?.trim();
+          let role = null;
+          let createRoleName = null;
+          if (roleOrCreate) {
+            const cleanRoleId = roleOrCreate.replace(/[<@&>]/g, '');
+            role = interaction.guild.roles.cache.get(cleanRoleId) || await interaction.guild.roles.fetch(cleanRoleId).catch(() => null);
+            if (!role) {
+              createRoleName = roleOrCreate;
+            }
+          }
+
+          const options = {
+            name: interaction.fields.getTextInputValue('name').trim(),
+            description: interaction.fields.getTextInputValue('description').trim(),
+            point_cost: parseInt(interaction.fields.getTextInputValue('point_cost')),
+            total_slots: parseInt(interaction.fields.getTextInputValue('total_slots')),
+            role,
+            create_role_name: createRoleName
+          };
+
+          const command = require('./commands/admin/addwlitem');
+          const mocked = mockInteraction(interaction, options);
+          await command.execute(mocked);
+        } else if (interaction.customId === 'admin_edit_wl_item_modal') {
+          const options = {
+            name: interaction.fields.getTextInputValue('name').trim(),
+            new_name: interaction.fields.getTextInputValue('new_name')?.trim() || null,
+            description: interaction.fields.getTextInputValue('description')?.trim() || null,
+            point_cost: interaction.fields.getTextInputValue('point_cost') ? parseInt(interaction.fields.getTextInputValue('point_cost')) : null,
+            total_slots: interaction.fields.getTextInputValue('total_slots') ? parseInt(interaction.fields.getTextInputValue('total_slots')) : null
+          };
+
+          const command = require('./commands/admin/editwlitem');
+          const mocked = mockInteraction(interaction, options);
+          await command.execute(mocked);
+        } else if (interaction.customId === 'admin_remove_wl_item_modal') {
+          const deleteRoleStr = interaction.fields.getTextInputValue('delete_role')?.trim().toLowerCase();
+          const deleteRole = deleteRoleStr === 'true' || deleteRoleStr === 'yes' || deleteRoleStr === '1';
+          
+          const options = {
+            name: interaction.fields.getTextInputValue('name').trim(),
+            delete_role: deleteRole
+          };
+
+          const command = require('./commands/admin/removewlitem');
+          const mocked = mockInteraction(interaction, options);
+          await command.execute(mocked);
+        } else if (interaction.customId === 'admin_add_points_modal' || interaction.customId === 'admin_remove_points_modal') {
+          const targetInput = interaction.fields.getTextInputValue('user').trim();
+          const cleanId = targetInput.replace(/[<@!>]/g, '');
+          let targetUser = interaction.guild.members.cache.get(cleanId)?.user || await interaction.client.users.fetch(cleanId).catch(() => null);
+          
+          if (!targetUser) {
+            const member = interaction.guild.members.cache.find(m => m.user.username.toLowerCase() === targetInput.toLowerCase());
+            targetUser = member?.user;
+          }
+
+          if (!targetUser) {
+            return await interaction.reply({
+              embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ Target user '${targetInput}' not found. Please provide a valid User ID or Username.`)],
+              ephemeral: true
+            });
+          }
+
+          const options = {
+            user: targetUser,
+            amount: parseInt(interaction.fields.getTextInputValue('amount')),
+            reason: interaction.fields.getTextInputValue('reason')?.trim() || null
+          };
+
+          const cmdFile = interaction.customId === 'admin_add_points_modal' ? 'addpoints' : 'removepoints';
+          const command = require(`./commands/admin/${cmdFile}`);
+          const mocked = mockInteraction(interaction, options);
+          await command.execute(mocked);
+        } else if (interaction.customId === 'admin_edit_raid_points_modal') {
+          const options = {
+            tweet_id: interaction.fields.getTextInputValue('tweet_id').trim(),
+            points: parseInt(interaction.fields.getTextInputValue('points'))
+          };
+
+          const command = require('./commands/admin/editraidpoints');
+          const mocked = mockInteraction(interaction, options);
+          await command.execute(mocked);
+        } else if (interaction.customId === 'admin_approve_raid_modal' || interaction.customId === 'admin_reject_raid_modal') {
+          const options = {
+            raid_id: interaction.fields.getTextInputValue('raid_id').trim(),
+            reason: interaction.fields.getTextInputValue('reason')?.trim() || null
+          };
+
+          const cmdFile = interaction.customId === 'admin_approve_raid_modal' ? 'approveraid' : 'rejectraid';
+          const command = require(`./commands/admin/${cmdFile}`);
+          const mocked = mockInteraction(interaction, options);
+          await command.execute(mocked);
+        } else if (interaction.customId === 'admin_removeraid_modal') {
+          const deleteMsgStr = interaction.fields.getTextInputValue('delete_message')?.trim().toLowerCase();
+          const deleteMsg = deleteMsgStr !== 'false' && deleteMsgStr !== 'no' && deleteMsgStr !== '0';
+
+          const options = {
+            tweet_id: interaction.fields.getTextInputValue('tweet_id').trim(),
+            delete_message: deleteMsg
+          };
+
+          const command = require('./commands/admin/removeraid');
+          const mocked = mockInteraction(interaction, options);
+          await command.execute(mocked);
+        } else if (interaction.customId === 'admin_edit_user_wl_modal') {
+          const roleInput = interaction.fields.getTextInputValue('role').trim();
+          const cleanRoleId = roleInput.replace(/[<@&>]/g, '');
+          const role = interaction.guild.roles.cache.get(cleanRoleId) || await interaction.guild.roles.fetch(cleanRoleId).catch(() => null);
+
+          if (!role) {
+            return await interaction.reply({
+              embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ Role '${roleInput}' not found on the server. Please provide a valid Role ID or mention.`)],
+              ephemeral: true
+            });
+          }
+
+          const targetInput = interaction.fields.getTextInputValue('user')?.trim();
+          let targetUser = null;
+          if (targetInput) {
+            const cleanUserId = targetInput.replace(/[<@!>]/g, '');
+            targetUser = interaction.guild.members.cache.get(cleanUserId)?.user || await interaction.client.users.fetch(cleanUserId).catch(() => null);
+            if (!targetUser) {
+              const member = interaction.guild.members.cache.find(m => m.user.username.toLowerCase() === targetInput.toLowerCase());
+              targetUser = member?.user;
+            }
+
+            if (!targetUser) {
+              return await interaction.reply({
+                embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ Target user '${targetInput}' not found. Please provide a valid User ID or Username.`)],
+                ephemeral: true
+              });
+            }
+          }
+
+          const daysStr = interaction.fields.getTextInputValue('days')?.trim();
+
+          const options = {
+            role,
+            action: interaction.fields.getTextInputValue('action').trim().toLowerCase(),
+            days: daysStr ? parseInt(daysStr) : null,
+            user: targetUser
+          };
+
+          const command = require('./commands/admin/edituserwl');
+          const mocked = mockInteraction(interaction, options);
+          await command.execute(mocked);
+        }
+      } catch (error) {
+        console.error('Error handling admin modal submission:', error);
       }
     }
   } else if (interaction.isStringSelectMenu()) {
@@ -493,6 +1458,13 @@ client.once('ready', async () => {
   console.log("✅ Marketplace Boss Bot online!");
   await updateMarketplace(client);
   await updateLeaderboard(client);
+  
+  try {
+    const updateMemberPanel = require('./utils/updateMemberPanel');
+    await updateMemberPanel(client);
+  } catch (err) {
+    console.error('Error running updateMemberPanel on startup:', err);
+  }
   
   // Periodically check for expired whitelist roles (every 1 minute)
   await checkExpiredRoles(client);

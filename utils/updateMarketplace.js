@@ -48,6 +48,15 @@ async function updateMarketplace(client) {
       ]
     }).sort({ name: 1 });
 
+    // Sort items: roles on top, whitelists below
+    items.sort((a, b) => {
+      const aIsRole = typeof a.roleId === 'string' && a.roleId.trim() !== '';
+      const bIsRole = typeof b.roleId === 'string' && b.roleId.trim() !== '';
+      if (aIsRole && !bIsRole) return -1;
+      if (!aIsRole && bIsRole) return 1;
+      return 0; // maintain relative name-based order
+    });
+
     const embed = new EmbedBuilder()
       .setTitle("🏪 Live Whitelist Marketplace")
       .setColor(0x5865F2) // Discord Blurple
