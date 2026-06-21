@@ -5,6 +5,7 @@ import {
   Check, X, Trash2, Shield, Plus, Search, 
   Coins, MessageSquare, AlertTriangle, RefreshCw, Send, ShieldCheck
 } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function AdminClient({ initialTweets, initialPendingRaids, initialUsers }) {
   const [activeTab, setActiveTab] = useState("submissions");
@@ -200,38 +201,59 @@ export default function AdminClient({ initialTweets, initialPendingRaids, initia
       )}
 
       {/* Admin Tab Switchers */}
-      <div className="flex bg-[#070711]/60 border border-indigo-950/45 p-1 rounded-full w-fit">
+      <div className="flex bg-[#070711]/60 border border-indigo-950/45 p-1 rounded-full w-fit relative">
         <button
           onClick={() => setActiveTab("submissions")}
-          className={`px-6 py-2 rounded-full text-[10px] font-extrabold uppercase tracking-widest transition-all duration-300 cursor-pointer ${
+          className={`px-6 py-2.5 rounded-full text-[10px] font-extrabold uppercase tracking-widest transition-all duration-300 cursor-pointer relative z-10 ${
             activeTab === "submissions"
-              ? "text-indigo-300 bg-indigo-950/50 border border-indigo-500/20 shadow-[0_0_12px_rgba(99,102,241,0.15)]"
-              : "text-slate-500 hover:text-slate-300 border border-transparent"
+              ? "text-indigo-300 font-extrabold"
+              : "text-slate-500 hover:text-slate-300 font-bold"
           }`}
         >
-          Pending ({pendingRaids.length})
+          <span>Pending ({pendingRaids.length})</span>
+          {activeTab === "submissions" && (
+            <motion.div
+              layoutId="adminActiveTabHighlight"
+              className="absolute inset-0 bg-indigo-950/70 border border-indigo-500/20 rounded-full z-[-1] shadow-[0_0_12px_rgba(99,102,241,0.15)]"
+              transition={{ type: "spring", stiffness: 380, damping: 30 }}
+            />
+          )}
         </button>
 
         <button
           onClick={() => setActiveTab("tweets")}
-          className={`px-6 py-2 rounded-full text-[10px] font-extrabold uppercase tracking-widest transition-all duration-300 cursor-pointer ${
+          className={`px-6 py-2.5 rounded-full text-[10px] font-extrabold uppercase tracking-widest transition-all duration-300 cursor-pointer relative z-10 ${
             activeTab === "tweets"
-              ? "text-indigo-300 bg-indigo-950/50 border border-indigo-500/20 shadow-[0_0_12px_rgba(99,102,241,0.15)]"
-              : "text-slate-500 hover:text-slate-300 border border-transparent"
+              ? "text-indigo-300 font-extrabold"
+              : "text-slate-500 hover:text-slate-300 font-bold"
           }`}
         >
-          Targets ({tweets.length})
+          <span>Targets ({tweets.length})</span>
+          {activeTab === "tweets" && (
+            <motion.div
+              layoutId="adminActiveTabHighlight"
+              className="absolute inset-0 bg-indigo-950/70 border border-indigo-500/20 rounded-full z-[-1] shadow-[0_0_12px_rgba(99,102,241,0.15)]"
+              transition={{ type: "spring", stiffness: 380, damping: 30 }}
+            />
+          )}
         </button>
 
         <button
           onClick={() => setActiveTab("members")}
-          className={`px-6 py-2 rounded-full text-[10px] font-extrabold uppercase tracking-widest transition-all duration-300 cursor-pointer ${
+          className={`px-6 py-2.5 rounded-full text-[10px] font-extrabold uppercase tracking-widest transition-all duration-300 cursor-pointer relative z-10 ${
             activeTab === "members"
-              ? "text-indigo-300 bg-indigo-950/50 border border-indigo-500/20 shadow-[0_0_12px_rgba(99,102,241,0.15)]"
-              : "text-slate-500 hover:text-slate-300 border border-transparent"
+              ? "text-indigo-300 font-extrabold"
+              : "text-slate-500 hover:text-slate-300 font-bold"
           }`}
         >
-          Members
+          <span>Members</span>
+          {activeTab === "members" && (
+            <motion.div
+              layoutId="adminActiveTabHighlight"
+              className="absolute inset-0 bg-indigo-950/70 border border-indigo-500/20 rounded-full z-[-1] shadow-[0_0_12px_rgba(99,102,241,0.15)]"
+              transition={{ type: "spring", stiffness: 380, damping: 30 }}
+            />
+          )}
         </button>
       </div>
 

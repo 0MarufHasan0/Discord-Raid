@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Trophy, Medal, SearchCode, Flame, Coins, ShieldCheck } from "lucide-react";
+import { Search, Trophy, Medal, SearchCode } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function LeaderboardClient({ initialUsers }) {
   const [search, setSearch] = useState("");
@@ -45,7 +46,19 @@ export default function LeaderboardClient({ initialUsers }) {
                 <th className="px-6 py-4">Twitter Account</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-indigo-950/15">
+            <motion.tbody 
+              initial="hidden"
+              animate="show"
+              variants={{
+                hidden: {},
+                show: {
+                  transition: {
+                    staggerChildren: 0.04
+                  }
+                }
+              }}
+              className="divide-y divide-indigo-950/15"
+            >
               {filteredUsers.length > 0 ? (
                 filteredUsers.map((user, idx) => {
                   const rank = idx + 1;
@@ -84,7 +97,15 @@ export default function LeaderboardClient({ initialUsers }) {
                   const firstLetter = (user.username || 'U').charAt(0).toUpperCase();
 
                   return (
-                    <tr key={user._id} className={rowClass}>
+                    <motion.tr 
+                      key={user._id}
+                      variants={{
+                        hidden: { opacity: 0, y: 12 },
+                        show: { opacity: 1, y: 0 }
+                      }}
+                      transition={{ type: "spring", stiffness: 260, damping: 22 }}
+                      className={rowClass}
+                    >
                       <td className="px-6 py-4 text-center">{rankCell}</td>
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-3">
@@ -120,19 +141,24 @@ export default function LeaderboardClient({ initialUsers }) {
                           <span className="text-[10px] text-slate-600 italic font-semibold">Not connected</span>
                         )}
                       </td>
-                    </tr>
+                    </motion.tr>
                   );
                 })
               ) : (
-                <tr>
+                <motion.tr
+                  variants={{
+                    hidden: { opacity: 0 },
+                    show: { opacity: 1 }
+                  }}
+                >
                   <td colSpan="6" className="px-6 py-12 text-center text-slate-500">
                     <SearchCode className="w-10 h-10 mx-auto text-slate-600 mb-3" />
                     <p className="text-xs font-bold text-slate-300">No members match your search</p>
                     <p className="text-[10px] text-slate-600 mt-1">Try another search query.</p>
                   </td>
-                </tr>
+                </motion.tr>
               )}
-            </tbody>
+            </motion.tbody>
           </table>
         </div>
       </div>

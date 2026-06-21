@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Coins, CheckCircle, Clock, XCircle, AlertCircle, RefreshCw, ShieldCheck, ExternalLink } from "lucide-react";
+import { Coins, CheckCircle, Clock, XCircle, AlertCircle, RefreshCw, ExternalLink } from "lucide-react";
+import { motion } from "framer-motion";
 
 // Local SVG Twitter bird icon to ensure zero dependency version conflicts
 const Twitter = (props) => (
@@ -58,7 +59,12 @@ export default function ProfileClient({ initialUser, raids, claims, discordInfo 
   return (
     <div className="space-y-8 animate-fade-in-up">
       {/* User Branding and Basic Stats Card */}
-      <div className="glass-panel p-6 md:p-8 rounded-3xl relative overflow-hidden">
+      <motion.div 
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 260, damping: 20 }}
+        className="glass-panel p-6 md:p-8 rounded-3xl relative overflow-hidden"
+      >
         <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-indigo-500/10 to-purple-500/5 rounded-full blur-3xl pointer-events-none" />
         
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -130,13 +136,18 @@ export default function ProfileClient({ initialUser, raids, claims, discordInfo 
             <p className="text-xl md:text-2xl font-extrabold text-indigo-400 mt-1">{approvalRate}%</p>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Settings and Claims */}
         <div className="space-y-8 lg:col-span-1">
           {/* Twitter Settings */}
-          <div className="glass-panel p-6 rounded-2xl border border-indigo-950/20">
+          <motion.div 
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.1 }}
+            className="glass-panel p-6 rounded-2xl border border-indigo-950/20"
+          >
             <h2 className="text-base font-extrabold font-outfit text-slate-200 mb-4 flex items-center space-x-2">
               <Twitter className="w-5 h-5 text-indigo-400" />
               <span>Twitter Account</span>
@@ -181,10 +192,15 @@ export default function ProfileClient({ initialUser, raids, claims, discordInfo 
                 <span>Save Handle</span>
               </button>
             </form>
-          </div>
+          </motion.div>
 
           {/* Active Claims List */}
-          <div className="glass-panel p-6 rounded-2xl border border-indigo-950/20">
+          <motion.div 
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.15 }}
+            className="glass-panel p-6 rounded-2xl border border-indigo-950/20"
+          >
             <h2 className="text-base font-extrabold font-outfit text-slate-200 mb-4">
               Claimed Rewards
             </h2>
@@ -216,11 +232,16 @@ export default function ProfileClient({ initialUser, raids, claims, discordInfo 
                 No active rewards claimed yet.
               </p>
             )}
-          </div>
+          </motion.div>
         </div>
 
         {/* Right Column: Raid Submission History (Table) */}
-        <div className="lg:col-span-2 space-y-6">
+        <motion.div 
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.2 }}
+          className="lg:col-span-2 space-y-6"
+        >
           <h2 className="text-xl font-extrabold font-outfit text-slate-100 flex items-center space-x-2">
             <span>Raid History</span>
           </h2>
@@ -236,7 +257,19 @@ export default function ProfileClient({ initialUser, raids, claims, discordInfo 
                     <th className="px-6 py-4">Proof Link</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-indigo-950/15">
+                <motion.tbody 
+                  initial="hidden"
+                  animate="show"
+                  variants={{
+                    hidden: {},
+                    show: {
+                      transition: {
+                        staggerChildren: 0.04
+                      }
+                    }
+                  }}
+                  className="divide-y divide-indigo-950/15"
+                >
                   {raids.length > 0 ? (
                     raids.map((raid) => {
                       let statusBadge = (
@@ -266,7 +299,15 @@ export default function ProfileClient({ initialUser, raids, claims, discordInfo 
                       }
 
                       return (
-                        <tr key={raid._id} className="hover:bg-indigo-950/15 transition-all duration-300">
+                        <motion.tr 
+                          key={raid._id}
+                          variants={{
+                            hidden: { opacity: 0, y: 10 },
+                            show: { opacity: 1, y: 0 }
+                          }}
+                          transition={{ type: "spring", stiffness: 260, damping: 22 }}
+                          className="hover:bg-indigo-950/15 transition-all duration-300"
+                        >
                           <td className="px-6 py-4">
                             <div className="flex flex-col">
                               <span className="text-xs text-slate-300 truncate max-w-xs font-semibold">
@@ -292,21 +333,26 @@ export default function ProfileClient({ initialUser, raids, claims, discordInfo 
                               <ExternalLink className="w-3 h-3" />
                             </a>
                           </td>
-                        </tr>
+                        </motion.tr>
                       );
                     })
                   ) : (
-                    <tr>
+                    <motion.tr
+                      variants={{
+                        hidden: { opacity: 0 },
+                        show: { opacity: 1 }
+                      }}
+                    >
                       <td colSpan="4" className="px-6 py-12 text-center text-slate-500 text-[10px] font-bold uppercase tracking-wider italic">
                         No recent raid submissions found. Join active targets on the home page!
                       </td>
-                    </tr>
+                    </motion.tr>
                   )}
-                </tbody>
+                </motion.tbody>
               </table>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

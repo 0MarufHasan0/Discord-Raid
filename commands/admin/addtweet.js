@@ -233,11 +233,6 @@ module.exports = {
 
         // Build premium announcement embed
         const announcementEmbed = new EmbedBuilder()
-          .setColor(0x5865F2) // Discord Blurple
-          .setFooter({ 
-            text: `Tweet ID: ${tweetId} • Posted by ${interaction.user.username}`,
-            iconURL: interaction.user.displayAvatarURL({ dynamic: true })
-          })
           .setTimestamp();
 
         // Prepare message content (user custom content text goes at the very top, outside embed)
@@ -251,6 +246,8 @@ module.exports = {
         const unixTimestamp = Math.floor(expiresAt.getTime() / 1000);
 
         if (tweetData) {
+          announcementEmbed.setColor(0x00A3FF); // Premium Twitter Cyan
+          
           // Set premium author details
           if (tweetData.author) {
             announcementEmbed.setAuthor({
@@ -268,18 +265,23 @@ module.exports = {
           // Build description
           let desc = '';
           if (tweetData.text) {
-            desc += `> ${tweetData.text.replace(/\n/g, '\n> ')}\n\n`;
+            desc += `💬 **Tweet Content:**\n> ${tweetData.text.replace(/\n/g, '\n> ')}\n\n`;
           }
           
-          desc += `📊 **Raid Details:**\n`;
+          desc += `📋 **RAID TARGET DETAILS**\n`;
           desc += `> 💰 **Reward:** \`${points} Points\`\n`;
           desc += `> ⏰ **Ends At:** <t:${unixTimestamp}:f>\n`;
-          desc += `> ⌛ **Time Left:** <t:${unixTimestamp}:R>\n\n\n`;
+          desc += `> ⌛ **Time Left:** <t:${unixTimestamp}:R>\n\n`;
 
           // Add Twitter stats line
-          desc += `💬 ${tweetData.replies || 0}   🔁 ${tweetData.retweets || 0}   ❤️ ${tweetData.likes || 0}   👁️ ${tweetData.views || 0}`;
+          desc += `📈 **Twitter Stats:** 💬 ${tweetData.replies || 0}   🔁 ${tweetData.retweets || 0}   ❤️ ${tweetData.likes || 0}   👁️ ${tweetData.views || 0}\n\n`;
+          desc += `⚔️ Click the links below to perform actions, then click **Submit Raid** to verify!`;
           
           announcementEmbed.setDescription(desc);
+          announcementEmbed.setFooter({ 
+            text: `Tweet ID: ${tweetId} • Posted by ${interaction.user.username}`,
+            iconURL: interaction.user.displayAvatarURL({ dynamic: true })
+          });
 
           // Set image if media photo is available
           if (tweetData.media && tweetData.media.all && tweetData.media.all.length > 0) {
@@ -290,17 +292,21 @@ module.exports = {
           }
         } else {
           // Fallback / Standard layout
-          announcementEmbed.setAuthor({
-            name: "New Raid Announcement",
-            iconURL: interaction.client.user.displayAvatarURL({ dynamic: true })
-          });
-
-          let desc = '';
-          desc += `📊 **Raid Details:**\n`;
-          desc += `> 💰 **Reward:** \`${points} Points\`\n`;
-          desc += `> ⏰ **Ends At:** <t:${unixTimestamp}:f>\n`;
-          desc += `> ⌛ **Time Left:** <t:${unixTimestamp}:R>\n\n\n`;
-          announcementEmbed.setDescription(desc);
+          announcementEmbed
+            .setTitle("⚔️ NEW COMMUNITY RAID TARGET ⚔️")
+            .setColor(0xF5A623) // Premium Gold/Orange color
+            .setDescription(
+              `✨ **A new raid challenge has been posted!** complete the task and submit your proof link to earn points.\n\n` +
+              `📊 **RAID DETAILS**\n` +
+              `> 💰 **Reward:** \`${points} Points\`\n` +
+              `> ⏰ **Ends At:** <t:${unixTimestamp}:f>\n` +
+              `> ⌛ **Time Left:** <t:${unixTimestamp}:R>\n\n` +
+              `📌 **Instruction:** click **Submit Raid** below to input your screenshot or action link proof!`
+            )
+            .setFooter({ 
+              text: `Raid Target ID: ${tweetId} • Posted by ${interaction.user.username}`,
+              iconURL: interaction.user.displayAvatarURL({ dynamic: true })
+            });
         }
 
         // Add Like and Retweet buttons if we have a tweet link

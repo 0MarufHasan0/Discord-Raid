@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Coins, Tag, Clock, ArrowRight, CheckCircle, XCircle, ShieldCheck, Ticket, RefreshCw } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function ShopClient({ initialItems, initialPoints }) {
   const [items, setItems] = useState(initialItems);
@@ -72,16 +73,34 @@ export default function ShopClient({ initialItems, initialPoints }) {
     <div className="space-y-8 animate-fade-in-up">
       {/* Grid listing of Shop Items */}
       {items.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <motion.div 
+          initial="hidden"
+          animate="show"
+          variants={{
+            hidden: {},
+            show: {
+              transition: {
+                staggerChildren: 0.06
+              }
+            }
+          }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
           {items.map((item) => {
             const isSoldOut = item.claimedSlots >= item.totalSlots;
             const hasEnoughPoints = userPoints >= item.pointCost;
             const claimedPercent = Math.min(100, Math.round((item.claimedSlots / item.totalSlots) * 100));
 
             return (
-              <div
+              <motion.div
                 key={item._id}
-                className="glass-panel p-6 rounded-2xl flex flex-col justify-between border border-indigo-950/20 relative group overflow-hidden shimmer-hover"
+                variants={{
+                  hidden: { opacity: 0, y: 15 },
+                  show: { opacity: 1, y: 0 }
+                }}
+                transition={{ type: "spring", stiffness: 260, damping: 22 }}
+                whileHover={{ scale: 1.015 }}
+                className="glass-panel p-6 rounded-2xl flex flex-col justify-between border border-indigo-950/25 relative group overflow-hidden shimmer-hover"
               >
                 <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-indigo-500/5 to-transparent rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
@@ -152,10 +171,10 @@ export default function ShopClient({ initialItems, initialPoints }) {
                     {!isSoldOut && <ArrowRight className="w-3.5 h-3.5" />}
                   </button>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       ) : (
         <div className="glass-panel p-16 rounded-2xl text-center border border-indigo-950/20">
           <Clock className="w-12 h-12 text-slate-600 mx-auto mb-4" />
@@ -167,84 +186,97 @@ export default function ShopClient({ initialItems, initialPoints }) {
       )}
 
       {/* Confirmation Modal */}
-      {selectedItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in transition-all">
-          <div className="w-full max-w-md glass-panel p-6 rounded-3xl border border-indigo-500/20 shadow-2xl relative animate-fade-in-up">
-            <h3 className="text-lg font-extrabold font-outfit text-white mb-2">
-              Confirm Redemption
-            </h3>
-            
-            {!feedback.text ? (
-              <>
-                <p className="text-xs text-slate-400 leading-relaxed mb-6 font-medium">
-                  Are you sure you want to claim <strong className="text-slate-200">{selectedItem.name}</strong>? 
-                  This will deduct <strong className="text-amber-400">{selectedItem.pointCost} points</strong> from your balance.
-                </p>
+      <AnimatePresence>
+        {selectedItem && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md"
+          >
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.93, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.93, y: 15 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="w-full max-w-md glass-panel p-6 rounded-3xl border border-indigo-500/20 shadow-2xl relative"
+            >
+              <h3 className="text-lg font-extrabold font-outfit text-white mb-2">
+                Confirm Redemption
+              </h3>
+              
+              {!feedback.text ? (
+                <>
+                  <p className="text-xs text-slate-400 leading-relaxed mb-6 font-medium">
+                    Are you sure you want to claim <strong className="text-slate-200">{selectedItem.name}</strong>? 
+                    This will deduct <strong className="text-amber-400">{selectedItem.pointCost} points</strong> from your balance.
+                  </p>
 
-                <div className="flex space-x-3 justify-end">
-                  <button
-                    onClick={handleCloseClaimConfirm}
-                    disabled={claiming}
-                    className="px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest text-slate-400 hover:text-slate-200 bg-white/5 border border-white/5 rounded-full transition-colors cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleClaimItem}
-                    disabled={claiming}
-                    className="px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest text-white bg-indigo-600 hover:bg-indigo-500 rounded-full transition-all flex items-center space-x-1.5 disabled:opacity-50 cursor-pointer"
-                  >
-                    {claiming && <RefreshCw className="w-3 h-3 animate-spin" />}
-                    <span>{claiming ? "Redeeming..." : "Confirm"}</span>
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="space-y-6">
-                <div className="flex items-center space-x-3 pt-2">
-                  {feedback.type === "success" ? (
-                    <CheckCircle className="w-8 h-8 text-emerald-400 shrink-0" />
-                  ) : (
-                    <XCircle className="w-8 h-8 text-rose-400 shrink-0" />
-                  )}
-                  <div>
-                    <h4 className={`text-sm font-bold ${feedback.type === "success" ? "text-emerald-400" : "text-rose-400"}`}>
-                      {feedback.type === "success" ? "Redemption Successful!" : "Redemption Failed"}
-                    </h4>
-                    <p className="text-[11px] text-slate-300 mt-1 leading-relaxed font-semibold">
-                      {feedback.text}
-                    </p>
+                  <div className="flex space-x-3 justify-end">
+                    <button
+                      onClick={handleCloseClaimConfirm}
+                      disabled={claiming}
+                      className="px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest text-slate-400 hover:text-slate-200 bg-white/5 border border-white/5 rounded-full transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleClaimItem}
+                      disabled={claiming}
+                      className="px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest text-white bg-indigo-600 hover:bg-indigo-500 rounded-full transition-all flex items-center space-x-1.5 disabled:opacity-50 cursor-pointer"
+                    >
+                      {claiming && <RefreshCw className="w-3 h-3 animate-spin" />}
+                      <span>{claiming ? "Redeeming..." : "Confirm"}</span>
+                    </button>
                   </div>
-                </div>
-
-                {feedback.ticketChannel && (
-                  <div className="p-4 rounded-2xl bg-cyan-950/20 border border-cyan-500/20 flex items-start space-x-3">
-                    <Ticket className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
-                    <div className="text-[11px] leading-relaxed">
-                      <p className="font-extrabold text-cyan-400 uppercase tracking-wider">Discord Ticket Created</p>
-                      <p className="text-slate-400 mt-0.5">
-                        A private claim ticket channel has been created for you in the server. Please head to Discord to submit any whitelisting proof needed.
+                </>
+              ) : (
+                <div className="space-y-6">
+                  <div className="flex items-center space-x-3 pt-2">
+                    {feedback.type === "success" ? (
+                      <CheckCircle className="w-8 h-8 text-emerald-400 shrink-0 animate-pulse" />
+                    ) : (
+                      <XCircle className="w-8 h-8 text-rose-400 shrink-0" />
+                    )}
+                    <div>
+                      <h4 className={`text-sm font-bold ${feedback.type === "success" ? "text-emerald-400" : "text-rose-400"}`}>
+                        {feedback.type === "success" ? "Redemption Successful!" : "Redemption Failed"}
+                      </h4>
+                      <p className="text-[11px] text-slate-300 mt-1 leading-relaxed font-semibold">
+                        {feedback.text}
                       </p>
                     </div>
                   </div>
-                )}
 
-                <div className="flex justify-end pt-2">
-                  <button
-                    onClick={() => {
-                      setSelectedItem(null);
-                      setFeedback({ text: "", type: "", ticketChannel: "" });
-                    }}
-                    className="px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest text-slate-300 hover:text-white bg-indigo-950/30 border border-indigo-500/20 rounded-full transition-colors cursor-pointer"
-                  >
-                    Dismiss
-                  </button>
+                  {feedback.ticketChannel && (
+                    <div className="p-4 rounded-2xl bg-cyan-950/20 border border-cyan-500/20 flex items-start space-x-3">
+                      <Ticket className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
+                      <div className="text-[11px] leading-relaxed">
+                        <p className="font-extrabold text-cyan-400 uppercase tracking-wider">Discord Ticket Created</p>
+                        <p className="text-slate-400 mt-0.5">
+                          A private claim ticket channel has been created for you in the server. Please head to Discord to submit any whitelisting proof needed.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end pt-2">
+                    <button
+                      onClick={() => {
+                        setSelectedItem(null);
+                        setFeedback({ text: "", type: "", ticketChannel: "" });
+                      }}
+                      className="px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest text-slate-300 hover:text-white bg-indigo-950/30 border border-indigo-500/20 rounded-full transition-colors cursor-pointer"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
