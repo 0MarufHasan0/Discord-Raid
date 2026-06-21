@@ -1835,14 +1835,13 @@ client.on('interactionCreate', async interaction => {
   }
 });
 
-// Auto-Tweet RSS Poller Helpers
 const NITTER_INSTANCES = [
+  'nitter.net',
+  'xcancel.com',
+  'nitter.privacyredirect.com',
   'nitter.privacydev.net',
-  'nitter.poast.org',
-  'nitter.neilzone.co.uk',
-  'nitter.inpt.people.ua',
   'nitter.cz',
-  'nitter.esma.work'
+  'nitter.poast.org'
 ];
 
 function fetchWithFallback(username) {
