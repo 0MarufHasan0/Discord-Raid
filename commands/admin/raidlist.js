@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const checkAdmin = require('../../utils/checkAdmin');
 const Raid = require('../../database/models/Raid');
 const User = require('../../database/models/User');
@@ -68,28 +68,18 @@ module.exports = {
       // Count total matching documents
       const totalCount = await Raid.countDocuments(filter);
 
-      // Fetch up to 25 raids sorted by submittedAt desc
-      const raids = await Raid.find(filter).sort({ submittedAt: -1 }).limit(25);
+      // Fetch up to 100 raids sorted by submittedAt desc
+      const raids = await Raid.find(filter).sort({ submittedAt: -1 }).limit(100);
 
       const titleSuffix = statusFilter ? ` — ${statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}` : '';
-      const embed = new EmbedBuilder()
-        .setTitle(`📋 Raid List${titleSuffix}`)
-        .setColor(0x5865F2) // Discord Blurple
-        .setTimestamp();
-
-      let description = '';
-      if (dateStr) {
-        description += `📅 **Date Filter:** \`${dateStr}\` (Dhaka Timezone)\n`;
-      }
-      description += `📊 **Total Matching Raids:** **${totalCount}**\n`;
-      if (raids.length > 0) {
-        description += `📝 Showing newest **${raids.length}** raids:\n`;
-      }
-      embed.setDescription(description);
 
       if (raids.length === 0) {
-        embed.setDescription((description + "\n📭 No raids found.").trim());
-        return interaction.editReply({ embeds: [embed] });
+        const emptyEmbed = new EmbedBuilder()
+          .setTitle(`📋 Raid List${titleSuffix}`)
+          .setDescription("📭 No raids found matching the filters.")
+          .setColor(0x5865F2)
+          .setTimestamp();
+        return interaction.editReply({ embeds: [emptyEmbed] });
       }
 
       // Fetch user docs to get Twitter handles
@@ -97,27 +87,141 @@ module.exports = {
       const users = await User.find({ discordId: { $in: userIds } });
       const userMap = new Map(users.map(u => [u.discordId, u]));
 
-      raids.forEach(raid => {
-        const formattedDate = raid.submittedAt ? new Date(raid.submittedAt).toLocaleString('en-US', { timeZone: 'Asia/Dhaka' }) : 'Unknown';
-        const userDoc = userMap.get(raid.userId);
-        const twitterHandle = userDoc && userDoc.twitter ? `@${userDoc.twitter}` : 'N/A';
+      // Pagination setup
+      const pageSize = 5;
+      const totalPages = Math.ceil(raids.length / pageSize);
+      let currentPage = 0;
 
-        let statusEmoji = '🟡';
-        if (raid.status === 'approved') statusEmoji = '🟢';
-        if (raid.status === 'rejected') statusEmoji = '🔴';
+      // Defensive Date Formatter
+      const formatDhakaDate = (date) => {
+        if (!date) return 'Unknown';
+        try {
+          return new Date(date).toLocaleString('en-US', { timeZone: 'Asia/Dhaka' });
+        } catch (tzError) {
+          return new Date(date).toLocaleString('en-US');
+        }
+      };
 
-        embed.addFields({
-          name: `🆔 Raid: ${raid.raidId}`,
-          value: `👤 **Discord:** <@${raid.userId}> (${raid.username})\n` +
-                 `🐦 **Twitter:** \`${twitterHandle}\`\n` +
-                 `🔗 **Link:** [View Submission](${raid.link})\n` +
-                 `${statusEmoji} **Status:** ${raid.status}\n` +
-                 `📅 **Date:** ${formattedDate}\n` +
-                 `❌ **Remove ID:** \`${raid.raidId}\` (Use \`/rejectraid raid_id:${raid.raidId}\` to reject & deduct ${(raid && typeof raid.points === 'number') ? raid.points : 1} points)`
+      // Function to build embed for a specific page
+      const buildPageEmbed = (pageIndex) => {
+        const start = pageIndex * pageSize;
+        const pageRaids = raids.slice(start, start + pageSize);
+
+        // Determine embed color dynamically based on filter
+        let embedColor = 0x5865F2; // Default blurple
+        if (statusFilter === 'pending') embedColor = 0xF1C40F; // Yellow
+        else if (statusFilter === 'approved') embedColor = 0x2ECC71; // Green
+        else if (statusFilter === 'rejected') embedColor = 0xE74C3C; // Red
+
+        const embed = new EmbedBuilder()
+          .setTitle(`📋 Raid List${titleSuffix}`)
+          .setColor(embedColor)
+          .setTimestamp();
+
+        let description = '';
+        if (dateStr) {
+          description += `📅 **Date Filter:** \`${dateStr}\` (Dhaka Timezone)\n`;
+        }
+        description += `📊 **Total Matching Raids:** **${totalCount}**\n`;
+        description += `📝 Showing page **${pageIndex + 1}** of **${totalPages}** (newest **${raids.length}** loaded):\n`;
+        description += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+        pageRaids.forEach((raid, index) => {
+          const globalIndex = start + index + 1;
+          const formattedDate = formatDhakaDate(raid.submittedAt);
+          const userDoc = userMap.get(raid.userId);
+          const twitterHandle = userDoc && userDoc.twitter ? `@${userDoc.twitter}` : 'N/A';
+
+          let statusEmoji = '🟡';
+          let statusText = 'Pending';
+          if (raid.status === 'approved') {
+            statusEmoji = '🟢';
+            statusText = 'Approved';
+          } else if (raid.status === 'rejected') {
+            statusEmoji = '🔴';
+            statusText = 'Rejected';
+          }
+
+          let actionText = '';
+          if (raid.status === 'pending') {
+            actionText = `👍 **Approve:** \`/approveraid raid_id:${raid.raidId}\`\n❌ **Reject:** \`/rejectraid raid_id:${raid.raidId} reason:\``;
+          } else if (raid.status === 'approved') {
+            actionText = `✅ **Approved by:** \`${raid.approvedBy || 'System'}\`\n❌ **Reject & Deduct:** \`/rejectraid raid_id:${raid.raidId} reason:\``;
+          } else if (raid.status === 'rejected') {
+            actionText = `🚫 **Rejected Reason:** \`${raid.rejectedReason || 'No reason specified'}\`\n👍 **Approve & Reward:** \`/approveraid raid_id:${raid.raidId}\``;
+          }
+
+          description += `**#${globalIndex}** — **Raid ID:** \`${raid.raidId}\` | ${statusEmoji} **${statusText}**\n` +
+                         `👤 **User:** <@${raid.userId}> (${raid.username}) | 🐦 **Twitter:** \`${twitterHandle}\`\n` +
+                         `🔗 **Link:** [View Submission](${raid.link})\n` +
+                         `📅 **Submitted:** \`${formattedDate}\` | 💰 \`${raid.points || 1} pts\`\n` +
+                         `${actionText}\n` +
+                         `━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
         });
+
+        embed.setDescription(description.trim());
+        return embed;
+      };
+
+      // Function to generate action buttons
+      const getButtons = (pageIndex, totalPages) => {
+        return new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId('raidlist_prev')
+            .setEmoji('◀️')
+            .setStyle(ButtonStyle.Primary)
+            .setDisabled(pageIndex === 0),
+          new ButtonBuilder()
+            .setCustomId('raidlist_page')
+            .setLabel(`Page ${pageIndex + 1} of ${totalPages}`)
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(true),
+          new ButtonBuilder()
+            .setCustomId('raidlist_next')
+            .setEmoji('▶️')
+            .setStyle(ButtonStyle.Primary)
+            .setDisabled(pageIndex === totalPages - 1)
+        );
+      };
+
+      const response = await interaction.editReply({
+        embeds: [buildPageEmbed(currentPage)],
+        components: totalPages > 1 ? [getButtons(currentPage, totalPages)] : []
       });
 
-      await interaction.editReply({ embeds: [embed] });
+      if (totalPages > 1) {
+        // Collect button interactions for 2 minutes
+        const collector = response.createMessageComponentCollector({
+          time: 120000
+        });
+
+        collector.on('collect', async i => {
+          if (i.user.id !== interaction.user.id) {
+            return i.reply({ content: '❌ You cannot interact with this menu.', ephemeral: true });
+          }
+
+          if (i.customId === 'raidlist_prev') {
+            currentPage = Math.max(0, currentPage - 1);
+          } else if (i.customId === 'raidlist_next') {
+            currentPage = Math.min(totalPages - 1, currentPage + 1);
+          }
+
+          await i.update({
+            embeds: [buildPageEmbed(currentPage)],
+            components: [getButtons(currentPage, totalPages)]
+          });
+        });
+
+        collector.on('end', () => {
+          // Disable all buttons after timeout
+          const disabledRow = new ActionRowBuilder().addComponents(
+            getButtons(currentPage, totalPages).components.map(button => 
+              ButtonBuilder.from(button).setDisabled(true)
+            )
+          );
+          interaction.editReply({ components: [disabledRow] }).catch(() => {});
+        });
+      }
 
     } catch (error) {
       console.error('Error in /raidlist command:', error);
