@@ -120,3 +120,48 @@ The bot manages a live marketplace where users can exchange points for Whitelist
    * Generates **Reopen Ticket** (🔓) and **Delete Ticket** (⛔) buttons.
    * Reopening restores writing permission; deleting triggers a 5-second countdown and deletes the channel.
 
+---
+
+## Next.js Web Dashboard
+
+The project includes a premium, responsive Web Dashboard located in the `/dashboard` directory. It shares the remote MongoDB Atlas database with the Discord bot to display leaderboards, marketplace redemptions, user point profiles, and admin approvals.
+
+### 1. Prerequisites & Keys
+To support Discord Login (OAuth2), make sure you have:
+1. **Client ID** and **Client Secret** from the Discord Developer Portal under the **OAuth2** tab.
+2. Saved the Redirect URI: `http://localhost:3000/api/auth/callback/discord`.
+
+### 2. Environment Variables
+Add the following additional variables to your root `.env` or create `/dashboard/.env.local`:
+```env
+DISCORD_CLIENT_SECRET=your_discord_client_secret
+NEXTAUTH_SECRET=your_secure_nextauth_secret_token
+NEXTAUTH_URL=http://localhost:3000
+
+# Main Guild ID for Admin verification
+DISCORD_GUILD_ID=your_discord_guild_id
+
+# Target API URL of the Discord Bot (default: 3005 in dev)
+BOT_API_URL=http://localhost:3005
+```
+
+### 3. Running Locally
+Because both the Discord Bot and Next.js Dashboard run web servers, they are configured to run on separate ports locally:
+
+1. **Start the Discord Bot keep-alive server** (Runs on port `3005` in dev):
+   ```bash
+   node index.js
+   ```
+2. **Start the Next.js Dashboard** (Runs on port `3000` in dev):
+   ```bash
+   cd dashboard
+   npm run dev
+   ```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser to view the application.
+
+### 4. Hosting & Deployment
+To prevent Out-Of-Memory (OOM) crashes and cold-starts on free hosting tiers, we recommend deploying them separately:
+- **Next.js Web Dashboard**: Deploy on **Vercel** (connect your GitHub repository, set root directory to `dashboard`, and define environment variables). Vercel is free, fast, and serverless.
+- **Discord Bot**: Host on **Render** (monitored with a keep-alive service like UptimeRobot). 
+Both services connect to the same remote MongoDB Atlas database, syncing your members' point values instantly.

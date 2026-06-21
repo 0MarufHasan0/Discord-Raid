@@ -1598,14 +1598,180 @@ client.once('ready', async () => {
   setInterval(() => checkExpiredRoles(client), 60 * 1000);
 });
 
-// Keep-alive HTTP Server for 24/7 Hosting (Render/Koyeb)
+// Keep-alive HTTP Server for 24/7 Hosting (Render/Koyeb) & Dashboard Sync API
 const http = require('http');
-http.createServer((req, res) => {
-  res.write("Bot is running!");
-  res.end();
-}).listen(process.env.PORT || 3000, () => {
-  console.log("📡 Keep-alive server is listening on port " + (process.env.PORT || 3000));
+const url = require('url');
+const { EmbedBuilder, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+
+http.createServer(async (req, res) => {
+  const parsedUrl = url.parse(req.url, true);
+  
+  if (parsedUrl.pathname === '/api/bot/sync' && req.method === 'POST') {
+    // 1. Authenticate with NextAuth Secret / DISCORD_CLIENT_SECRET
+    const authHeader = req.headers['authorization'];
+    const expectedSecret = process.env.NEXTAUTH_SECRET || process.env.DISCORD_CLIENT_SECRET;
+    
+    if (!authHeader || authHeader !== `Bearer ${expectedSecret}`) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized: Invalid credentials' }));
+      return;
+    }
+    
+    // 2. Read Request Body
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', async () => {
+      try {
+        const data = JSON.parse(body || '{}');
+        const guildId = data.guildId || process.env.DISCORD_GUILD_ID || config.guildId || '1035210317380198440';
+        
+        const guild = client.guilds.cache.get(guildId) || await client.guilds.fetch(guildId).catch(() => null);
+        if (!guild) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: `Guild with ID ${guildId} not found by bot` }));
+          return;
+        }
+
+        if (data.action === 'update_all') {
+          await updateMarketplace(client);
+          await updateLeaderboard(client);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true, message: 'Marketplace and Leaderboard sync triggered' }));
+          return;
+        }
+
+        if (data.action === 'add_role') {
+          const { userId, roleId, itemName } = data;
+          if (!userId || !roleId) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Missing userId or roleId' }));
+            return;
+          }
+
+          const member = await guild.members.fetch(userId).catch(() => null);
+          if (!member) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: `Member with ID ${userId} not found in guild` }));
+            return;
+          }
+
+          await member.roles.add(roleId, `Claimed whitelist item via Web: ${itemName || 'Unknown'}`);
+          
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true, roleAdded: true }));
+          return;
+        }
+
+        if (data.action === 'create_ticket') {
+          const { userId, username, itemName } = data;
+          if (!userId || !username || !itemName) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Missing userId, username, or itemName' }));
+            return;
+          }
+
+          const cleanItemName = itemName.toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 15);
+          const cleanUsername = username.toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 15);
+          const ticketChannelName = `ticket-${cleanItemName}-${cleanUsername}`;
+          
+          const adminRoleIds = (config.adminRoleId || '').split(',').map(id => id.trim()).filter(Boolean);
+          
+          const permissionOverwrites = [
+            {
+              id: guild.id,
+              deny: ['ViewChannel']
+            },
+            {
+              id: userId,
+              allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory', 'AttachFiles', 'EmbedLinks']
+            },
+            {
+              id: client.user.id,
+              allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory', 'AttachFiles', 'EmbedLinks', 'ManageChannels']
+            }
+          ];
+          
+          adminRoleIds.forEach(roleId => {
+            if (guild.roles.cache.has(roleId)) {
+              permissionOverwrites.push({
+                id: roleId,
+                allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory', 'AttachFiles', 'EmbedLinks', 'ManageChannels']
+              });
+            }
+          });
+          
+          const ticketCategoryIds = (config.ticketCategoryId || '').split(',').map(id => id.trim()).filter(Boolean);
+          let parentCategory = null;
+          for (const id of ticketCategoryIds) {
+            const cat = guild.channels.cache.get(id);
+            if (cat && cat.type === ChannelType.GuildCategory) {
+              parentCategory = cat;
+              break;
+            }
+          }
+          if (!parentCategory) {
+            parentCategory = guild.channels.cache.find(c => c.name.toLowerCase().includes('ticket') && c.type === ChannelType.GuildCategory);
+          }
+          
+          const ticketChannel = await guild.channels.create({
+            name: ticketChannelName,
+            type: ChannelType.GuildText,
+            parent: parentCategory ? parentCategory.id : null,
+            permissionOverwrites: permissionOverwrites
+          });
+          
+          const ticketEmbed = new EmbedBuilder()
+            .setColor(0x5865F2)
+            .setTitle(`🎟️ Whitelist Ticket (Web Claim) — ${itemName}`)
+            .setDescription(
+              `Welcome <@${userId}>!\n\n` +
+              `This ticket channel has been automatically created for your claim of **${itemName}** via the Web Dashboard.\n\n` +
+              `Please post screenshots or proof of your whitelist requirements here so admins can assist you.`
+            )
+            .setTimestamp();
+
+          const closeButtonRow = new ActionRowBuilder()
+            .addComponents(
+              new ButtonBuilder()
+                .setCustomId('ticket_close')
+                .setLabel('Close Ticket')
+                .setEmoji('🔒')
+                .setStyle(ButtonStyle.Danger)
+            );
+
+          const validAdminRoleIds = adminRoleIds.filter(roleId => guild.roles.cache.has(roleId));
+          const adminMentions = validAdminRoleIds.map(roleId => `<@&${roleId}>`).join(' ');
+          const pingContent = `<@${userId}>${adminMentions ? ` | ${adminMentions}` : ''}`;
+            
+          await ticketChannel.send({ 
+            content: pingContent, 
+            embeds: [ticketEmbed], 
+            components: [closeButtonRow] 
+          });
+
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true, ticketCreated: true, channelId: ticketChannel.id }));
+          return;
+        }
+
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: `Unknown action: ${data.action}` }));
+      } catch (err) {
+        console.error('Error handling bot sync API request:', err);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+  } else {
+    // Standard Keep-alive text response
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.write("Bot is running!");
+    res.end();
+  }
+}).listen(process.env.PORT || 3005, () => {
+  console.log("📡 Keep-alive server is listening on port " + (process.env.PORT || 3005));
 });
+
 
 // Bot startup lifecycle
 (async () => {
