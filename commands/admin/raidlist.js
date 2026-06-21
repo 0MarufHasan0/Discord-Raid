@@ -26,7 +26,7 @@ module.exports = {
       const isAdmin = await checkAdmin(interaction);
       if (!isAdmin) return;
 
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       const statusFilter = interaction.options.getString('status');
       const dateStr = interaction.options.getString('date');
@@ -197,7 +197,7 @@ module.exports = {
 
         collector.on('collect', async i => {
           if (i.user.id !== interaction.user.id) {
-            return i.reply({ content: '❌ You cannot interact with this menu.', ephemeral: true });
+            return i.reply({ content: '❌ You cannot interact with this menu.', flags: MessageFlags.Ephemeral });
           }
 
           if (i.customId === 'raidlist_prev') {

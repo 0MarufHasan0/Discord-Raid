@@ -65,7 +65,7 @@ module.exports = {
       if (!item) {
         return interaction.reply({
           embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ No active marketplace item found with the name '${name}'.`)],
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
 
@@ -80,7 +80,7 @@ module.exports = {
         if (duplicate && duplicate.isActive) {
           return interaction.reply({
             embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ An active item named '${newName}' already exists.`)],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
         item.name = newName;
@@ -94,7 +94,7 @@ module.exports = {
         if (pointCost <= 0) {
           return interaction.reply({
             embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Point cost must be greater than 0.")],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
         item.pointCost = pointCost;
@@ -104,13 +104,13 @@ module.exports = {
         if (totalSlots <= 0) {
           return interaction.reply({
             embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Slots must be greater than 0.")],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
         if (totalSlots < item.claimedSlots) {
           return interaction.reply({
             embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ Total slots cannot be less than the already claimed slots (${item.claimedSlots}).`)],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
         item.totalSlots = totalSlots;
@@ -155,7 +155,7 @@ module.exports = {
         .setDescription(successMsg)
         .setTimestamp();
 
-      await interaction.reply({ embeds: [replyEmbed], ephemeral: true });
+      await interaction.reply({ embeds: [replyEmbed], flags: MessageFlags.Ephemeral });
 
       // Send admin log
       const sendAdminLog = require('../../utils/sendAdminLog');
@@ -176,9 +176,9 @@ module.exports = {
       console.error('Error in /editwlitem command:', error);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: "❌ An error occurred. Please try again.", ephemeral: true });
+          await interaction.followUp({ content: "❌ An error occurred. Please try again.", flags: MessageFlags.Ephemeral });
         } else {
-          await interaction.reply({ content: "❌ An error occurred. Please try again.", ephemeral: true });
+          await interaction.reply({ content: "❌ An error occurred. Please try again.", flags: MessageFlags.Ephemeral });
         }
       } catch (err) {
         // Silently catch errors

@@ -133,7 +133,7 @@ async function handleRaidSubmission(interaction, link, tweetId) {
             .setColor(0xFF0000)
             .setDescription("❌ You must connect your Twitter/X account before submitting a raid!\n\nUse `/settwitter` to link your Twitter username first.")
         ],
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -151,7 +151,7 @@ async function handleRaidSubmission(interaction, link, tweetId) {
             .setColor(0xFF0000)
             .setDescription("❌ Invalid Tweet ID! Please provide a correct Tweet ID (found in the footer of the tweet announcement).")
         ],
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -165,7 +165,7 @@ async function handleRaidSubmission(interaction, link, tweetId) {
             .setColor(0xFF0000)
             .setDescription("❌ This raid has expired! You can no longer submit a raid for this Tweet ID.")
         ],
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -185,7 +185,7 @@ async function handleRaidSubmission(interaction, link, tweetId) {
             .setColor(0xFF0000)
             .setDescription(`❌ You have already submitted a raid for this tweet.\n\nIf you submitted the wrong link and want to submit a new one, please delete your previous raid using \`/removemyraid tweet_id:${canonicalTweetId}\` first (only if the raid is not expired).`)
         ],
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -197,7 +197,7 @@ async function handleRaidSubmission(interaction, link, tweetId) {
             .setColor(0xFF0000)
             .setDescription("❌ Please provide a valid URL/link (must start with http:// or https://).")
         ],
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -209,7 +209,7 @@ async function handleRaidSubmission(interaction, link, tweetId) {
             .setColor(0xFF0000)
             .setDescription("❌ Only Twitter/X post links can be submitted as raid proof!")
         ],
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -221,7 +221,7 @@ async function handleRaidSubmission(interaction, link, tweetId) {
             .setColor(0xFF0000)
             .setDescription("❌ Please provide a valid Twitter or X post link (e.g., `https://x.com/username/status/1234567890`).")
         ],
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -246,7 +246,7 @@ async function handleRaidSubmission(interaction, link, tweetId) {
               .setColor(0xFF0000)
               .setDescription("❌ You submitted the original announcement tweet link. Please complete the raid and submit the link to your own reply, retweet, or quote tweet.")
           ],
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
     }
@@ -259,7 +259,7 @@ async function handleRaidSubmission(interaction, link, tweetId) {
             .setColor(0xFF0000)
             .setDescription(`❌ The Twitter username in your submitted link (@${tweetInfo.username}) does not match your connected Twitter handle (@${userDoc.twitter})!\n\nIf you updated your Twitter handle, please link it again using \`/settwitter\`.`)
         ],
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -272,7 +272,7 @@ async function handleRaidSubmission(interaction, link, tweetId) {
             .setColor(0xFF0000)
             .setDescription("❌ This link has already been submitted.")
         ],
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -343,7 +343,7 @@ async function handleRaidSubmission(interaction, link, tweetId) {
 
   } catch (error) {
     console.error('Error processing raid submission:', error);
-    await sendReply(interaction, { content: "❌ An error occurred while processing your raid submission. Please try again.", ephemeral: true });
+    await sendReply(interaction, { content: "❌ An error occurred while processing your raid submission. Please try again.", flags: MessageFlags.Ephemeral });
   }
 }
 

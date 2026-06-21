@@ -31,7 +31,7 @@ module.exports = {
       const response = await interaction.reply({
         embeds: [welcomeEmbed],
         components: [row],
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
 
       // Collector to handle buttons ephemerally
@@ -39,7 +39,7 @@ module.exports = {
 
       collector.on('collect', async i => {
         if (i.user.id !== interaction.user.id) {
-          return i.reply({ content: '❌ You cannot interact with this menu.', ephemeral: true });
+          return i.reply({ content: '❌ You cannot interact with this menu.', flags: MessageFlags.Ephemeral });
         }
 
         if (i.customId === 'help_user_commands') {
@@ -116,9 +116,9 @@ module.exports = {
       console.error('Error in /help command:', error);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: '❌ An error occurred. Please try again.', ephemeral: true });
+          await interaction.followUp({ content: '❌ An error occurred. Please try again.', flags: MessageFlags.Ephemeral });
         } else {
-          await interaction.reply({ content: '❌ An error occurred. Please try again.', ephemeral: true });
+          await interaction.reply({ content: '❌ An error occurred. Please try again.', flags: MessageFlags.Ephemeral });
         }
       } catch (err) {}
     }

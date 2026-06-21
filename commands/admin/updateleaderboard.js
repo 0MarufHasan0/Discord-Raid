@@ -11,7 +11,7 @@ module.exports = {
       const isAdmin = await checkAdmin(interaction);
       if (!isAdmin) return;
 
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       await updateLeaderboard(interaction.client);
 
@@ -25,9 +25,9 @@ module.exports = {
       console.error('Error in /updateleaderboard command:', error);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: '❌ An error occurred. Please try again.', ephemeral: true });
+          await interaction.followUp({ content: '❌ An error occurred. Please try again.', flags: MessageFlags.Ephemeral });
         } else {
-          await interaction.reply({ content: '❌ An error occurred. Please try again.', ephemeral: true });
+          await interaction.reply({ content: '❌ An error occurred. Please try again.', flags: MessageFlags.Ephemeral });
         }
       } catch (err) {
         // Silently catch

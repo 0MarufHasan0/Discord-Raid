@@ -30,7 +30,7 @@ module.exports = {
         .setRequired(false)),
   async execute(interaction) {
     try {
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       // Check admin permissions
       const isAdmin = await checkAdmin(interaction);

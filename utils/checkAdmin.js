@@ -18,9 +18,9 @@ async function checkAdmin(interaction) {
       .setDescription("❌ You do not have permission to use this command.");
     try {
       if (interaction.deferred || interaction.replied) {
-        await interaction.followUp({ embeds: [embed], ephemeral: true });
+        await interaction.followUp({ embeds: [embed], flags: MessageFlags.Ephemeral });
       } else {
-        await interaction.reply({ embeds: [embed], ephemeral: true });
+        await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
       }
     } catch (err) {}
     return false;
@@ -43,9 +43,9 @@ async function checkAdmin(interaction) {
     
     try {
       if (interaction.deferred || interaction.replied) {
-        await interaction.followUp({ embeds: [embed], ephemeral: true });
+        await interaction.followUp({ embeds: [embed], flags: MessageFlags.Ephemeral });
       } else {
-        await interaction.reply({ embeds: [embed], ephemeral: true });
+        await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
       }
     } catch (err) {}
     return false;

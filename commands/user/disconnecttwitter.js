@@ -17,7 +17,7 @@ module.exports = {
               .setColor(0xFF0000)
               .setDescription("❌ You don't have a Twitter/X account connected to disconnect!")
           ],
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
 
@@ -39,9 +39,9 @@ module.exports = {
       console.error('Error in /disconnecttwitter command:', error);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: "❌ An error occurred while disconnecting your Twitter account.", ephemeral: true });
+          await interaction.followUp({ content: "❌ An error occurred while disconnecting your Twitter account.", flags: MessageFlags.Ephemeral });
         } else {
-          await interaction.reply({ content: "❌ An error occurred while disconnecting your Twitter account.", ephemeral: true });
+          await interaction.reply({ content: "❌ An error occurred while disconnecting your Twitter account.", flags: MessageFlags.Ephemeral });
         }
       } catch (err) {
         // Silently catch errors if interaction already finished/closed

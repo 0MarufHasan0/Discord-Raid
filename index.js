@@ -91,9 +91,9 @@ client.on('interactionCreate', async interaction => {
     
     try {
       if (interaction.replied || interaction.deferred) {
-        await interaction.followUp({ content: errMessage, ephemeral: true });
+        await interaction.followUp({ content: errMessage, flags: MessageFlags.Ephemeral });
       } else {
-        await interaction.reply({ content: errMessage, ephemeral: true });
+        await interaction.reply({ content: errMessage, flags: MessageFlags.Ephemeral });
       }
     } catch (replyError) {
       // Silently catch in case the channel or interaction was destroyed
@@ -144,7 +144,7 @@ client.on('interactionCreate', async interaction => {
       try {
         await interaction.reply({
           content: `\`${tweetId}\``,
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       } catch (error) {
         console.error('Error replying to copy button:', error);
@@ -166,7 +166,7 @@ client.on('interactionCreate', async interaction => {
                 .setColor(0xFF0000)
                 .setDescription("❌ You must connect your Twitter/X account before submitting a raid!\n\nUse `/settwitter` to link your Twitter username first.")
             ],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
 
@@ -184,7 +184,7 @@ client.on('interactionCreate', async interaction => {
                 .setColor(0xFF0000)
                 .setDescription("❌ Invalid Tweet ID! Please provide a correct Tweet ID.")
             ],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
 
@@ -196,7 +196,7 @@ client.on('interactionCreate', async interaction => {
                 .setColor(0xFF0000)
                 .setDescription("❌ This raid has expired! You can no longer submit a raid for this Tweet ID.")
             ],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
 
@@ -216,7 +216,7 @@ client.on('interactionCreate', async interaction => {
                 .setColor(0xFF0000)
                 .setDescription(`❌ You have already submitted a raid for this tweet.\n\nIf you submitted the wrong link and want to submit a new one, please delete your previous raid using \`/removemyraid tweet_id:${canonicalTweetId}\` first (only if the raid is not expired).`)
             ],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
 
@@ -278,7 +278,7 @@ client.on('interactionCreate', async interaction => {
                 .setColor(0xFF0000)
                 .setDescription(`❌ There are currently no active ${typeStr} items available for claiming.`)
             ],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
 
@@ -309,7 +309,7 @@ client.on('interactionCreate', async interaction => {
         await interaction.reply({
           content: promptContent,
           components: [row],
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
 
       } catch (error) {
@@ -317,7 +317,7 @@ client.on('interactionCreate', async interaction => {
         try {
           await interaction.reply({
             content: '❌ An error occurred while opening the claim menu.',
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         } catch (e) {}
       }
@@ -398,7 +398,7 @@ client.on('interactionCreate', async interaction => {
           if (interaction.deferred || interaction.replied) {
             await interaction.editReply({ content: '❌ Failed to close the ticket.' });
           } else {
-            await interaction.reply({ content: '❌ Failed to close the ticket.', ephemeral: true });
+            await interaction.reply({ content: '❌ Failed to close the ticket.', flags: MessageFlags.Ephemeral });
           }
         } catch (e) {}
       }
@@ -470,7 +470,7 @@ client.on('interactionCreate', async interaction => {
           if (interaction.deferred || interaction.replied) {
             await interaction.editReply({ content: '❌ Failed to reopen the ticket.' });
           } else {
-            await interaction.reply({ content: '❌ Failed to reopen the ticket.', ephemeral: true });
+            await interaction.reply({ content: '❌ Failed to reopen the ticket.', flags: MessageFlags.Ephemeral });
           }
         } catch (e) {}
       }
@@ -491,7 +491,7 @@ client.on('interactionCreate', async interaction => {
       } catch (error) {
         console.error('Error initiating ticket deletion:', error);
         try {
-          await interaction.reply({ content: '❌ Failed to delete the ticket.', ephemeral: true });
+          await interaction.reply({ content: '❌ Failed to delete the ticket.', flags: MessageFlags.Ephemeral });
         } catch (e) {}
       }
     } else if (interaction.customId === 'panel_submit_raid') {
@@ -508,7 +508,7 @@ client.on('interactionCreate', async interaction => {
                 .setColor(0xFF0000)
                 .setDescription("❌ You must connect your Twitter/X account before submitting a raid!\n\nClick the **Set Twitter** button to link your Twitter username first.")
             ],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
 
@@ -575,7 +575,7 @@ client.on('interactionCreate', async interaction => {
                 .setColor(0xFF0000)
                 .setDescription("❌ You don't have a Twitter/X account connected to disconnect!")
             ],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
 
@@ -589,7 +589,7 @@ client.on('interactionCreate', async interaction => {
           .setDescription(`✅ Successfully disconnected **@${connectedHandle}** from your profile.`)
           .setTimestamp();
 
-        return interaction.reply({ embeds: [successEmbed], ephemeral: true });
+        return interaction.reply({ embeds: [successEmbed], flags: MessageFlags.Ephemeral });
       } catch (error) {
         console.error('Error handling panel disconnect twitter button:', error);
       }
@@ -620,7 +620,7 @@ client.on('interactionCreate', async interaction => {
           )
           .setTimestamp();
 
-        await interaction.reply({ embeds: [embed], ephemeral: true });
+        await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
       } catch (error) {
         console.error('Error handling panel my points button:', error);
       }
@@ -636,7 +636,7 @@ client.on('interactionCreate', async interaction => {
         if (raids.length === 0) {
           return interaction.reply({
             embeds: [new EmbedBuilder().setColor(0x5865F2).setDescription("You have not submitted any raids yet.")],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
 
@@ -668,7 +668,7 @@ client.on('interactionCreate', async interaction => {
           });
         });
 
-        await interaction.reply({ embeds: [embed], ephemeral: true });
+        await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
       } catch (error) {
         console.error('Error handling panel raid history button:', error);
       }
@@ -708,7 +708,7 @@ client.on('interactionCreate', async interaction => {
 
         if (topUsers.length === 0) {
           embed.setDescription("📭 No users found on the leaderboard.");
-          return interaction.reply({ embeds: [embed], ephemeral: true });
+          return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
         }
 
         const rankEmojis = ['🥇', '🥈', '🥉'];
@@ -723,7 +723,7 @@ client.on('interactionCreate', async interaction => {
           });
         });
 
-        await interaction.reply({ embeds: [embed], ephemeral: true });
+        await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
       } catch (error) {
         console.error('Error handling panel leaderboard button:', error);
       }
@@ -735,7 +735,7 @@ client.on('interactionCreate', async interaction => {
         if (!isAdmin) {
           return await interaction.reply({
             content: "❌ You do not have permission to use admin commands.",
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
 
@@ -1109,7 +1109,7 @@ client.on('interactionCreate', async interaction => {
           await interaction.reply({
             embeds: [embed],
             components: [row],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         } else if (interaction.customId.startsWith('admin_copy_raiders_')) {
           const format = interaction.customId.replace('admin_copy_raiders_', '');
@@ -1145,7 +1145,7 @@ client.on('interactionCreate', async interaction => {
           if (!content) {
             return await interaction.reply({
               content: '❌ No user data found for this format.',
-              ephemeral: true
+              flags: MessageFlags.Ephemeral
             });
           }
 
@@ -1156,7 +1156,7 @@ client.on('interactionCreate', async interaction => {
           await interaction.reply({
             content: `✅ Here is your requested **${format.toUpperCase()}** format raider list:`,
             files: [attachment],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
 
           // Send admin log
@@ -1206,7 +1206,7 @@ client.on('interactionCreate', async interaction => {
           updateLeaderboard(interaction.client);
           await interaction.reply({
             embeds: [new EmbedBuilder().setColor(0x00FF00).setDescription("✅ Leaderboard successfully updated!")],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
 
           // Send admin log
@@ -1244,7 +1244,7 @@ client.on('interactionCreate', async interaction => {
           await interaction.reply({
             embeds: [warningEmbed],
             components: [actionRow],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         } else if (interaction.customId === 'admin_delete_all_data_confirm_btn') {
           const modal = new ModalBuilder()
@@ -1274,7 +1274,7 @@ client.on('interactionCreate', async interaction => {
       const link = interaction.fields.getTextInputValue('proof_link').trim();
       try {
         // Defer response ephemerally
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         const handleRaidSubmission = require('./utils/handleRaidSubmission');
         await handleRaidSubmission(interaction, link, tweetId);
@@ -1285,7 +1285,7 @@ client.on('interactionCreate', async interaction => {
       const tweetId = interaction.fields.getTextInputValue('panel_tweet_id').trim();
       const link = interaction.fields.getTextInputValue('panel_proof_link').trim();
       try {
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
         const handleRaidSubmission = require('./utils/handleRaidSubmission');
         await handleRaidSubmission(interaction, link, tweetId);
       } catch (error) {
@@ -1309,7 +1309,7 @@ client.on('interactionCreate', async interaction => {
                 .setColor(0xFF0000)
                 .setDescription("❌ Invalid Twitter/X username! Twitter handles should be 1-15 characters long and contain only letters, numbers, and underscores.")
             ],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
 
@@ -1327,7 +1327,7 @@ client.on('interactionCreate', async interaction => {
                 .setColor(0xFF0000)
                 .setDescription(`❌ The Twitter handle **@${twitterHandle}** is already linked to another user!`)
             ],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
 
@@ -1352,7 +1352,7 @@ client.on('interactionCreate', async interaction => {
           .setDescription(`✅ Successfully linked your Twitter/X account: **@${twitterHandle}**!\n\nYou can now submit raids for approval.`)
           .setTimestamp();
 
-        return interaction.reply({ embeds: [successEmbed], ephemeral: true });
+        return interaction.reply({ embeds: [successEmbed], flags: MessageFlags.Ephemeral });
 
       } catch (error) {
         console.error('Error handling panel set twitter modal submission:', error);
@@ -1360,7 +1360,7 @@ client.on('interactionCreate', async interaction => {
     } else if (interaction.customId === 'panel_remove_raid_modal') {
       const tweetId = interaction.fields.getTextInputValue('panel_remove_tweet_id').trim();
       try {
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
         const Raid = require('./database/models/Raid');
         const User = require('./database/models/User');
         const Tweet = require('./database/models/Tweet');
@@ -1443,7 +1443,7 @@ client.on('interactionCreate', async interaction => {
         if (!isAdmin) {
           return await interaction.reply({
             content: "❌ You do not have permission to use admin commands.",
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
 
@@ -1650,7 +1650,7 @@ client.on('interactionCreate', async interaction => {
           if (!targetUser) {
             return await interaction.reply({
               embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ Target user '${targetInput}' not found. Please provide a valid User ID or Username.`)],
-              ephemeral: true
+              flags: MessageFlags.Ephemeral
             });
           }
 
@@ -1703,7 +1703,7 @@ client.on('interactionCreate', async interaction => {
           if (!role) {
             return await interaction.reply({
               embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ Role '${roleInput}' not found on the server. Please provide a valid Role ID or mention.`)],
-              ephemeral: true
+              flags: MessageFlags.Ephemeral
             });
           }
 
@@ -1720,7 +1720,7 @@ client.on('interactionCreate', async interaction => {
             if (!targetUser) {
               return await interaction.reply({
                 embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ Target user '${targetInput}' not found. Please provide a valid User ID or Username.`)],
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
               });
             }
           }
@@ -1745,7 +1745,7 @@ client.on('interactionCreate', async interaction => {
           const winnersCount = parseInt(winnersCountStr) || 1;
           const minPoints = parseInt(minPointsStr) || 0;
 
-          await interaction.deferReply({ ephemeral: true });
+          await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
           try {
             const User = require('./database/models/User');
@@ -1829,11 +1829,11 @@ client.on('interactionCreate', async interaction => {
           if (confirmation !== "I want to Fuck Chess Dao Data Base") {
             return await interaction.reply({
               embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Invalid confirmation phrase. Action cancelled.")],
-              ephemeral: true
+              flags: MessageFlags.Ephemeral
             });
           }
 
-          await interaction.deferReply({ ephemeral: true });
+          await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
           const Raid = require('./database/models/Raid');
           const Tweet = require('./database/models/Tweet');

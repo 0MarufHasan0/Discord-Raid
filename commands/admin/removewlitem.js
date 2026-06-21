@@ -30,14 +30,14 @@ module.exports = {
       if (!item) {
         return interaction.reply({
           embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ No item found with the name '${name}'.`)],
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
 
       if (!item.isActive) {
         return interaction.reply({
           embeds: [new EmbedBuilder().setColor(0xFFA500).setDescription(`⚠️ The item '${item.name}' is already inactive or removed from the marketplace.`)],
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
 
@@ -70,7 +70,7 @@ module.exports = {
         .setColor(0x00FF00) // Success green
         .setDescription(`✅ '${item.name}' has been removed from the marketplace.${roleDeleteInfo}`);
 
-      await interaction.reply({ embeds: [replyEmbed], ephemeral: true });
+      await interaction.reply({ embeds: [replyEmbed], flags: MessageFlags.Ephemeral });
 
       // Send admin log
       const sendAdminLog = require('../../utils/sendAdminLog');
@@ -90,9 +90,9 @@ module.exports = {
       console.error('Error in /removewlitem command:', error);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: "❌ An error occurred. Please try again.", ephemeral: true });
+          await interaction.followUp({ content: "❌ An error occurred. Please try again.", flags: MessageFlags.Ephemeral });
         } else {
-          await interaction.reply({ content: "❌ An error occurred. Please try again.", ephemeral: true });
+          await interaction.reply({ content: "❌ An error occurred. Please try again.", flags: MessageFlags.Ephemeral });
         }
       } catch (err) {
         // Silently catch errors if interaction already finished/closed

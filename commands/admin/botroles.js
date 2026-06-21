@@ -30,7 +30,7 @@ module.exports = {
       const subcommand = interaction.options.getSubcommand();
 
       if (subcommand === 'list') {
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         // Retrieve bot created roles from database
         const dbRoles = await BotCreatedRole.find({}).sort({ createdAt: -1 });
@@ -85,11 +85,11 @@ module.exports = {
         if (!dbRole) {
           return interaction.reply({
             embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ This role is not in the bot-created roles tracking list! You can only delete bot-created roles with this command.")],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
 
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         // Delete from Discord server
         try {
@@ -142,9 +142,9 @@ module.exports = {
       console.error('Error in /botroles command:', error);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: "❌ An error occurred. Please try again.", ephemeral: true });
+          await interaction.followUp({ content: "❌ An error occurred. Please try again.", flags: MessageFlags.Ephemeral });
         } else {
-          await interaction.reply({ content: "❌ An error occurred. Please try again.", ephemeral: true });
+          await interaction.reply({ content: "❌ An error occurred. Please try again.", flags: MessageFlags.Ephemeral });
         }
       } catch (err) {}
     }

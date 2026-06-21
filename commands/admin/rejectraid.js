@@ -30,7 +30,7 @@ module.exports = {
       if (!raid) {
         return interaction.reply({
           embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ Raid ID not found: ${raidId}`)],
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
 
@@ -38,7 +38,7 @@ module.exports = {
       if (raid.status === 'rejected') {
         return interaction.reply({
           embeds: [new EmbedBuilder().setColor(0xFFA500).setDescription(`⚠️ This raid has already been rejected.`)],
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
 
@@ -97,7 +97,7 @@ module.exports = {
         .setColor(0x00FF00) // Success green
         .setDescription(replyDescription);
 
-      await interaction.reply({ embeds: [replyEmbed], ephemeral: true });
+      await interaction.reply({ embeds: [replyEmbed], flags: MessageFlags.Ephemeral });
 
       // Send admin log
       const sendAdminLog = require('../../utils/sendAdminLog');
@@ -118,9 +118,9 @@ module.exports = {
       console.error('Error in /rejectraid command:', error);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: "❌ An error occurred. Please try again.", ephemeral: true });
+          await interaction.followUp({ content: "❌ An error occurred. Please try again.", flags: MessageFlags.Ephemeral });
         } else {
-          await interaction.reply({ content: "❌ An error occurred. Please try again.", ephemeral: true });
+          await interaction.reply({ content: "❌ An error occurred. Please try again.", flags: MessageFlags.Ephemeral });
         }
       } catch (err) {
         // Silently catch errors if interaction already finished/closed

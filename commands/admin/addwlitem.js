@@ -91,14 +91,14 @@ module.exports = {
       if (pointCost <= 0 || totalSlots <= 0) {
         return interaction.reply({
           embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Point cost and slots must be greater than 0.")],
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
 
       if (claimDurationMs <= 0) {
         return interaction.reply({
           embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Claim duration must be greater than 0.")],
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
 
@@ -110,7 +110,7 @@ module.exports = {
         if (duplicateRoleItem) {
           return interaction.reply({
             embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ The role <@&${roleId}> is already in use by another active marketplace item ('${duplicateRoleItem.name}').`)],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
       }
@@ -121,7 +121,7 @@ module.exports = {
         if (existingRole) {
           return interaction.reply({
             embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ A role named '${createRoleName}' already exists in this server. Please provide another name or delete the existing role.`)],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
 
@@ -144,7 +144,7 @@ module.exports = {
           console.error(`❌ Failed to create role '${createRoleName}':`, createErr);
           return interaction.reply({
             embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ Failed to create role '${createRoleName}'. Please verify bot permissions and hierarchy to manage roles.`)],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
         roleId = existingRole.id;
@@ -197,13 +197,13 @@ module.exports = {
 
           return interaction.reply({
             embeds: [new EmbedBuilder().setColor(0x00FF00).setDescription(successDesc)],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
 
         return interaction.reply({
           embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ An active marketplace item named '${name}' already exists.`)],
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
 
@@ -244,7 +244,7 @@ module.exports = {
         .setColor(0x00FF00) // Success green
         .setDescription(replyDesc);
 
-      await interaction.reply({ embeds: [replyEmbed], ephemeral: true });
+      await interaction.reply({ embeds: [replyEmbed], flags: MessageFlags.Ephemeral });
 
       // Send admin log
       const sendAdminLog = require('../../utils/sendAdminLog');
@@ -265,9 +265,9 @@ module.exports = {
       console.error('Error in /addwlitem command:', error);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: "❌ An error occurred. Please try again.", ephemeral: true });
+          await interaction.followUp({ content: "❌ An error occurred. Please try again.", flags: MessageFlags.Ephemeral });
         } else {
-          await interaction.reply({ content: "❌ An error occurred. Please try again.", ephemeral: true });
+          await interaction.reply({ content: "❌ An error occurred. Please try again.", flags: MessageFlags.Ephemeral });
         }
       } catch (err) {
         // Silently catch errors if interaction already finished/closed

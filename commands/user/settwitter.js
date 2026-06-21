@@ -27,7 +27,7 @@ module.exports = {
               .setColor(0xFF0000)
               .setDescription("❌ Invalid Twitter/X username! Twitter handles should be 1-15 characters long and contain only letters, numbers, and underscores.")
           ],
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
 
@@ -46,7 +46,7 @@ module.exports = {
               .setColor(0xFF0000)
               .setDescription(`❌ The Twitter handle **@${twitterHandle}** is already linked to another user!`)
           ],
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
 
@@ -78,9 +78,9 @@ module.exports = {
       console.error('Error in /settwitter command:', error);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: "❌ An error occurred while linking your Twitter account.", ephemeral: true });
+          await interaction.followUp({ content: "❌ An error occurred while linking your Twitter account.", flags: MessageFlags.Ephemeral });
         } else {
-          await interaction.reply({ content: "❌ An error occurred while linking your Twitter account.", ephemeral: true });
+          await interaction.reply({ content: "❌ An error occurred while linking your Twitter account.", flags: MessageFlags.Ephemeral });
         }
       } catch (err) {
         // Silently catch errors if interaction already finished/closed

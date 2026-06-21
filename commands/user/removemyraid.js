@@ -15,7 +15,7 @@ module.exports = {
   async execute(interaction) {
     try {
       // Defer reply ephemerally to avoid timeouts on database calls
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       const tweetId = interaction.options.getString('tweet_id').trim();
       const escapedTweetId = tweetId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

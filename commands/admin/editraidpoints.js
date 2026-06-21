@@ -20,7 +20,7 @@ module.exports = {
       const isAdmin = await checkAdmin(interaction);
       if (!isAdmin) return;
 
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       const tweetId = interaction.options.getString('tweet_id').trim();
       const newPoints = interaction.options.getInteger('points');

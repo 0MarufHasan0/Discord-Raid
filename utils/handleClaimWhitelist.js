@@ -27,7 +27,7 @@ async function handleClaimWhitelist(interaction, itemName) {
   try {
     // Defer reply ephemerally if not already deferred
     if (!interaction.deferred && !interaction.replied) {
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     }
 
     const escapedItemName = itemName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -269,11 +269,11 @@ async function handleClaimWhitelist(interaction, itemName) {
       .setDescription(responseDescription)
       .setTimestamp();
 
-    await sendReply(interaction, { embeds: [successEmbed], ephemeral: true });
+    await sendReply(interaction, { embeds: [successEmbed], flags: MessageFlags.Ephemeral });
 
   } catch (error) {
     console.error('Error handling whitelist claim:', error);
-    await sendReply(interaction, { content: "❌ An error occurred while claiming the whitelist. Please try again.", ephemeral: true });
+    await sendReply(interaction, { content: "❌ An error occurred while claiming the whitelist. Please try again.", flags: MessageFlags.Ephemeral });
   }
 }
 

@@ -92,7 +92,7 @@ module.exports = {
       if (!isAdmin) return;
 
       // Defer reply ephemerally as resolving multiple channels might take time
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       const content = interaction.options.getString('content');
       const tweetLink = interaction.options.getString('tweet_link');
@@ -452,9 +452,9 @@ module.exports = {
       console.error('Error in /addtweet command:', error);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: "❌ An error occurred. Please try again.", ephemeral: true });
+          await interaction.followUp({ content: "❌ An error occurred. Please try again.", flags: MessageFlags.Ephemeral });
         } else {
-          await interaction.reply({ content: "❌ An error occurred. Please try again.", ephemeral: true });
+          await interaction.reply({ content: "❌ An error occurred. Please try again.", flags: MessageFlags.Ephemeral });
         }
       } catch (err) {
         // Silently catch errors if interaction already finished/closed

@@ -23,7 +23,7 @@ module.exports = {
       const isAdmin = await checkAdmin(interaction);
       if (!isAdmin) return;
 
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       const tweetId = interaction.options.getString('tweet_id').trim();
       const deleteMessage = interaction.options.getBoolean('delete_message') !== false; // defaults to true
@@ -139,9 +139,9 @@ module.exports = {
       console.error('Error in /removeraid command:', error);
       try {
         if (interaction.deferred || interaction.replied) {
-          await interaction.followUp({ content: "❌ An error occurred while removing the raid announcement.", ephemeral: true });
+          await interaction.followUp({ content: "❌ An error occurred while removing the raid announcement.", flags: MessageFlags.Ephemeral });
         } else {
-          await interaction.reply({ content: "❌ An error occurred while removing the raid announcement.", ephemeral: true });
+          await interaction.reply({ content: "❌ An error occurred while removing the raid announcement.", flags: MessageFlags.Ephemeral });
         }
       } catch (err) {}
     }

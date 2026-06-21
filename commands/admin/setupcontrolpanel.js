@@ -29,7 +29,7 @@ module.exports = {
       if (!targetChannel.isTextBased()) {
         return interaction.reply({
           embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ The specified channel must be a text-based channel.")],
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
 
@@ -211,7 +211,7 @@ module.exports = {
 
       await interaction.reply({
         embeds: [new EmbedBuilder().setColor(0x00FF00).setDescription(`✅ ${panelType === 'member' ? 'Member' : 'Admin'} Control Panel successfully sent to ${targetChannel}!`)],
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
 
       // Send admin log
@@ -232,9 +232,9 @@ module.exports = {
       console.error('Error in setupcontrolpanel command:', error);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: '❌ An error occurred while setting up the control panel.', ephemeral: true });
+          await interaction.followUp({ content: '❌ An error occurred while setting up the control panel.', flags: MessageFlags.Ephemeral });
         } else {
-          await interaction.reply({ content: '❌ An error occurred while setting up the control panel.', ephemeral: true });
+          await interaction.reply({ content: '❌ An error occurred while setting up the control panel.', flags: MessageFlags.Ephemeral });
         }
       } catch (e) {}
     }
