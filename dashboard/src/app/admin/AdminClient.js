@@ -53,6 +53,18 @@ export default function AdminClient({ initialTweets, initialPendingRaids, initia
     setTimeout(() => setMessage({ text: "", type: "" }), 5000);
   };
 
+  const sendWebAdminLog = async (logData) => {
+    try {
+      await fetch("/api/admin/log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(logData),
+      });
+    } catch (err) {
+      console.error("Failed to send web admin log:", err);
+    }
+  };
+
   // 1. Approve Raid
   const handleApproveRaid = async (raidId) => {
     setActionLoading(true);
@@ -319,6 +331,14 @@ export default function AdminClient({ initialTweets, initialPendingRaids, initia
       navigator.clipboard.writeText(textToCopy);
       setCopyStatus("Copied to clipboard successfully!");
       setTimeout(() => setCopyStatus(""), 3000);
+
+      // Log the copy action to Discord channel
+      sendWebAdminLog({
+        action: "Copy Raiders (Web)",
+        target: "Server Raiders",
+        details: `Copied raiders list to clipboard in **${format.toUpperCase()}** format.`,
+        color: 0x3498DB // Blue
+      });
     } else {
       setCopyStatus("No usernames found to copy.");
       setTimeout(() => setCopyStatus(""), 3000);
@@ -381,6 +401,19 @@ export default function AdminClient({ initialTweets, initialPendingRaids, initia
 
       setRaffleWinners(winners);
       setIsRaffling(false);
+
+      // Log the raffle draw to Discord channel
+      sendWebAdminLog({
+        action: "Raffle Draw (Web)",
+        target: "Server Raiders",
+        details: `Drew **${winners.length}** winner(s) from **${eligible.length}** eligible participant(s) via Web Dashboard.`,
+        fields: [
+          { name: 'Min Points Filter', value: `${raffleMinPoints} pts`, inline: true },
+          { name: 'Tweet ID Filter', value: raffleTweetId.trim() || 'None', inline: true },
+          { name: 'Winners List', value: winners.length > 0 ? winners.map((w, i) => `**${i + 1}.** ${w.username} (${w.twitter ? (w.twitter.startsWith('@') ? w.twitter : `@${w.twitter}`) : 'N/A'})`).join('\n') : 'None', inline: false }
+        ],
+        color: 0x9B59B6 // Purple
+      });
     }, 1200);
   };
 

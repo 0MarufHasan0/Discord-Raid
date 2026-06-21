@@ -1158,6 +1158,16 @@ client.on('interactionCreate', async interaction => {
             files: [attachment],
             ephemeral: true
           });
+
+          // Send admin log
+          const sendAdminLog = require('./utils/sendAdminLog');
+          await sendAdminLog(interaction.client, {
+            action: 'Copy Raiders (Discord)',
+            executor: interaction.user.tag,
+            target: 'Server Raiders',
+            details: `Exported and downloaded raiders list in **${format.toUpperCase()}** format.`,
+            color: 0x3498DB // Blue
+          });
         } else if (interaction.customId === 'admin_raffle_raider') {
           const modal = new ModalBuilder()
             .setCustomId('admin_raffle_raider_modal')
@@ -1197,6 +1207,16 @@ client.on('interactionCreate', async interaction => {
           await interaction.reply({
             embeds: [new EmbedBuilder().setColor(0x00FF00).setDescription("✅ Leaderboard successfully updated!")],
             ephemeral: true
+          });
+
+          // Send admin log
+          const sendAdminLog = require('./utils/sendAdminLog');
+          await sendAdminLog(interaction.client, {
+            action: 'Update Leaderboard (Discord)',
+            executor: interaction.user.tag,
+            target: 'Leaderboard Embed',
+            details: `Force updated the live leaderboard channel embed.`,
+            color: 0x5865F2 // Default Blue
           });
         } else if (interaction.customId === 'admin_delete_all_data') {
           const { ButtonBuilder, ButtonStyle } = require('discord.js');

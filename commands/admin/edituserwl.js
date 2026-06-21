@@ -120,8 +120,24 @@ module.exports = {
         responseText += `\n⚠️ Failed to update validity for **${failCount}** user(s) (please check bot role permissions).`;
       }
 
-      return interaction.editReply({
+      await interaction.editReply({
         embeds: [new EmbedBuilder().setColor(0x00FF00).setDescription(responseText)]
+      });
+
+      // Send admin log
+      const sendAdminLog = require('../../utils/sendAdminLog');
+      await sendAdminLog(interaction.client, {
+        action: 'User Whitelist Edited',
+        executor: interaction.user.tag,
+        target: targetUser ? `${targetUser.username} (${targetUser.id})` : 'All Members',
+        details: `Modified active whitelist role validity.`,
+        fields: [
+          { name: 'Role', value: `<@&${role.id}>`, inline: true },
+          { name: 'Action', value: action, inline: true },
+          { name: 'Days Offset', value: days ? `${days} days` : 'N/A', inline: true },
+          { name: 'Updated Users Count', value: `${successCount} successful, ${failCount} failed`, inline: false }
+        ],
+        color: action === 'remove' ? 0xE74C3C : 0x3498DB // Red for remove, blue for adjust
       });
 
     } catch (error) {

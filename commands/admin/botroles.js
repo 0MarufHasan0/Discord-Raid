@@ -118,6 +118,21 @@ module.exports = {
         const successDesc = `✅ Role '**${dbRole.roleName}**' has been permanently deleted from the server and database tracking has been removed.` +
           (affectedItems.modifiedCount > 0 ? `\n⚠️ **${affectedItems.modifiedCount}** active marketplace item(s) associated with this role have been set to inactive.` : '');
 
+        // Send admin log
+        const sendAdminLog = require('../../utils/sendAdminLog');
+        await sendAdminLog(interaction.client, {
+          action: 'Delete Bot-Created Role',
+          executor: interaction.user.tag,
+          target: `${dbRole.roleName} (${role.id})`,
+          details: `Permanently deleted bot-created role from the server and database tracking.`,
+          fields: [
+            { name: 'Role Name', value: dbRole.roleName, inline: true },
+            { name: 'Role ID', value: role.id, inline: true },
+            { name: 'Deactivated Shop Items', value: `${affectedItems.modifiedCount}`, inline: true }
+          ],
+          color: 0xE74C3C // Red
+        });
+
         return interaction.editReply({
           embeds: [new EmbedBuilder().setColor(0x00FF00).setDescription(successDesc)]
         });

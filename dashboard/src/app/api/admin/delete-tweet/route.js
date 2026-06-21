@@ -30,6 +30,22 @@ export async function POST(req) {
     // 2. Trigger bot sync
     await triggerBotSync({ action: "update_all" });
 
+    // Send admin log
+    try {
+      await triggerBotSync({
+        action: "log_action",
+        details: {
+          action: "Tweet Deleted (Web)",
+          executor: session.user.username,
+          target: `Tweet ID: ${tweetId}`,
+          details: `Deleted target tweet **${tweetId}** from the dashboard.`,
+          color: 0xE74C3C // Red
+        }
+      });
+    } catch (logErr) {
+      console.warn("Failed to trigger admin log for web tweet deletion:", logErr);
+    }
+
     return NextResponse.json({
       success: true,
       message: "Target tweet deleted successfully"
