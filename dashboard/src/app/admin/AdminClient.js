@@ -40,6 +40,7 @@ export default function AdminClient({ initialTweets, initialPendingRaids, initia
   const [raffleMinPoints, setRaffleMinPoints] = useState(4);
   const [raffleRequireTwitter, setRaffleRequireTwitter] = useState(true);
   const [raffleWinners, setRaffleWinners] = useState([]);
+  const [raffleTweetId, setRaffleTweetId] = useState("");
   const [isRaffling, setIsRaffling] = useState(false);
 
   // Database reset states
@@ -267,7 +268,29 @@ export default function AdminClient({ initialTweets, initialPendingRaids, initia
   const handleOpenRaffleModal = async () => {
     setShowRaffleModal(true);
     setRaffleWinners([]);
+    setRaffleTweetId("");
     await fetchAllUsers();
+  };
+
+  const handleLoadTweetUsers = async () => {
+    setLoadingAllUsers(true);
+    try {
+      const url = raffleTweetId.trim()
+        ? `/api/admin/all-users?tweetId=${raffleTweetId.trim()}`
+        : "/api/admin/all-users";
+      const res = await fetch(url);
+      const data = await res.json();
+      if (res.ok) {
+        setAllUsers(data.users);
+      } else {
+        showStatusMsg(data.error || "Failed to fetch users.", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      showStatusMsg("Failed to fetch users.", "error");
+    } finally {
+      setLoadingAllUsers(false);
+    }
   };
 
   const handleCopyFormat = (format) => {
@@ -302,12 +325,36 @@ export default function AdminClient({ initialTweets, initialPendingRaids, initia
     }
   };
 
-  const handleRunRaffle = () => {
+  const handleRunRaffle = async () => {
     setIsRaffling(true);
     setRaffleWinners([]);
 
+    let targetUsers = allUsers;
+
+    // Fetch latest users dynamically from DB (respecting tweetId if provided)
+    try {
+      const url = raffleTweetId.trim()
+        ? `/api/admin/all-users?tweetId=${raffleTweetId.trim()}`
+        : "/api/admin/all-users";
+      const res = await fetch(url);
+      const data = await res.json();
+      if (res.ok) {
+        targetUsers = data.users;
+        setAllUsers(data.users); // Sync count in UI
+      } else {
+        showStatusMsg(data.error || "Failed to fetch users.", "error");
+        setIsRaffling(false);
+        return;
+      }
+    } catch (err) {
+      console.error(err);
+      showStatusMsg("Failed to fetch users.", "error");
+      setIsRaffling(false);
+      return;
+    }
+
     // Filter eligible users
-    const eligible = allUsers.filter((u) => {
+    const eligible = targetUsers.filter((u) => {
       const matchPoints = u.points >= raffleMinPoints;
       const matchTwitter = !raffleRequireTwitter || u.twitter;
       return matchPoints && matchTwitter;
@@ -1033,6 +1080,31 @@ export default function AdminClient({ initialTweets, initialPendingRaids, initia
                       }}
                       className="w-full px-3.5 py-2.5 rounded-lg border border-indigo-950/40 bg-[#0c0c16]/50 text-xs focus:outline-none focus:border-indigo-500 text-slate-200"
                     />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-semibold text-slate-400 mb-1">
+                      Tweet ID (Optional) - Filter by specific raid participants
+                    </label>
+                    <div className="flex space-x-2">
+                      <input
+                        type="text"
+                        placeholder="e.g. 1782025385673 (Leave empty for all users)"
+                        value={raffleTweetId}
+                        onChange={(e) => {
+                          setRaffleTweetId(e.target.value);
+                          setRaffleWinners([]);
+                        }}
+                        className="flex-1 px-3.5 py-2.5 rounded-lg border border-indigo-950/40 bg-[#0c0c16]/50 text-xs focus:outline-none focus:border-indigo-500 text-slate-200"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleLoadTweetUsers}
+                        className="px-4 py-2.5 text-xs font-bold text-indigo-300 bg-indigo-950/30 hover:bg-indigo-900/40 border border-indigo-500/20 rounded-lg transition-colors cursor-pointer"
+                      >
+                        Apply Filter
+                      </button>
+                    </div>
                   </div>
                 </div>
 
