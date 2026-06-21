@@ -1102,6 +1102,7 @@ client.on('interactionCreate', async interaction => {
           const usernamesList = configDoc.twitterUsernames.length > 0
             ? configDoc.twitterUsernames.map(name => `@${name}`).join(', ')
             : '*None*';
+          const captionText = configDoc.caption || '⚔️ **New Raid Announcement!** ⚔️';
 
           const oldEmbed = interaction.message.embeds[0];
           const newEmbed = EmbedBuilder.from(oldEmbed)
@@ -1120,7 +1121,8 @@ client.on('interactionCreate', async interaction => {
               "🎭 **Edit User WL** — Modify or remove a member's whitelist validity\n" +
               "🔄 **Update Leaderboard** — Force update the leaderboard embed\n\n" +
               `🤖 **Auto-Tweet Status:** ${statusText}\n` +
-              `🐦 **Monitored Accounts:** ${usernamesList}`
+              `🐦 **Monitored Accounts:** ${usernamesList}\n` +
+              `📝 **Auto-Tweet Caption:** ${captionText}`
             );
 
           await interaction.update({ embeds: [newEmbed] });
@@ -1157,6 +1159,26 @@ client.on('interactionCreate', async interaction => {
             .setRequired(true);
 
           modal.addComponents(new ActionRowBuilder().addComponents(usernameInput));
+          await interaction.showModal(modal);
+        } else if (interaction.customId === 'admin_set_autotweet_caption') {
+          const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+          const AutoTweetConfig = require('./database/models/AutoTweetConfig');
+          let configDoc = await AutoTweetConfig.findOne();
+          const currentCaption = configDoc ? configDoc.caption : "⚔️ **New Raid Announcement!** ⚔️";
+
+          const modal = new ModalBuilder()
+            .setCustomId('admin_set_autotweet_caption_modal')
+            .setTitle('Set Auto-Tweet Caption');
+
+          const captionInput = new TextInputBuilder()
+            .setCustomId('caption')
+            .setLabel('Caption Message')
+            .setValue(currentCaption || "")
+            .setPlaceholder('Enter message to display above auto-tweets')
+            .setStyle(TextInputStyle.Paragraph)
+            .setRequired(true);
+
+          modal.addComponents(new ActionRowBuilder().addComponents(captionInput));
           await interaction.showModal(modal);
         }
       } catch (error) {
@@ -1662,6 +1684,7 @@ client.on('interactionCreate', async interaction => {
           const usernamesList = configDoc.twitterUsernames.length > 0
             ? configDoc.twitterUsernames.map(name => `@${name}`).join(', ')
             : '*None*';
+          const captionText = configDoc.caption || '⚔️ **New Raid Announcement!** ⚔️';
 
           const oldEmbed = interaction.message.embeds[0];
           const newEmbed = EmbedBuilder.from(oldEmbed)
@@ -1680,7 +1703,8 @@ client.on('interactionCreate', async interaction => {
               "🎭 **Edit User WL** — Modify or remove a member's whitelist validity\n" +
               "🔄 **Update Leaderboard** — Force update the leaderboard embed\n\n" +
               `🤖 **Auto-Tweet Status:** ${statusText}\n` +
-              `🐦 **Monitored Accounts:** ${usernamesList}`
+              `🐦 **Monitored Accounts:** ${usernamesList}\n` +
+              `📝 **Auto-Tweet Caption:** ${captionText}`
             );
 
           await interaction.update({ embeds: [newEmbed] });
@@ -1714,6 +1738,7 @@ client.on('interactionCreate', async interaction => {
           const usernamesList = configDoc.twitterUsernames.length > 0
             ? configDoc.twitterUsernames.map(name => `@${name}`).join(', ')
             : '*None*';
+          const captionText = configDoc.caption || '⚔️ **New Raid Announcement!** ⚔️';
 
           const oldEmbed = interaction.message.embeds[0];
           const newEmbed = EmbedBuilder.from(oldEmbed)
@@ -1732,12 +1757,64 @@ client.on('interactionCreate', async interaction => {
               "🎭 **Edit User WL** — Modify or remove a member's whitelist validity\n" +
               "🔄 **Update Leaderboard** — Force update the leaderboard embed\n\n" +
               `🤖 **Auto-Tweet Status:** ${statusText}\n` +
-              `🐦 **Monitored Accounts:** ${usernamesList}`
+              `🐦 **Monitored Accounts:** ${usernamesList}\n` +
+              `📝 **Auto-Tweet Caption:** ${captionText}`
             );
 
           await interaction.update({ embeds: [newEmbed] });
           await interaction.followUp({
             embeds: [new EmbedBuilder().setColor(0x00FF00).setDescription(`✅ Successfully removed \`@${username}\` from monitored accounts list.`)],
+            ephemeral: true
+          });
+        } else if (interaction.customId === 'admin_set_autotweet_caption_modal') {
+          const newCaption = interaction.fields.getTextInputValue('caption').trim();
+
+          if (!newCaption) {
+            return await interaction.reply({
+              embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Please specify a valid caption message.")],
+              ephemeral: true
+            });
+          }
+
+          const AutoTweetConfig = require('./database/models/AutoTweetConfig');
+          let configDoc = await AutoTweetConfig.findOne();
+          if (!configDoc) {
+            configDoc = new AutoTweetConfig({ twitterUsernames: [], isEnabled: true });
+          }
+
+          configDoc.caption = newCaption;
+          await configDoc.save();
+
+          const statusText = configDoc.isEnabled ? '🟢 **Enabled**' : '🔴 **Disabled**';
+          const usernamesList = configDoc.twitterUsernames.length > 0
+            ? configDoc.twitterUsernames.map(name => `@${name}`).join(', ')
+            : '*None*';
+          const captionText = configDoc.caption || '⚔️ **New Raid Announcement!** ⚔️';
+
+          const oldEmbed = interaction.message.embeds[0];
+          const newEmbed = EmbedBuilder.from(oldEmbed)
+            .setDescription(
+              "Welcome to the **Raid Boss** Admin Panel! Use the buttons below to manage the bot's features and users:\n\n" +
+              "📢 **Add Tweet** — Register a tweet for a raid\n" +
+              "🎁 **Add WL Item** — Add a new item to the marketplace\n" +
+              "✏️ **Edit WL Item** — Edit an existing marketplace item\n" +
+              "🗑️ **Remove WL Item** — Deactivate/remove a marketplace item\n" +
+              "➕ **Add Points** — Reward points to a member\n" +
+              "➖ **Remove Points** — Deduct points from a member\n" +
+              "⚙️ **Edit Raid Points** — Modify points rewarded for a specific raid\n" +
+              "✅ **Approve Raid** — Manually approve a pending raid\n" +
+              "❌ **Reject Raid** — Manually reject a raid submission\n" +
+              "🗑️ **Delete Announcement** — Delete a raid announcement and its records\n" +
+              "🎭 **Edit User WL** — Modify or remove a member's whitelist validity\n" +
+              "🔄 **Update Leaderboard** — Force update the leaderboard embed\n\n" +
+              `🤖 **Auto-Tweet Status:** ${statusText}\n` +
+              `🐦 **Monitored Accounts:** ${usernamesList}\n` +
+              `📝 **Auto-Tweet Caption:** ${captionText}`
+            );
+
+          await interaction.update({ embeds: [newEmbed] });
+          await interaction.followUp({
+            embeds: [new EmbedBuilder().setColor(0x00FF00).setDescription(`✅ Successfully set Auto-Tweet caption to:\n\n${newCaption}`)],
             ephemeral: true
           });
         }
@@ -1980,9 +2057,9 @@ async function pollAutoTweets(client) {
                 })
                 .setTimestamp();
 
-              let messageText = '';
+              let messageText = configDoc.caption || '⚔️ **New Raid Announcement!** ⚔️';
               if (finalTweetLink) {
-                messageText = `[.](${finalTweetLink})`;
+                messageText = `${messageText} [.](${finalTweetLink})`.trim();
               }
 
               if (tweetData) {

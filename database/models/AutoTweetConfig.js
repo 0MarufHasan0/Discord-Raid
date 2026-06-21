@@ -13,6 +13,10 @@ const AutoTweetConfigSchema = new mongoose.Schema({
     type: Map,
     of: String, // username -> lastStatusId
     default: {}
+  },
+  caption: {
+    type: String,
+    default: "⚔️ **New Raid Announcement!** ⚔️"
   }
 });
 
