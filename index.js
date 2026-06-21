@@ -1123,8 +1123,8 @@ client.on('interactionCreate', async interaction => {
 
           const confirmInput = new TextInputBuilder()
             .setCustomId('confirmation')
-            .setLabel('Type: confirm confirm confirm confirm Chess Dao')
-            .setPlaceholder('Type the confirmation phrase here...')
+            .setLabel('Enter the phrase below to confirm:')
+            .setPlaceholder('confirm confirm confirm confirm Chess Dao')
             .setStyle(TextInputStyle.Short)
             .setRequired(true);
 
