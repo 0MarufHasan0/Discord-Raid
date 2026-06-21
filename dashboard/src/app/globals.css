@@ -14,11 +14,12 @@
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background-color: #06060c;
+  color: #f3f4f6;
   font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
 }
+
 
 /* Premium Custom Scrollbar */
 ::-webkit-scrollbar {
@@ -63,11 +64,11 @@ body {
   text-shadow: 0 0 8px rgba(6, 182, 212, 0.6), 0 0 20px rgba(6, 182, 212, 0.3);
 }
 
-/* Radial Gradient Overlay for Backgrounds */
 .radial-bg {
-  background: radial-gradient(circle at 50% -20%, rgba(99, 102, 241, 0.15) 0%, rgba(13, 13, 27, 0) 50%),
-              radial-gradient(circle at 0% 100%, rgba(6, 182, 212, 0.08) 0%, rgba(13, 13, 27, 0) 40%);
+  background-image: radial-gradient(circle at 50% -20%, rgba(99, 102, 241, 0.15) 0%, rgba(13, 13, 27, 0) 50%),
+                    radial-gradient(circle at 0% 100%, rgba(6, 182, 212, 0.08) 0%, rgba(13, 13, 27, 0) 40%);
 }
+
 
 /* Dynamic Animation Utilities */
 @keyframes pulse-glow {
