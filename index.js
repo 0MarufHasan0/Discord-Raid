@@ -761,9 +761,9 @@ client.on('interactionCreate', async interaction => {
             .setRequired(false);
 
           const durationInput = new TextInputBuilder()
-            .setCustomId('duration_hours')
-            .setLabel('Raid Duration (Hours, default: 24)')
-            .setPlaceholder('24')
+            .setCustomId('duration')
+            .setLabel('Raid Duration (e.g. 1d 12h 30m, default: 24h)')
+            .setPlaceholder('24h')
             .setStyle(TextInputStyle.Short)
             .setRequired(false);
 
@@ -1277,13 +1277,52 @@ client.on('interactionCreate', async interaction => {
         if (interaction.customId === 'admin_add_tweet_modal') {
           const content = interaction.fields.getTextInputValue('content').trim();
           const tweetLink = interaction.fields.getTextInputValue('tweet_link')?.trim() || null;
-          const durationHours = parseInt(interaction.fields.getTextInputValue('duration_hours')) || 0;
+          const durationInput = interaction.fields.getTextInputValue('duration')?.trim();
           const points = interaction.fields.getTextInputValue('points')?.trim();
           
+          // Helper to parse duration string (e.g. 1d 12h 30m)
+          const parseDurationStringToMs = (str) => {
+            if (!str) return null;
+            const regex = /(\d+)\s*(d|h|m|days|hours|minutes|day|hour|minute)/gi;
+            let matches = [...str.matchAll(regex)];
+            if (matches.length === 0) {
+              const num = parseInt(str);
+              if (!isNaN(num) && num > 0) {
+                return num * 60 * 60 * 1000; // default to hours if just a number
+              }
+              return null;
+            }
+            let totalMs = 0;
+            for (const match of matches) {
+              const value = parseInt(match[1]);
+              const unit = match[2].toLowerCase();
+              if (unit.startsWith('d')) {
+                totalMs += value * 24 * 60 * 60 * 1000;
+              } else if (unit.startsWith('h')) {
+                totalMs += value * 60 * 60 * 1000;
+              } else if (unit.startsWith('m')) {
+                totalMs += value * 60 * 1000;
+              }
+            }
+            return totalMs;
+          };
+
+          let durationMs = 24 * 60 * 60 * 1000; // default 24 hours
+          if (durationInput) {
+            const parsed = parseDurationStringToMs(durationInput);
+            if (parsed) durationMs = parsed;
+          }
+
+          const days = Math.floor(durationMs / (24 * 60 * 60 * 1000));
+          const hours = Math.floor((durationMs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+          const minutes = Math.floor((durationMs % (60 * 60 * 1000)) / (60 * 1000));
+
           const options = {
             content,
             tweet_link: tweetLink,
-            duration_hours: durationHours,
+            duration_days: days,
+            duration_hours: hours,
+            duration_minutes: minutes,
             points: points ? parseInt(points) : null
           };
 
