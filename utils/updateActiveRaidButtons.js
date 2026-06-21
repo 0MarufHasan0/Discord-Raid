@@ -61,9 +61,13 @@ async function updateActiveRaidButtons(client) {
         const oldRow = message.components[twitterRowIndex];
         const newRow = new ActionRowBuilder();
         
-        // Reconstruct old components for this row
+        let originalTweetLink = `https://x.com/i/status/${tweet.tweetId}`;
+        // Reconstruct old components for this row and extract original link
         for (const comp of oldRow.components) {
           newRow.addComponents(ButtonBuilder.from(comp));
+          if (comp.url && (comp.label === 'Like' || comp.label === 'Retweet')) {
+            originalTweetLink = comp.url;
+          }
         }
 
         // Add the Reply button to the row
@@ -71,7 +75,7 @@ async function updateActiveRaidButtons(client) {
           new ButtonBuilder()
             .setLabel('Reply')
             .setEmoji('💬')
-            .setURL(`https://x.com/intent/tweet?in_reply_to=${tweet.tweetId}`)
+            .setURL(originalTweetLink)
             .setStyle(ButtonStyle.Link)
         );
         

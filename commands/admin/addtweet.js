@@ -329,7 +329,7 @@ module.exports = {
               .setStyle(ButtonStyle.Link)
           );
 
-          const replyUrl = `https://x.com/intent/tweet?in_reply_to=${tweetId}`;
+          const replyUrl = originalTweetLink;
           twitterRow.addComponents(
             new ButtonBuilder()
               .setLabel('Reply')
