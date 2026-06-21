@@ -1081,6 +1081,7 @@ client.on('interactionCreate', async interaction => {
           );
 
           await interaction.showModal(modal);
+
         } else if (interaction.customId === 'admin_update_leaderboard') {
           const updateLeaderboard = require('./utils/updateLeaderboard');
           updateLeaderboard(interaction.client);
@@ -1088,6 +1089,75 @@ client.on('interactionCreate', async interaction => {
             embeds: [new EmbedBuilder().setColor(0x00FF00).setDescription("✅ Leaderboard successfully updated!")],
             ephemeral: true
           });
+        } else if (interaction.customId === 'admin_toggle_autotweet') {
+          const AutoTweetConfig = require('./database/models/AutoTweetConfig');
+          let configDoc = await AutoTweetConfig.findOne();
+          if (!configDoc) {
+            configDoc = new AutoTweetConfig({ twitterUsernames: [], isEnabled: true });
+          }
+          configDoc.isEnabled = !configDoc.isEnabled;
+          await configDoc.save();
+
+          const statusText = configDoc.isEnabled ? '🟢 **Enabled**' : '🔴 **Disabled**';
+          const usernamesList = configDoc.twitterUsernames.length > 0
+            ? configDoc.twitterUsernames.map(name => `@${name}`).join(', ')
+            : '*None*';
+
+          const oldEmbed = interaction.message.embeds[0];
+          const newEmbed = EmbedBuilder.from(oldEmbed)
+            .setDescription(
+              "Welcome to the **Raid Boss** Admin Panel! Use the buttons below to manage the bot's features and users:\n\n" +
+              "📢 **Add Tweet** — Register a tweet for a raid\n" +
+              "🎁 **Add WL Item** — Add a new item to the marketplace\n" +
+              "✏️ **Edit WL Item** — Edit an existing marketplace item\n" +
+              "🗑️ **Remove WL Item** — Deactivate/remove a marketplace item\n" +
+              "➕ **Add Points** — Reward points to a member\n" +
+              "➖ **Remove Points** — Deduct points from a member\n" +
+              "⚙️ **Edit Raid Points** — Modify points rewarded for a specific raid\n" +
+              "✅ **Approve Raid** — Manually approve a pending raid\n" +
+              "❌ **Reject Raid** — Manually reject a raid submission\n" +
+              "🗑️ **Delete Announcement** — Delete a raid announcement and its records\n" +
+              "🎭 **Edit User WL** — Modify or remove a member's whitelist validity\n" +
+              "🔄 **Update Leaderboard** — Force update the leaderboard embed\n\n" +
+              `🤖 **Auto-Tweet Status:** ${statusText}\n` +
+              `🐦 **Monitored Accounts:** ${usernamesList}`
+            );
+
+          await interaction.update({ embeds: [newEmbed] });
+          await interaction.followUp({
+            embeds: [new EmbedBuilder().setColor(0x00FF00).setDescription(`🤖 Auto-Tweet detection has been toggled to: ${statusText}`)],
+            ephemeral: true
+          });
+        } else if (interaction.customId === 'admin_add_autotweet_user') {
+          const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+          const modal = new ModalBuilder()
+            .setCustomId('admin_add_autotweet_user_modal')
+            .setTitle('Add Monitored Twitter Account');
+
+          const usernameInput = new TextInputBuilder()
+            .setCustomId('twitter_username')
+            .setLabel('Twitter Username')
+            .setPlaceholder('e.g. ElonMusk')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+
+          modal.addComponents(new ActionRowBuilder().addComponents(usernameInput));
+          await interaction.showModal(modal);
+        } else if (interaction.customId === 'admin_remove_autotweet_user') {
+          const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+          const modal = new ModalBuilder()
+            .setCustomId('admin_remove_autotweet_user_modal')
+            .setTitle('Remove Monitored Twitter Account');
+
+          const usernameInput = new TextInputBuilder()
+            .setCustomId('twitter_username')
+            .setLabel('Twitter Username')
+            .setPlaceholder('e.g. ElonMusk')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+
+          modal.addComponents(new ActionRowBuilder().addComponents(usernameInput));
+          await interaction.showModal(modal);
         }
       } catch (error) {
         console.error('Error handling admin button click:', error);
@@ -1562,6 +1632,114 @@ client.on('interactionCreate', async interaction => {
           const command = require('./commands/admin/edituserwl');
           const mocked = mockInteraction(interaction, options);
           await command.execute(mocked);
+        } else if (interaction.customId === 'admin_add_autotweet_user_modal') {
+          const username = interaction.fields.getTextInputValue('twitter_username').trim().replace(/^@/, '');
+          
+          if (!username) {
+            return await interaction.reply({
+              embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Please specify a valid Twitter username.")],
+              ephemeral: true
+            });
+          }
+
+          const AutoTweetConfig = require('./database/models/AutoTweetConfig');
+          let configDoc = await AutoTweetConfig.findOne();
+          if (!configDoc) {
+            configDoc = new AutoTweetConfig({ twitterUsernames: [], isEnabled: true });
+          }
+
+          if (configDoc.twitterUsernames.some(name => name.toLowerCase() === username.toLowerCase())) {
+            return await interaction.reply({
+              embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ Username \`@${username}\` is already being monitored.`)],
+              ephemeral: true
+            });
+          }
+
+          configDoc.twitterUsernames.push(username);
+          await configDoc.save();
+
+          const statusText = configDoc.isEnabled ? '🟢 **Enabled**' : '🔴 **Disabled**';
+          const usernamesList = configDoc.twitterUsernames.length > 0
+            ? configDoc.twitterUsernames.map(name => `@${name}`).join(', ')
+            : '*None*';
+
+          const oldEmbed = interaction.message.embeds[0];
+          const newEmbed = EmbedBuilder.from(oldEmbed)
+            .setDescription(
+              "Welcome to the **Raid Boss** Admin Panel! Use the buttons below to manage the bot's features and users:\n\n" +
+              "📢 **Add Tweet** — Register a tweet for a raid\n" +
+              "🎁 **Add WL Item** — Add a new item to the marketplace\n" +
+              "✏️ **Edit WL Item** — Edit an existing marketplace item\n" +
+              "🗑️ **Remove WL Item** — Deactivate/remove a marketplace item\n" +
+              "➕ **Add Points** — Reward points to a member\n" +
+              "➖ **Remove Points** — Deduct points from a member\n" +
+              "⚙️ **Edit Raid Points** — Modify points rewarded for a specific raid\n" +
+              "✅ **Approve Raid** — Manually approve a pending raid\n" +
+              "❌ **Reject Raid** — Manually reject a raid submission\n" +
+              "🗑️ **Delete Announcement** — Delete a raid announcement and its records\n" +
+              "🎭 **Edit User WL** — Modify or remove a member's whitelist validity\n" +
+              "🔄 **Update Leaderboard** — Force update the leaderboard embed\n\n" +
+              `🤖 **Auto-Tweet Status:** ${statusText}\n` +
+              `🐦 **Monitored Accounts:** ${usernamesList}`
+            );
+
+          await interaction.update({ embeds: [newEmbed] });
+          await interaction.followUp({
+            embeds: [new EmbedBuilder().setColor(0x00FF00).setDescription(`✅ Successfully added \`@${username}\` to monitored accounts list.`)],
+            ephemeral: true
+          });
+        } else if (interaction.customId === 'admin_remove_autotweet_user_modal') {
+          const username = interaction.fields.getTextInputValue('twitter_username').trim().replace(/^@/, '');
+
+          if (!username) {
+            return await interaction.reply({
+              embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Please specify a valid Twitter username.")],
+              ephemeral: true
+            });
+          }
+
+          const AutoTweetConfig = require('./database/models/AutoTweetConfig');
+          let configDoc = await AutoTweetConfig.findOne();
+          if (!configDoc || !configDoc.twitterUsernames.some(name => name.toLowerCase() === username.toLowerCase())) {
+            return await interaction.reply({
+              embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ Username \`@${username}\` is not in the monitored accounts list.`)],
+              ephemeral: true
+            });
+          }
+
+          configDoc.twitterUsernames = configDoc.twitterUsernames.filter(name => name.toLowerCase() !== username.toLowerCase());
+          await configDoc.save();
+
+          const statusText = configDoc.isEnabled ? '🟢 **Enabled**' : '🔴 **Disabled**';
+          const usernamesList = configDoc.twitterUsernames.length > 0
+            ? configDoc.twitterUsernames.map(name => `@${name}`).join(', ')
+            : '*None*';
+
+          const oldEmbed = interaction.message.embeds[0];
+          const newEmbed = EmbedBuilder.from(oldEmbed)
+            .setDescription(
+              "Welcome to the **Raid Boss** Admin Panel! Use the buttons below to manage the bot's features and users:\n\n" +
+              "📢 **Add Tweet** — Register a tweet for a raid\n" +
+              "🎁 **Add WL Item** — Add a new item to the marketplace\n" +
+              "✏️ **Edit WL Item** — Edit an existing marketplace item\n" +
+              "🗑️ **Remove WL Item** — Deactivate/remove a marketplace item\n" +
+              "➕ **Add Points** — Reward points to a member\n" +
+              "➖ **Remove Points** — Deduct points from a member\n" +
+              "⚙️ **Edit Raid Points** — Modify points rewarded for a specific raid\n" +
+              "✅ **Approve Raid** — Manually approve a pending raid\n" +
+              "❌ **Reject Raid** — Manually reject a raid submission\n" +
+              "🗑️ **Delete Announcement** — Delete a raid announcement and its records\n" +
+              "🎭 **Edit User WL** — Modify or remove a member's whitelist validity\n" +
+              "🔄 **Update Leaderboard** — Force update the leaderboard embed\n\n" +
+              `🤖 **Auto-Tweet Status:** ${statusText}\n` +
+              `🐦 **Monitored Accounts:** ${usernamesList}`
+            );
+
+          await interaction.update({ embeds: [newEmbed] });
+          await interaction.followUp({
+            embeds: [new EmbedBuilder().setColor(0x00FF00).setDescription(`✅ Successfully removed \`@${username}\` from monitored accounts list.`)],
+            ephemeral: true
+          });
         }
       } catch (error) {
         console.error('Error handling admin modal submission:', error);
@@ -1580,6 +1758,344 @@ client.on('interactionCreate', async interaction => {
   }
 });
 
+// Auto-Tweet RSS Poller Helpers
+const NITTER_INSTANCES = [
+  'nitter.privacydev.net',
+  'nitter.poast.org',
+  'nitter.neilzone.co.uk',
+  'nitter.inpt.people.ua',
+  'nitter.cz',
+  'nitter.esma.work'
+];
+
+function fetchWithFallback(username) {
+  const https = require('https');
+  const shuffled = [...NITTER_INSTANCES].sort(() => 0.5 - Math.random());
+  
+  const tryInstance = (index) => {
+    if (index >= shuffled.length) {
+      return Promise.reject(new Error("All Nitter instances failed to fetch RSS feed."));
+    }
+    const instance = shuffled[index];
+    const url = `https://${instance}/${username}/rss`;
+    
+    return new Promise((resolve, reject) => {
+      const req = https.get(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        },
+        timeout: 10000
+      }, (res) => {
+        if (res.statusCode !== 200) {
+          reject(new Error(`Status code ${res.statusCode}`));
+          return;
+        }
+        let data = '';
+        res.on('data', (chunk) => { data += chunk; });
+        res.on('end', () => { resolve({ xml: data, instance }); });
+      });
+      
+      req.on('error', (err) => { reject(err); });
+      req.on('timeout', () => {
+        req.destroy();
+        reject(new Error("Timeout"));
+      });
+    }).catch(err => {
+      console.warn(`[Auto-Tweet Poller] Failed to fetch from ${instance} for ${username}: ${err.message}`);
+      return tryInstance(index + 1);
+    });
+  };
+  
+  return tryInstance(0);
+}
+
+function parseNitterRss(xmlText, username) {
+  const items = [];
+  const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+  let match;
+  while ((match = itemRegex.exec(xmlText)) !== null) {
+    const itemContent = match[1];
+    
+    const linkMatch = itemContent.match(/<link>([\s\S]*?)<\/link>/);
+    let link = linkMatch ? linkMatch[1].trim() : '';
+    link = link.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').trim();
+    link = link.replace(/&amp;/g, '&');
+    
+    const titleMatch = itemContent.match(/<title>([\s\S]*?)<\/title>/);
+    let title = titleMatch ? titleMatch[1].trim() : '';
+    title = title.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').trim();
+
+    const pubDateMatch = itemContent.match(/<pubDate>([\s\S]*?)<\/pubDate>/);
+    const pubDate = pubDateMatch ? new Date(pubDateMatch[1].trim()) : new Date();
+
+    if (link) {
+      items.push({ link, title, pubDate });
+    }
+  }
+  return items;
+}
+
+function fetchTweetData(username, statusId) {
+  const https = require('https');
+  return new Promise((resolve, reject) => {
+    const url = `https://api.fxtwitter.com/${username}/status/${statusId}`;
+    const options = {
+      headers: {
+        'User-Agent': 'MarketplaceBossBot/1.0 (Discord Bot)'
+      },
+      timeout: 5000
+    };
+
+    const req = https.get(url, options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        if (res.statusCode === 200) {
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed && parsed.tweet) {
+              resolve(parsed.tweet);
+            } else {
+              reject(new Error('Invalid response structure'));
+            }
+          } catch (e) {
+            reject(e);
+          }
+        } else {
+          reject(new Error(`HTTP status code ${res.statusCode}`));
+        }
+      });
+    });
+
+    req.on('error', (err) => {
+      reject(err);
+    });
+
+    req.on('timeout', () => {
+      req.destroy();
+      reject(new Error('Request timeout'));
+    });
+  });
+}
+
+async function pollAutoTweets(client) {
+  try {
+    const AutoTweetConfig = require('./database/models/AutoTweetConfig');
+    const Tweet = require('./database/models/Tweet');
+    const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+    
+    const configDoc = await AutoTweetConfig.findOne();
+    if (!configDoc || !configDoc.isEnabled || !configDoc.twitterUsernames || configDoc.twitterUsernames.length === 0) {
+      return;
+    }
+
+    const tweetChannelIdString = config.tweetChannelId || '';
+    const tweetChannelIds = tweetChannelIdString.split(',').map(id => id.trim()).filter(Boolean);
+    if (tweetChannelIds.length === 0) {
+      console.warn('[Auto-Tweet Poller] No TWEET_CHANNEL_ID configured.');
+      return;
+    }
+
+    for (const username of configDoc.twitterUsernames) {
+      try {
+        const fetchResult = await fetchWithFallback(username).catch(() => null);
+        if (!fetchResult) {
+          continue;
+        }
+
+        const { xml } = fetchResult;
+        const parsedItems = parseNitterRss(xml, username);
+
+        if (parsedItems.length === 0) {
+          continue;
+        }
+
+        const statusIdRegex = new RegExp(`/${username}/status/(\\d+)`, 'i');
+        const itemsWithStatus = parsedItems.map(item => {
+          const match = item.link.match(statusIdRegex);
+          return match ? { ...item, statusId: match[1] } : null;
+        }).filter(Boolean);
+
+        if (itemsWithStatus.length === 0) {
+          continue;
+        }
+
+        const lastCheckedId = configDoc.lastCheckedTweets.get(username);
+
+        if (!lastCheckedId) {
+          let highestId = itemsWithStatus[0].statusId;
+          for (const item of itemsWithStatus) {
+            if (BigInt(item.statusId) > BigInt(highestId)) {
+              highestId = item.statusId;
+            }
+          }
+          configDoc.lastCheckedTweets.set(username, highestId);
+          await configDoc.save();
+          console.log(`[Auto-Tweet Poller] Initialized tracking for @${username} at status ID: ${highestId}`);
+          continue;
+        }
+
+        const newTweets = itemsWithStatus.filter(item => BigInt(item.statusId) > BigInt(lastCheckedId));
+        if (newTweets.length === 0) {
+          continue;
+        }
+
+        newTweets.sort((a, b) => {
+          const diff = BigInt(a.statusId) - BigInt(b.statusId);
+          return diff < 0n ? -1 : diff > 0n ? 1 : 0;
+        });
+
+        console.log(`[Auto-Tweet Poller] Found ${newTweets.length} new tweets for @${username}. Processing...`);
+
+        let lastProcessedId = lastCheckedId;
+
+        for (const tweet of newTweets) {
+          const { statusId, title } = tweet;
+          const originalTweetLink = `https://twitter.com/${username}/status/${statusId}`;
+          const finalTweetLink = `https://fxtwitter.com/${username}/status/${statusId}`;
+          const cleanText = title || 'New Tweet';
+
+          let tweetData = null;
+          try {
+            tweetData = await fetchTweetData(username, statusId);
+          } catch (apiError) {
+            console.warn(`[Auto-Tweet Poller] FxTwitter API error for ${username}/status/${statusId}: ${apiError.message}`);
+          }
+
+          const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+          const unixTimestamp = Math.floor(expiresAt.getTime() / 1000);
+
+          for (const channelId of tweetChannelIds) {
+            try {
+              const channel = client.channels.cache.get(channelId) || await client.channels.fetch(channelId).catch(() => null);
+              if (!channel) {
+                continue;
+              }
+
+              const embed = new EmbedBuilder()
+                .setColor(0x5865F2)
+                .setFooter({
+                  text: `Tweet ID: ${statusId} • Auto-Tweet`,
+                  iconURL: client.user.displayAvatarURL({ dynamic: true })
+                })
+                .setTimestamp();
+
+              let messageText = '';
+              if (finalTweetLink) {
+                messageText = `[.](${finalTweetLink})`;
+              }
+
+              if (tweetData) {
+                if (tweetData.author) {
+                  embed.setAuthor({
+                    name: `${tweetData.author.name} (@${tweetData.author.screen_name})`,
+                    iconURL: tweetData.author.avatar_url,
+                    url: tweetData.url || originalTweetLink
+                  });
+                } else {
+                  embed.setAuthor({
+                    name: `New Raid Announcement (@${username})`,
+                    iconURL: client.user.displayAvatarURL({ dynamic: true })
+                  });
+                }
+
+                let desc = '';
+                if (tweetData.text) {
+                  desc += `> ${tweetData.text.replace(/\n/g, '\n> ')}\n\n`;
+                }
+                desc += `📊 **Raid Details:**\n`;
+                desc += `> 💰 **Reward:** \`1 Point\`\n`;
+                desc += `> ⏰ **Ends At:** <t:${unixTimestamp}:f>\n`;
+                desc += `> ⌛ **Time Left:** <t:${unixTimestamp}:R>\n\n\n`;
+                desc += `💬 ${tweetData.replies || 0}   🔁 ${tweetData.retweets || 0}   ❤️ ${tweetData.likes || 0}   👁️ ${tweetData.views || 0}`;
+                embed.setDescription(desc);
+
+                if (tweetData.media && tweetData.media.all && tweetData.media.all.length > 0) {
+                  const photo = tweetData.media.all.find(m => m.type === 'photo' || m.type === 'image');
+                  if (photo && photo.url) {
+                    embed.setImage(photo.url);
+                  }
+                }
+              } else {
+                embed.setAuthor({
+                  name: `New Raid Announcement (@${username})`,
+                  iconURL: client.user.displayAvatarURL({ dynamic: true })
+                });
+
+                let desc = '';
+                if (cleanText) {
+                  desc += `> ${cleanText.replace(/\n/g, '\n> ')}\n\n`;
+                }
+                desc += `📊 **Raid Details:**\n`;
+                desc += `> 💰 **Reward:** \`1 Point\`\n`;
+                desc += `> ⏰ **Ends At:** <t:${unixTimestamp}:f>\n`;
+                desc += `> ⌛ **Time Left:** <t:${unixTimestamp}:R>\n\n\n`;
+                embed.setDescription(desc);
+              }
+
+              const twitterRow = new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                  .setLabel('Like')
+                  .setEmoji('❤️')
+                  .setURL(originalTweetLink)
+                  .setStyle(ButtonStyle.Link),
+                new ButtonBuilder()
+                  .setLabel('Retweet')
+                  .setEmoji('🔁')
+                  .setURL(originalTweetLink)
+                  .setStyle(ButtonStyle.Link)
+              );
+
+              const botRow = new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                  .setLabel('Submit Raid')
+                  .setEmoji('⚔️')
+                  .setCustomId(`submit_raid_btn_${statusId}`)
+                  .setStyle(ButtonStyle.Success),
+                new ButtonBuilder()
+                  .setLabel('Copy Tweet ID')
+                  .setEmoji('📋')
+                  .setCustomId(`copy_tweet_id_${statusId}`)
+                  .setStyle(ButtonStyle.Secondary)
+              );
+
+              const sentMessage = await channel.send({
+                content: messageText || undefined,
+                embeds: [embed],
+                components: [twitterRow, botRow]
+              });
+
+              const newTweetDoc = new Tweet({
+                tweetId: statusId,
+                content: cleanText,
+                imageUrl: originalTweetLink,
+                postedBy: 'Auto-Tweet',
+                channelId: channelId,
+                expiresAt: expiresAt,
+                points: 1,
+                messageId: sentMessage.id
+              });
+              await newTweetDoc.save();
+              console.log(`[Auto-Tweet Poller] Posted tweet ${statusId} to channel ${channelId}`);
+            } catch (postError) {
+              console.error(`[Auto-Tweet Poller] Failed to post tweet ${statusId} to channel ${channelId}:`, postError);
+            }
+          }
+
+          lastProcessedId = statusId;
+        }
+
+        configDoc.lastCheckedTweets.set(username, lastProcessedId);
+        await configDoc.save();
+      } catch (err) {
+        console.error(`[Auto-Tweet Poller] Error checking @${username}:`, err);
+      }
+    }
+  } catch (error) {
+    console.error('[Auto-Tweet Poller] Global poller error:', error);
+  }
+}
+
 // Bot ready event
 client.once('ready', async () => {
   console.log("✅ Marketplace Boss Bot online!");
@@ -1596,6 +2112,10 @@ client.once('ready', async () => {
   // Periodically check for expired whitelist roles (every 1 minute)
   await checkExpiredRoles(client);
   setInterval(() => checkExpiredRoles(client), 60 * 1000);
+
+  // Set up Auto-Tweet RSS Poller (every 5 minutes)
+  setTimeout(() => pollAutoTweets(client), 10 * 1000); // 10s after startup
+  setInterval(() => pollAutoTweets(client), 5 * 60 * 1000); // every 5 minutes
 });
 
 // Keep-alive HTTP Server for 24/7 Hosting (Render/Koyeb)

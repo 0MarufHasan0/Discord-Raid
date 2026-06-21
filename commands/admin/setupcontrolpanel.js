@@ -94,6 +94,18 @@ module.exports = {
 
         await targetChannel.send({ embeds: [embed], components: [row1, row2] });
       } else {
+        const AutoTweetConfig = require('../../database/models/AutoTweetConfig');
+        let configDoc = await AutoTweetConfig.findOne();
+        if (!configDoc) {
+          configDoc = new AutoTweetConfig({ twitterUsernames: [], isEnabled: true });
+          await configDoc.save();
+        }
+
+        const statusText = configDoc.isEnabled ? '🟢 **Enabled**' : '🔴 **Disabled**';
+        const usernamesList = configDoc.twitterUsernames.length > 0
+          ? configDoc.twitterUsernames.map(name => `@${name}`).join(', ')
+          : '*None*';
+
         const embed = new EmbedBuilder()
           .setTitle("🛠️ Admin Control Panel")
           .setDescription(
@@ -109,7 +121,9 @@ module.exports = {
             "❌ **Reject Raid** — Manually reject a raid submission\n" +
             "🗑️ **Delete Announcement** — Delete a raid announcement and its records\n" +
             "🎭 **Edit User WL** — Modify or remove a member's whitelist validity\n" +
-            "🔄 **Update Leaderboard** — Force update the leaderboard embed"
+            "🔄 **Update Leaderboard** — Force update the leaderboard embed\n\n" +
+            `🤖 **Auto-Tweet Status:** ${statusText}\n` +
+            `🐦 **Monitored Accounts:** ${usernamesList}`
           )
           .setColor(0xE91E63)
           .setTimestamp();
@@ -187,7 +201,22 @@ module.exports = {
               .setCustomId('admin_update_leaderboard')
               .setLabel('Update Leaderboard')
               .setEmoji('🔄')
-              .setStyle(ButtonStyle.Secondary)
+              .setStyle(ButtonStyle.Secondary),
+            new ButtonBuilder()
+              .setCustomId('admin_toggle_autotweet')
+              .setLabel('Toggle Auto-Tweet')
+              .setEmoji('⚙️')
+              .setStyle(ButtonStyle.Primary),
+            new ButtonBuilder()
+              .setCustomId('admin_add_autotweet_user')
+              .setLabel('Add Monitored User')
+              .setEmoji('➕')
+              .setStyle(ButtonStyle.Success),
+            new ButtonBuilder()
+              .setCustomId('admin_remove_autotweet_user')
+              .setLabel('Remove Monitored User')
+              .setEmoji('➖')
+              .setStyle(ButtonStyle.Danger)
           );
 
         await targetChannel.send({ embeds: [embed], components: [row1, row2, row3, row4] });

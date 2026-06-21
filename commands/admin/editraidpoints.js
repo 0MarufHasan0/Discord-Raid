@@ -102,9 +102,50 @@ module.exports = {
         }
       }
 
+      // Recalculate points for users who already completed this raid
+      const Raid = require('../../database/models/Raid');
+      const User = require('../../database/models/User');
+      const updateLeaderboard = require('../../utils/updateLeaderboard');
+
+      const canonicalTweetId = tweets[0].tweetId;
+      const escapedCanonicalTweetId = canonicalTweetId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+      const completedRaids = await Raid.find({
+        tweetId: { $regex: new RegExp(`^${escapedCanonicalTweetId}$`, 'i') },
+        status: 'approved'
+      });
+
+      let recalculatedCount = 0;
+      for (const raidDoc of completedRaids) {
+        const oldPoints = typeof raidDoc.points === 'number' ? raidDoc.points : 0;
+        const diff = newPoints - oldPoints;
+        
+        if (diff !== 0) {
+          // Update user points
+          const userDoc = await User.findOne({ discordId: raidDoc.userId });
+          if (userDoc) {
+            userDoc.points = Math.max(0, userDoc.points + diff);
+            await userDoc.save();
+          }
+          
+          // Update points stored in the raid record
+          raidDoc.points = newPoints;
+          await raidDoc.save();
+          recalculatedCount++;
+        }
+      }
+
+      if (recalculatedCount > 0) {
+        updateLeaderboard(interaction.client);
+      }
+
       const successEmbed = new EmbedBuilder()
         .setColor(0x00FF00) // Success green
-        .setDescription(`✅ Raid **${tweetId}** points have been updated to **${newPoints}** (Updated in **${updatedCount}** active channel postings).\n\n*Note: Existing completions for this raid will keep their original points.*`)
+        .setDescription(
+          `✅ Raid **${canonicalTweetId}** points have been updated to **${newPoints}** (Updated in **${updatedCount}** active channel postings).\n\n` +
+          `📊 **Points Recalculation:**\n` +
+          `• Re-calculated and updated points for **${recalculatedCount}** already completed raid submission(s) for this tweet.`
+        )
         .setTimestamp();
 
       await interaction.editReply({ embeds: [successEmbed] });
