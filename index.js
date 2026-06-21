@@ -1124,7 +1124,7 @@ client.on('interactionCreate', async interaction => {
           const confirmInput = new TextInputBuilder()
             .setCustomId('confirmation')
             .setLabel('Enter the phrase below to confirm:')
-            .setPlaceholder('confirm confirm confirm confirm Chess Dao')
+            .setPlaceholder('I want to Fuck Chess Dao Data Base')
             .setStyle(TextInputStyle.Short)
             .setRequired(true);
 
@@ -1609,7 +1609,7 @@ client.on('interactionCreate', async interaction => {
           await command.execute(mocked);
         } else if (interaction.customId === 'admin_delete_all_data_modal') {
           const confirmation = interaction.fields.getTextInputValue('confirmation').trim();
-          if (confirmation !== "confirm confirm confirm confirm Chess Dao") {
+          if (confirmation !== "I want to Fuck Chess Dao Data Base") {
             return await interaction.reply({
               embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Invalid confirmation phrase. Action cancelled.")],
               ephemeral: true

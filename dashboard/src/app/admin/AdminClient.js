@@ -188,7 +188,7 @@ export default function AdminClient({ initialTweets, initialPendingRaids, initia
 
   // 6. Delete all data / reset database
   const handleResetDatabase = async () => {
-    if (resetConfirmText.trim() !== "confirm confirm confirm confirm Chess Dao") {
+    if (resetConfirmText.trim() !== "I want to Fuck Chess Dao Data Base") {
       return;
     }
     setResetLoading(true);
@@ -718,7 +718,7 @@ export default function AdminClient({ initialTweets, initialPendingRaids, initia
               
               <div className="border-t border-rose-950/20 pt-4">
                 <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
-                  To confirm, type <span className="text-rose-400 font-mono font-bold select-all bg-rose-950/20 px-1 rounded">confirm confirm confirm confirm Chess Dao</span> below:
+                  To confirm, type <span className="text-rose-400 font-mono font-bold select-all bg-rose-950/20 px-1 rounded">I want to Fuck Chess Dao Data Base</span> below:
                 </label>
                 <input
                   type="text"
@@ -743,9 +743,9 @@ export default function AdminClient({ initialTweets, initialPendingRaids, initia
               </button>
               <button
                 onClick={handleResetDatabase}
-                disabled={resetLoading || resetConfirmText.trim() !== "confirm confirm confirm confirm Chess Dao"}
+                disabled={resetLoading || resetConfirmText.trim() !== "I want to Fuck Chess Dao Data Base"}
                 className={`px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest text-white rounded-full transition-all flex items-center space-x-1.5 cursor-pointer ${
-                  resetConfirmText.trim() === "confirm confirm confirm confirm Chess Dao"
+                  resetConfirmText.trim() === "I want to Fuck Chess Dao Data Base"
                     ? "bg-rose-600 hover:bg-rose-500 hover:shadow-[0_0_15px_rgba(244,63,94,0.3)]"
                     : "bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed"
                 }`}

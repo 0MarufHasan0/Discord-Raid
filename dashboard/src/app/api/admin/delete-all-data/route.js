@@ -18,7 +18,7 @@ export async function POST(req) {
     }
 
     const { confirmation } = await req.json();
-    if (confirmation !== "confirm confirm confirm confirm Chess Dao") {
+    if (confirmation !== "I want to Fuck Chess Dao Data Base") {
       return NextResponse.json({ error: "Invalid confirmation phrase" }, { status: 400 });
     }
 
