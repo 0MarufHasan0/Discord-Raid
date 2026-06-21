@@ -732,12 +732,7 @@ client.on('interactionCreate', async interaction => {
       try {
         const checkAdmin = require('./utils/checkAdmin');
         const isAdmin = await checkAdmin(interaction);
-        if (!isAdmin) {
-          return await interaction.reply({
-            content: "❌ You do not have permission to use admin commands.",
-            flags: MessageFlags.Ephemeral
-          });
-        }
+        if (!isAdmin) return;
 
         const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, EmbedBuilder } = require('discord.js');
 
@@ -1440,12 +1435,7 @@ client.on('interactionCreate', async interaction => {
       try {
         const checkAdmin = require('./utils/checkAdmin');
         const isAdmin = await checkAdmin(interaction);
-        if (!isAdmin) {
-          return await interaction.reply({
-            content: "❌ You do not have permission to use admin commands.",
-            flags: MessageFlags.Ephemeral
-          });
-        }
+        if (!isAdmin) return;
 
         const { EmbedBuilder } = require('discord.js');
 

@@ -14,12 +14,22 @@ export async function POST(req) {
     const { twitter } = await req.json();
     
     // Clean and validate twitter username
-    let cleanTwitter = twitter ? twitter.trim().replace(/^@/, "") : null;
+    let cleanTwitter = twitter ? twitter.trim().replace(/^@/, "").toLowerCase() : null;
     if (cleanTwitter && !/^[a-zA-Z0-9_]{1,15}$/.test(cleanTwitter)) {
       return NextResponse.json({ error: "Invalid Twitter handle format" }, { status: 400 });
     }
 
     await dbConnect();
+
+    if (cleanTwitter) {
+      const existingUser = await User.findOne({
+        twitter: cleanTwitter,
+        discordId: { $ne: session.user.id }
+      });
+      if (existingUser) {
+        return NextResponse.json({ error: "This Twitter handle is already linked to another user" }, { status: 400 });
+      }
+    }
     
     // Find and update user in database
     const updatedUser = await User.findOneAndUpdate(

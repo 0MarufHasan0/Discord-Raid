@@ -186,4 +186,8 @@ The Next.js dashboard has been customized with premium visual aesthetics and enh
 * **Administrative User Export & Copy**: Added a dynamic **Copy Raiders** modal to the dashboard members manager that allows admins to instantly copy Twitter usernames, Discord usernames, or a combined serialized list from all database records.
 * **Point-Based Raffle Draw (Raffle Raider)**: Introduced a custom **Raffle Raider** modal popup on the dashboard that enables administrators to run a perfect random raffle draw among raiders, filtering by minimum points, requiring Twitter handle links, and selecting a customized number of winners. It displays results with a shuffling animation and allows copying the final winners list.
 * **Discord.js Modernization**: Updated interaction response handlers across all command and utility files to replace the deprecated `ephemeral: true` option with the recommended `flags: MessageFlags.Ephemeral` format, resolving deprecation warnings and future-proofing the bot for discord.js v15.
+* **Vercel Deprecation Fix (uuid Override)**: Configured package-level dependency overrides forcing `uuid@11.1.1` to resolve deprecation warnings during npm builds on Vercel.
+* **Bot Interaction Protection**: Fixed stability issues where non-administrator users clicking admin-prefixed buttons or submitting admin-prefixed modals would trigger a double-reply error and crash.
+* **Duplicate Twitter Linkage Validation**: Integrated case-insensitive checks in both the Discord Bot (`/settwitter`) and Dashboard Twitter API (`/api/user/twitter`) to prevent multiple users from linking/claiming the same Twitter account.
+
 
