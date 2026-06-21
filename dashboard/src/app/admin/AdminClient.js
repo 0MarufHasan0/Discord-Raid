@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { 
   Check, X, Trash2, Shield, Plus, Search, 
-  Coins, MessageSquare, AlertTriangle, RefreshCw, Send, ShieldCheck
+  Coins, MessageSquare, AlertTriangle, RefreshCw, Send, ShieldCheck,
+  Copy, Trophy, Gift
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -28,6 +29,18 @@ export default function AdminClient({ initialTweets, initialPendingRaids, initia
   const [pointsAction, setPointsAction] = useState("add"); // "add" or "remove"
 
   const [message, setMessage] = useState({ text: "", type: "" });
+
+  // Copy Raider & Raffle States
+  const [showCopyModal, setShowCopyModal] = useState(false);
+  const [showRaffleModal, setShowRaffleModal] = useState(false);
+  const [allUsers, setAllUsers] = useState([]);
+  const [loadingAllUsers, setLoadingAllUsers] = useState(false);
+  const [copyStatus, setCopyStatus] = useState("");
+  const [raffleWinnersCount, setRaffleWinnersCount] = useState(1);
+  const [raffleMinPoints, setRaffleMinPoints] = useState(4);
+  const [raffleRequireTwitter, setRaffleRequireTwitter] = useState(true);
+  const [raffleWinners, setRaffleWinners] = useState([]);
+  const [isRaffling, setIsRaffling] = useState(false);
 
   // Database reset states
   const [showResetModal, setShowResetModal] = useState(false);
@@ -223,6 +236,118 @@ export default function AdminClient({ initialTweets, initialPendingRaids, initia
     } finally {
       setResetLoading(false);
     }
+  };
+
+  const fetchAllUsers = async () => {
+    if (allUsers.length > 0) return allUsers;
+    setLoadingAllUsers(true);
+    try {
+      const res = await fetch("/api/admin/all-users");
+      const data = await res.json();
+      if (res.ok) {
+        setAllUsers(data.users);
+        return data.users;
+      } else {
+        showStatusMsg(data.error || "Failed to fetch all users.", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      showStatusMsg("Failed to fetch all users.", "error");
+    } finally {
+      setLoadingAllUsers(false);
+    }
+    return [];
+  };
+
+  const handleOpenCopyModal = async () => {
+    setShowCopyModal(true);
+    await fetchAllUsers();
+  };
+
+  const handleOpenRaffleModal = async () => {
+    setShowRaffleModal(true);
+    setRaffleWinners([]);
+    await fetchAllUsers();
+  };
+
+  const handleCopyFormat = (format) => {
+    let textToCopy = "";
+    if (format === "twitter") {
+      const twitters = allUsers
+        .map((u) => u.twitter?.trim())
+        .filter(Boolean)
+        .map((t) => (t.startsWith("@") ? t : `@${t}`));
+      textToCopy = twitters.join("\n");
+    } else if (format === "discord") {
+      const discords = allUsers
+        .map((u) => u.username?.trim())
+        .filter(Boolean);
+      textToCopy = discords.join("\n");
+    } else if (format === "both") {
+      textToCopy = allUsers
+        .map((u, i) => {
+          const twStr = u.twitter ? (u.twitter.startsWith("@") ? u.twitter : `@${u.twitter}`) : "N/A";
+          return `${i + 1}. Twitter: ${twStr} | Discord: ${u.username}`;
+        })
+        .join("\n");
+    }
+
+    if (textToCopy) {
+      navigator.clipboard.writeText(textToCopy);
+      setCopyStatus("Copied to clipboard successfully!");
+      setTimeout(() => setCopyStatus(""), 3000);
+    } else {
+      setCopyStatus("No usernames found to copy.");
+      setTimeout(() => setCopyStatus(""), 3000);
+    }
+  };
+
+  const handleRunRaffle = () => {
+    setIsRaffling(true);
+    setRaffleWinners([]);
+
+    // Filter eligible users
+    const eligible = allUsers.filter((u) => {
+      const matchPoints = u.points >= raffleMinPoints;
+      const matchTwitter = !raffleRequireTwitter || u.twitter;
+      return matchPoints && matchTwitter;
+    });
+
+    if (eligible.length === 0) {
+      showStatusMsg("No eligible users found for the raffle.", "error");
+      setIsRaffling(false);
+      return;
+    }
+
+    // Shuffling simulation (delay for nice visual experience)
+    setTimeout(() => {
+      // Fisher-Yates shuffle
+      const shuffled = [...eligible];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+
+      // Select winners
+      const count = Math.min(raffleWinnersCount, shuffled.length);
+      const winners = shuffled.slice(0, count);
+
+      setRaffleWinners(winners);
+      setIsRaffling(false);
+    }, 1200);
+  };
+
+  const handleCopyWinners = () => {
+    if (raffleWinners.length === 0) return;
+    const text = raffleWinners
+      .map((w, index) => {
+        const tw = w.twitter ? (w.twitter.startsWith("@") ? w.twitter : `@${w.twitter}`) : "N/A";
+        return `${index + 1}. Discord: ${w.username} | Twitter: ${tw} (${w.points} pts)`;
+      })
+      .join("\n");
+    
+    navigator.clipboard.writeText(text);
+    showStatusMsg("Winners list copied to clipboard!", "success");
   };
 
   const filteredUsers = users.filter((u) => {
@@ -585,17 +710,37 @@ export default function AdminClient({ initialTweets, initialPendingRaids, initia
 
           {/* Member List Table */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="relative max-w-sm w-full">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                <Search className="w-4 h-4" />
-              </span>
-              <input
-                type="text"
-                placeholder="Search member by username or ID..."
-                value={memberSearch}
-                onChange={(e) => setMemberSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-indigo-950/40 bg-[#0d0d1b]/40 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500/60"
-              />
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="relative max-w-sm w-full">
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                  <Search className="w-4 h-4" />
+                </span>
+                <input
+                  type="text"
+                  placeholder="Search member by username or ID..."
+                  value={memberSearch}
+                  onChange={(e) => setMemberSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-indigo-950/40 bg-[#0d0d1b]/40 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500/60"
+                />
+              </div>
+              <div className="flex items-center space-x-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleOpenCopyModal}
+                  className="px-4 py-2.5 rounded-xl border border-indigo-500/20 bg-indigo-950/40 hover:bg-indigo-600 text-xs font-semibold text-indigo-300 hover:text-white transition-all flex items-center space-x-1.5 cursor-pointer shadow-md"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>Copy Raiders</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleOpenRaffleModal}
+                  className="px-4 py-2.5 rounded-xl border border-purple-500/20 bg-purple-950/40 hover:bg-purple-600 text-xs font-semibold text-purple-300 hover:text-white transition-all flex items-center space-x-1.5 cursor-pointer shadow-md"
+                >
+                  <Trophy className="w-3.5 h-3.5" />
+                  <span>Raffle Raider</span>
+                </button>
+              </div>
             </div>
 
             <div className="glass-panel rounded-2xl overflow-hidden border border-indigo-950/20">
@@ -754,6 +899,237 @@ export default function AdminClient({ initialTweets, initialPendingRaids, initia
                 <span>{resetLoading ? "Deleting..." : "Permanently Delete"}</span>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Copy Raiders Modal */}
+      {showCopyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md glass-panel p-6 rounded-2xl border border-indigo-950/50 shadow-2xl">
+            <h3 className="text-lg font-bold font-outfit text-white mb-2 flex items-center space-x-2">
+              <Copy className="w-5 h-5 text-indigo-400" />
+              <span>Copy Raider Usernames</span>
+            </h3>
+            
+            {loadingAllUsers ? (
+              <div className="flex flex-col items-center justify-center py-12 space-y-3">
+                <RefreshCw className="w-8 h-8 text-indigo-500 animate-spin" />
+                <p className="text-xs text-slate-400">Loading all raider data...</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-xs text-slate-400">
+                  Select a copy format to copy all raider details. Total raiders loaded: <strong className="text-slate-200">{allUsers.length}</strong>.
+                </p>
+
+                <div className="p-3.5 rounded-xl bg-indigo-950/15 border border-indigo-950/40 space-y-2">
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span className="text-slate-400">Total Members:</span>
+                    <span className="text-slate-200">{allUsers.length}</span>
+                  </div>
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span className="text-slate-400">Twitter Accounts Linked:</span>
+                    <span className="text-emerald-400">{allUsers.filter(u => u.twitter).length}</span>
+                  </div>
+                </div>
+
+                {copyStatus && (
+                  <div className="p-2.5 text-center text-xs font-bold text-emerald-400 bg-emerald-950/20 border border-emerald-500/20 rounded-lg">
+                    {copyStatus}
+                  </div>
+                )}
+
+                <div className="flex flex-col space-y-2">
+                  <button
+                    onClick={() => handleCopyFormat("twitter")}
+                    className="w-full py-2.5 px-4 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors flex justify-between items-center cursor-pointer"
+                  >
+                    <span>Copy Twitter Usernames Only</span>
+                    <span className="text-[10px] text-indigo-200">(@user)</span>
+                  </button>
+                  <button
+                    onClick={() => handleCopyFormat("discord")}
+                    className="w-full py-2.5 px-4 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors flex justify-between items-center cursor-pointer"
+                  >
+                    <span>Copy Discord Usernames Only</span>
+                    <span className="text-[10px] text-indigo-200">(username)</span>
+                  </button>
+                  <button
+                    onClick={() => handleCopyFormat("both")}
+                    className="w-full py-2.5 px-4 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors flex justify-between items-center cursor-pointer"
+                  >
+                    <span>Copy Serialized List (Both)</span>
+                    <span className="text-[10px] text-indigo-200">(1. Twitter: @x | Discord: y)</span>
+                  </button>
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <button
+                    onClick={() => {
+                      setShowCopyModal(false);
+                      setCopyStatus("");
+                    }}
+                    className="px-4 py-2 text-xs font-semibold text-slate-400 bg-slate-900 border border-slate-800 rounded-lg hover:text-slate-200 cursor-pointer"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Raffle Raider Modal */}
+      {showRaffleModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-lg glass-panel p-6 rounded-2xl border border-indigo-950/50 shadow-2xl text-left">
+            <h3 className="text-lg font-bold font-outfit text-white mb-2 flex items-center space-x-2">
+              <Trophy className="w-5 h-5 text-purple-400 animate-pulse" />
+              <span>Raider Raffle Draw</span>
+            </h3>
+            
+            {loadingAllUsers ? (
+              <div className="flex flex-col items-center justify-center py-12 space-y-3">
+                <RefreshCw className="w-8 h-8 text-purple-500 animate-spin" />
+                <p className="text-xs text-slate-400">Loading all raider data...</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-xs text-slate-400">
+                  Select points threshold and number of winners to draw random raiders.
+                </p>
+
+                {/* Configuration Inputs */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 mb-1">
+                      Min Points Target
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={raffleMinPoints}
+                      onChange={(e) => {
+                        setRaffleMinPoints(Number(e.target.value));
+                        setRaffleWinners([]);
+                      }}
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-indigo-950/40 bg-[#0c0c16]/50 text-xs focus:outline-none focus:border-indigo-500 text-slate-200"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 mb-1">
+                      Number of Winners
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={raffleWinnersCount}
+                      onChange={(e) => {
+                        setRaffleWinnersCount(Number(e.target.value));
+                        setRaffleWinners([]);
+                      }}
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-indigo-950/40 bg-[#0c0c16]/50 text-xs focus:outline-none focus:border-indigo-500 text-slate-200"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="requireTwitter"
+                    checked={raffleRequireTwitter}
+                    onChange={(e) => {
+                      setRaffleRequireTwitter(e.target.checked);
+                      setRaffleWinners([]);
+                    }}
+                    className="rounded border-indigo-950 bg-[#0c0c16]/50 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                  />
+                  <label htmlFor="requireTwitter" className="text-xs text-slate-300 cursor-pointer select-none">
+                    Require Twitter handle (Exclude users without Twitter link)
+                  </label>
+                </div>
+
+                {/* Statistics of Qualified Users */}
+                <div className="p-3 py-2 rounded-xl bg-purple-950/10 border border-purple-500/10 flex justify-between items-center">
+                  <span className="text-[11px] text-slate-400">Eligible Raiders matching filters:</span>
+                  <span className="text-xs font-extrabold text-purple-400">
+                    {allUsers.filter(u => u.points >= raffleMinPoints && (!raffleRequireTwitter || u.twitter)).length} users
+                  </span>
+                </div>
+
+                {/* Shuffling Status / Results */}
+                {isRaffling ? (
+                  <div className="p-8 text-center space-y-3">
+                    <RefreshCw className="w-10 h-10 text-purple-500 animate-spin mx-auto" />
+                    <p className="text-sm font-semibold text-purple-300 animate-pulse">Shuffling and drawing winners...</p>
+                  </div>
+                ) : raffleWinners.length > 0 ? (
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-bold text-slate-200 uppercase tracking-widest">
+                      🎉 Raffle Winners ({raffleWinners.length})
+                    </h4>
+                    <div className="max-h-[160px] overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                      {raffleWinners.map((winner, index) => (
+                        <div
+                          key={winner.discordId}
+                          className="flex items-center justify-between p-3 rounded-xl bg-purple-950/15 border border-purple-500/20 shadow-[0_0_8px_rgba(168,85,247,0.08)]"
+                        >
+                          <div className="flex flex-col">
+                            <span className="text-xs font-extrabold text-slate-200">
+                              {index + 1}. Discord: {winner.username}
+                            </span>
+                            <span className="text-[10px] text-purple-400 font-medium mt-0.5">
+                              Twitter: {winner.twitter ? (winner.twitter.startsWith("@") ? winner.twitter : `@${winner.twitter}`) : "None"}
+                            </span>
+                          </div>
+                          <span className="text-xs font-bold text-amber-400">
+                            {winner.points} pts
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={handleCopyWinners}
+                        className="flex-1 py-2 text-xs font-bold text-purple-300 bg-purple-950/30 hover:bg-purple-900/40 rounded-lg border border-purple-500/20 transition-colors flex items-center justify-center space-x-1.5 cursor-pointer"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copy Winners List</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* Footer Buttons */}
+                <div className="flex space-x-3 justify-end pt-2 border-t border-indigo-950/20">
+                  <button
+                    onClick={() => {
+                      setShowRaffleModal(false);
+                      setRaffleWinners([]);
+                    }}
+                    className="px-4 py-2 text-xs font-semibold text-slate-400 bg-slate-900 border border-slate-800 rounded-lg hover:text-slate-200 cursor-pointer"
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={handleRunRaffle}
+                    disabled={isRaffling || allUsers.filter(u => u.points >= raffleMinPoints && (!raffleRequireTwitter || u.twitter)).length === 0}
+                    className={`px-5 py-2 text-xs font-extrabold text-white rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer ${
+                      allUsers.filter(u => u.points >= raffleMinPoints && (!raffleRequireTwitter || u.twitter)).length > 0
+                        ? "bg-purple-600 hover:bg-purple-500 hover:shadow-[0_0_12px_rgba(168,85,247,0.35)]"
+                        : "bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed"
+                    }`}
+                  >
+                    <Gift className="w-4 h-4" />
+                    <span>{raffleWinners.length > 0 ? "Draw Again" : "Draw Winners"}</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
