@@ -80,6 +80,8 @@ npm start
 * `/raidlist` - List recently submitted raids with date filters, user details, and remove instructions.
 * `/editraidpoints <tweet_id> <points>` - Edit the point value of an active (non-expired) raid announcement and dynamically update its Discord announcement embed.
 * `/edituserwl <role> <action> [days] [user]` - Edit or remove active whitelist role validity (duration) for a member or all members in the guild. Actions include removing role, reducing validity, extending validity, or setting validity.
+* `/setupcontrolpanel <type> [channel]` - Spawn the interactive Member or Admin Control Panel. The Admin Control Panel includes a **Delete All Data** button.
+* **Delete All Data** (Admin Button & Dashboard API) - A secure database wipe feature that clears all `raids`, `tweets`, and `userroleexpirations` collections, resets user stats to 0, and updates the leaderboard. It requires strict admin authorization and typing the verification phrase `confirm confirm confirm confirm Chess Dao`.
 
 ### User Commands
 * `/settwitter <username>` - Link your Twitter/X account handle (without `@`) for automated verification of raid proof.
@@ -176,3 +178,4 @@ The Next.js dashboard has been customized with premium visual aesthetics and enh
 * **Full-Scope Global Rankings**: Removed the limit of 100 on the leaderboard page. Now, every single raider who joins a raid is ranked, searchable, and visible on the leaderboard.
 * **Smart Asset Filtering**: Prevents broken image placeholders on raid cards by detecting and filtering out tweet/post link structures from image tags, while retaining direct image media.
 * **Vercel Build Stability**: Patched configuration issues to prevent build cold-starts and infinite loader screens on serverless deploys.
+* **Secure Database Reset**: Added a **Delete All Data** confirmation workflow for administrators both in the Next.js Dashboard (`/api/admin/delete-all-data`) and as an interactive button on the Discord Admin Control Panel, protected by a dual-stage warning and a typing confirmation requirement (`confirm confirm confirm confirm Chess Dao`).
