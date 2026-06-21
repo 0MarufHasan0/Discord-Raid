@@ -200,47 +200,38 @@ export default function AdminClient({ initialTweets, initialPendingRaids, initia
       )}
 
       {/* Admin Tab Switchers */}
-      <div className="flex border-b border-indigo-950/40 space-x-6">
+      <div className="flex bg-[#070711]/60 border border-indigo-950/45 p-1 rounded-full w-fit">
         <button
           onClick={() => setActiveTab("submissions")}
-          className={`pb-4 text-sm font-semibold transition-all relative ${
+          className={`px-6 py-2 rounded-full text-[10px] font-extrabold uppercase tracking-widest transition-all duration-300 cursor-pointer ${
             activeTab === "submissions"
-              ? "text-indigo-400"
-              : "text-slate-400 hover:text-slate-200"
+              ? "text-indigo-300 bg-indigo-950/50 border border-indigo-500/20 shadow-[0_0_12px_rgba(99,102,241,0.15)]"
+              : "text-slate-500 hover:text-slate-300 border border-transparent"
           }`}
         >
-          <span>Pending Submissions ({pendingRaids.length})</span>
-          {activeTab === "submissions" && (
-            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-500" />
-          )}
+          Pending ({pendingRaids.length})
         </button>
 
         <button
           onClick={() => setActiveTab("tweets")}
-          className={`pb-4 text-sm font-semibold transition-all relative ${
+          className={`px-6 py-2 rounded-full text-[10px] font-extrabold uppercase tracking-widest transition-all duration-300 cursor-pointer ${
             activeTab === "tweets"
-              ? "text-indigo-400"
-              : "text-slate-400 hover:text-slate-200"
+              ? "text-indigo-300 bg-indigo-950/50 border border-indigo-500/20 shadow-[0_0_12px_rgba(99,102,241,0.15)]"
+              : "text-slate-500 hover:text-slate-300 border border-transparent"
           }`}
         >
-          <span>Target Tweets ({tweets.length})</span>
-          {activeTab === "tweets" && (
-            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-500" />
-          )}
+          Targets ({tweets.length})
         </button>
 
         <button
           onClick={() => setActiveTab("members")}
-          className={`pb-4 text-sm font-semibold transition-all relative ${
+          className={`px-6 py-2 rounded-full text-[10px] font-extrabold uppercase tracking-widest transition-all duration-300 cursor-pointer ${
             activeTab === "members"
-              ? "text-indigo-400"
-              : "text-slate-400 hover:text-slate-200"
+              ? "text-indigo-300 bg-indigo-950/50 border border-indigo-500/20 shadow-[0_0_12px_rgba(99,102,241,0.15)]"
+              : "text-slate-500 hover:text-slate-300 border border-transparent"
           }`}
         >
-          <span>Member Manager</span>
-          {activeTab === "members" && (
-            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-500" />
-          )}
+          Members
         </button>
       </div>
 

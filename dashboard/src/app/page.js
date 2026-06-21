@@ -4,7 +4,7 @@ import Tweet from "../../lib/models/Tweet";
 import User from "../../lib/models/User";
 import Raid from "../../lib/models/Raid";
 import MarketItem from "../../lib/models/MarketItem";
-import { ArrowUpRight, Flame, Users, Coins, HelpCircle } from "lucide-react";
+import { ArrowUpRight, Flame, Users, Coins, HelpCircle, Trophy, ShoppingBag, Target } from "lucide-react";
 import Link from "next/link";
 
 // Force dynamic so data is always fresh on page load
@@ -90,7 +90,6 @@ async function getStatsAndTweets() {
   }
 }
 
-
 export default async function Home() {
   const { stats, tweets } = await getStatsAndTweets();
 
@@ -98,14 +97,10 @@ export default async function Home() {
     <>
       <Header />
       
-      <main className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
         {/* Hero Section */}
-        <section className="text-center py-16 md:py-24 relative overflow-hidden">
-          {/* Subtle decorative glows */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-indigo-500/10 rounded-full blur-[80px] pointer-events-none" />
-          <div className="absolute top-10 left-10 w-[200px] h-[200px] bg-cyan-500/5 rounded-full blur-[60px] pointer-events-none" />
-
-          <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider text-indigo-400 bg-indigo-950/45 border border-indigo-900/50 mb-6 pulse-glow-border">
+        <section className="text-center py-16 md:py-24 relative overflow-hidden animate-fade-in-up">
+          <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-indigo-400 bg-indigo-950/30 border border-indigo-500/20 mb-6 pulse-glow-border">
             <Flame className="w-3.5 h-3.5" />
             <span>Chess DAO Whitelist & Raid Engine</span>
           </span>
@@ -117,22 +112,22 @@ export default async function Home() {
             </span>
           </h1>
           
-          <p className="max-w-2xl mx-auto text-base md:text-lg text-slate-400 mb-10 leading-relaxed font-sans">
+          <p className="max-w-2xl mx-auto text-slate-400 text-sm md:text-base mb-10 leading-relaxed font-sans font-medium">
             Connect your Discord account to submit raids, earn multipliers, track your leaderboard position, and redeem points for exclusive whitelists in the community shop.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/leaderboard"
-              className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 transition-all duration-300 flex items-center justify-center space-x-2"
+              className="w-full sm:w-auto px-8 py-3 rounded-full bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:brightness-110 text-xs font-bold text-white shadow-lg shadow-indigo-500/10 transition-all duration-300 flex items-center justify-center space-x-2 cursor-pointer shimmer-hover"
             >
               <span>View Leaderboard</span>
-              <ArrowUpRight className="w-4 h-4" />
+              <ArrowUpRight className="w-3.5 h-3.5" />
             </Link>
             
             <Link
               href="/shop"
-              className="w-full sm:w-auto px-8 py-3.5 rounded-full border border-indigo-500/30 bg-indigo-950/20 hover:bg-indigo-950/30 text-sm font-semibold text-indigo-300 transition-all flex items-center justify-center space-x-2"
+              className="w-full sm:w-auto px-8 py-3 rounded-full border border-indigo-500/20 bg-indigo-950/15 hover:bg-indigo-950/25 text-xs font-bold text-indigo-300 transition-all flex items-center justify-center space-x-2 cursor-pointer"
             >
               <span>Browse Marketplace</span>
             </Link>
@@ -140,54 +135,58 @@ export default async function Home() {
         </section>
 
         {/* Stats Grid */}
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-16">
-          <div className="glass-panel p-6 rounded-2xl">
+        <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-16 animate-fade-in-up delay-100">
+          <div className="glass-panel p-6 rounded-2xl relative group overflow-hidden">
+            <div className="absolute top-0 right-0 w-16 h-16 bg-indigo-500/5 rounded-full blur-xl group-hover:scale-150 transition-all duration-500" />
             <div className="flex items-center justify-between mb-4">
-              <span className="text-xs uppercase tracking-widest text-slate-500 font-semibold">Active Members</span>
-              <Users className="w-5 h-5 text-indigo-400" />
+              <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Active Members</span>
+              <Users className="w-5 h-5 text-indigo-400 group-hover:scale-110 transition-transform duration-300" />
             </div>
-            <p className="text-2xl md:text-3xl font-bold font-outfit text-white">{stats.totalUsers}</p>
-            <p className="text-xs text-slate-500 mt-1">Verified Discord Raiders</p>
+            <p className="text-2xl md:text-3xl font-extrabold font-outfit text-white tracking-wide">{stats.totalUsers.toLocaleString()}</p>
+            <p className="text-[10px] text-slate-500 font-semibold mt-1">Verified Discord Raiders</p>
           </div>
 
-          <div className="glass-panel p-6 rounded-2xl">
+          <div className="glass-panel p-6 rounded-2xl relative group overflow-hidden">
+            <div className="absolute top-0 right-0 w-16 h-16 bg-amber-500/5 rounded-full blur-xl group-hover:scale-150 transition-all duration-500" />
             <div className="flex items-center justify-between mb-4">
-              <span className="text-xs uppercase tracking-widest text-slate-500 font-semibold">Total Points Distributed</span>
-              <Coins className="w-5 h-5 text-amber-400" />
+              <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Total Points</span>
+              <Coins className="w-5 h-5 text-amber-400 group-hover:rotate-12 transition-transform duration-300" />
             </div>
-            <p className="text-2xl md:text-3xl font-bold font-outfit text-white">{stats.totalPoints.toLocaleString()}</p>
-            <p className="text-xs text-slate-500 mt-1">Raid points circulating</p>
+            <p className="text-2xl md:text-3xl font-extrabold font-outfit text-white tracking-wide text-glow-amber">{stats.totalPoints.toLocaleString()}</p>
+            <p className="text-[10px] text-slate-500 font-semibold mt-1">Raid points circulating</p>
           </div>
 
-          <div className="glass-panel p-6 rounded-2xl">
+          <div className="glass-panel p-6 rounded-2xl relative group overflow-hidden">
+            <div className="absolute top-0 right-0 w-16 h-16 bg-rose-500/5 rounded-full blur-xl group-hover:scale-150 transition-all duration-500" />
             <div className="flex items-center justify-between mb-4">
-              <span className="text-xs uppercase tracking-widest text-slate-500 font-semibold">Rains & Raids Approved</span>
-              <Flame className="w-5 h-5 text-rose-500" />
+              <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Approved Raids</span>
+              <Flame className="w-5 h-5 text-rose-500 group-hover:animate-pulse" />
             </div>
-            <p className="text-2xl md:text-3xl font-bold font-outfit text-white">{stats.totalRaids.toLocaleString()}</p>
-            <p className="text-xs text-slate-500 mt-1">Valid submissions</p>
+            <p className="text-2xl md:text-3xl font-extrabold font-outfit text-white tracking-wide">{stats.totalRaids.toLocaleString()}</p>
+            <p className="text-[10px] text-slate-500 font-semibold mt-1">Valid submissions</p>
           </div>
 
-          <div className="glass-panel p-6 rounded-2xl">
+          <div className="glass-panel p-6 rounded-2xl relative group overflow-hidden">
+            <div className="absolute top-0 right-0 w-16 h-16 bg-cyan-500/5 rounded-full blur-xl group-hover:scale-150 transition-all duration-500" />
             <div className="flex items-center justify-between mb-4">
-              <span className="text-xs uppercase tracking-widest text-slate-500 font-semibold">Available Shop Items</span>
-              <Coins className="w-5 h-5 text-cyan-400" />
+              <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Shop Items</span>
+              <ShoppingBag className="w-5 h-5 text-cyan-400 group-hover:translate-y-[-2px] transition-transform duration-300" />
             </div>
-            <p className="text-2xl md:text-3xl font-bold font-outfit text-white">{stats.totalMarketItems}</p>
-            <p className="text-xs text-slate-500 mt-1">Active whitelist slots</p>
+            <p className="text-2xl md:text-3xl font-extrabold font-outfit text-white tracking-wide text-glow-cyan">{stats.totalMarketItems}</p>
+            <p className="text-[10px] text-slate-500 font-semibold mt-1">Active whitelist slots</p>
           </div>
         </section>
 
         {/* Content Section: Active Raids */}
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-in-up delay-200">
           {/* Active Tweets (Left 2 cols) */}
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl md:text-2xl font-bold font-outfit text-slate-100 flex items-center space-x-2">
-                <span className="w-2 h-2 rounded-full bg-cyan-400 pulse-glow-border" />
+              <h2 className="text-xl md:text-2xl font-extrabold font-outfit text-slate-100 flex items-center space-x-2">
+                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
                 <span>Live Raids</span>
               </h2>
-              <span className="text-xs text-cyan-400 bg-cyan-950/30 border border-cyan-900/50 px-2.5 py-0.5 rounded-full font-medium">
+              <span className="text-[10px] text-cyan-400 bg-cyan-950/20 border border-cyan-900/40 px-3 py-1 rounded-full font-bold">
                 {tweets.length} Active Targets
               </span>
             </div>
@@ -199,43 +198,43 @@ export default async function Home() {
                     ? `https://x.com/i/status/${tweet.tweetId}` 
                     : `https://x.com/${tweet.postedBy}`;
                   return (
-                    <div key={tweet._id} className="glass-panel p-5 rounded-xl border border-indigo-950/20 relative group overflow-hidden">
-                      <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-indigo-500/5 to-transparent rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                    <div key={tweet._id} className="glass-panel p-5 rounded-2xl border border-indigo-950/25 relative group overflow-hidden shimmer-hover">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-500/5 to-transparent rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
                       
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="space-y-2">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div className="space-y-2 flex-grow">
                           <div className="flex items-center space-x-2">
-                            <span className="text-xs font-semibold text-indigo-400">@{tweet.postedBy}</span>
+                            <span className="text-[11px] font-bold text-indigo-400">@{tweet.postedBy}</span>
                             <span className="text-[10px] text-slate-500">•</span>
-                            <span className="text-[10px] text-slate-500">
+                            <span className="text-[10px] text-slate-500 font-semibold">
                               {new Date(tweet.postedAt).toLocaleDateString(undefined, {month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'})}
                             </span>
                           </div>
                           
-                          <p className="text-sm text-slate-300 font-sans line-clamp-3 leading-relaxed">
+                          <p className="text-sm text-slate-300 font-sans leading-relaxed font-medium">
                             {tweet.content}
                           </p>
 
                           {tweet.imageUrl && (
-                            <div className="mt-3 overflow-hidden rounded-lg border border-indigo-950/50 max-h-48 max-w-md">
-                              <img src={tweet.imageUrl} alt="Tweet Asset" className="w-full h-auto object-cover" />
+                            <div className="mt-3 overflow-hidden rounded-xl border border-indigo-950/40 max-h-48 max-w-md transition-all duration-300 group-hover:border-indigo-500/35">
+                              <img src={tweet.imageUrl} alt="Tweet Asset" className="w-full h-auto object-cover group-hover:scale-[1.02] transition-transform duration-500" />
                             </div>
                           )}
                         </div>
 
-                        <div className="flex flex-col items-end justify-between self-stretch">
-                          <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded bg-amber-950/35 border border-amber-500/20 text-amber-400 text-xs font-bold whitespace-nowrap">
-                            <Coins className="w-3.5 h-3.5 text-amber-400" />
-                            <span>+{tweet.points ?? 1} pts</span>
+                        <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center self-stretch w-full sm:w-auto border-t sm:border-t-0 border-indigo-950/20 pt-4 sm:pt-0">
+                          <span className="inline-flex items-center space-x-1 px-3 py-1 rounded-full bg-amber-950/25 border border-amber-500/20 text-amber-400 text-[10px] font-extrabold whitespace-nowrap tracking-wider">
+                            <Coins className="w-3 h-3 text-amber-400 mr-0.5 animate-pulse" />
+                            <span>+{tweet.points ?? 1} PTS</span>
                           </span>
                           
                           <a
                             href={xLink}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="mt-4 text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition-colors flex items-center space-x-0.5 border border-cyan-500/20 bg-cyan-950/10 px-3 py-1.5 rounded-full hover:bg-cyan-950/30"
+                            className="mt-0 sm:mt-4 text-[10px] font-extrabold uppercase tracking-widest text-cyan-400 hover:text-cyan-300 transition-colors flex items-center space-x-1 border border-cyan-500/20 bg-cyan-950/10 px-4 py-2 rounded-full hover:bg-cyan-950/30 cursor-pointer"
                           >
-                            <span>Raid Now</span>
+                            <span>Raid Target</span>
                             <ArrowUpRight className="w-3 h-3" />
                           </a>
                         </div>
@@ -248,8 +247,8 @@ export default async function Home() {
               <div className="glass-panel p-12 rounded-2xl text-center border border-indigo-950/20">
                 <HelpCircle className="w-12 h-12 text-slate-600 mx-auto mb-4" />
                 <h3 className="text-base font-semibold text-slate-300">No Active Raids</h3>
-                <p className="text-sm text-slate-500 max-w-sm mx-auto mt-2 leading-relaxed">
-                  All tweets have been successfully raided. Wait for admins to post new raid objectives!
+                <p className="text-xs text-slate-500 max-w-sm mx-auto mt-2 leading-relaxed">
+                  All tweets have been successfully raided. Wait for admins to post new raid targets!
                 </p>
               </div>
             )}
@@ -257,54 +256,54 @@ export default async function Home() {
 
           {/* Quick FAQ / Info (Right 1 col) */}
           <div className="space-y-6">
-            <h2 className="text-xl md:text-2xl font-bold font-outfit text-slate-100 flex items-center space-x-2">
+            <h2 className="text-xl md:text-2xl font-extrabold font-outfit text-slate-100 flex items-center space-x-2">
               <span>How it Works</span>
             </h2>
 
             <div className="glass-panel p-6 rounded-2xl border border-indigo-950/20 space-y-6">
               <div className="flex items-start space-x-4">
-                <div className="w-7 h-7 rounded-lg bg-indigo-950/60 border border-indigo-500/30 flex items-center justify-center text-xs font-bold text-indigo-400 mt-0.5">
+                <div className="w-7 h-7 rounded-lg bg-indigo-950/40 border border-indigo-500/20 flex items-center justify-center text-xs font-bold text-indigo-400 mt-0.5 shadow-[0_0_10px_rgba(99,102,241,0.15)]">
                   1
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-slate-200">Join the Raid</h4>
-                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                    Click the "Raid Now" link to perform the Twitter raid (like, comment, retweet, bookmark).
+                  <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">Join the Raid</h4>
+                  <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+                    Click the "Raid Target" link to perform the Twitter actions (like, retweet, or comment).
                   </p>
                 </div>
               </div>
 
               <div className="flex items-start space-x-4">
-                <div className="w-7 h-7 rounded-lg bg-indigo-950/60 border border-indigo-500/30 flex items-center justify-center text-xs font-bold text-indigo-400 mt-0.5">
+                <div className="w-7 h-7 rounded-lg bg-indigo-950/40 border border-indigo-500/20 flex items-center justify-center text-xs font-bold text-indigo-400 mt-0.5 shadow-[0_0_10px_rgba(99,102,241,0.15)]">
                   2
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-slate-200">Submit Proof</h4>
-                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                    Use the Discord bot commands `/submitraid` or complete Twitter verification to record your raid.
+                  <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">Submit Proof</h4>
+                  <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+                    Complete verification on Twitter or use the bot commands `/submitraid` to submit proof.
                   </p>
                 </div>
               </div>
 
               <div className="flex items-start space-x-4">
-                <div className="w-7 h-7 rounded-lg bg-indigo-950/60 border border-indigo-500/30 flex items-center justify-center text-xs font-bold text-indigo-400 mt-0.5">
+                <div className="w-7 h-7 rounded-lg bg-indigo-950/40 border border-indigo-500/20 flex items-center justify-center text-xs font-bold text-indigo-400 mt-0.5 shadow-[0_0_10px_rgba(99,102,241,0.15)]">
                   3
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-slate-200">Accumulate Points</h4>
-                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                    Once approved by admins, points are deposited into your profile. Build a streak for multipliers!
+                  <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">Accumulate Points</h4>
+                  <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+                    Once approved by admins, points are deposited into your profile dashboard immediately.
                   </p>
                 </div>
               </div>
 
               <div className="flex items-start space-x-4">
-                <div className="w-7 h-7 rounded-lg bg-indigo-950/60 border border-indigo-500/30 flex items-center justify-center text-xs font-bold text-indigo-400 mt-0.5">
+                <div className="w-7 h-7 rounded-lg bg-indigo-950/40 border border-indigo-500/20 flex items-center justify-center text-xs font-bold text-indigo-400 mt-0.5 shadow-[0_0_10px_rgba(99,102,241,0.15)]">
                   4
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-slate-200">Shop Marketplace</h4>
-                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                  <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">Shop Marketplace</h4>
+                  <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
                     Redeem your points directly in the web Shop to claim roles or whitelist items instantly.
                   </p>
                 </div>
@@ -314,7 +313,7 @@ export default async function Home() {
         </section>
       </main>
 
-      <footer className="border-t border-indigo-950/30 bg-[#040409] py-8 text-center text-xs text-slate-600">
+      <footer className="border-t border-indigo-950/30 bg-[#020204] py-8 text-center text-xs text-slate-600">
         <p>© {new Date().getFullYear()} Chess DAO. All rights reserved. Built for competitive raiding.</p>
       </footer>
     </>
