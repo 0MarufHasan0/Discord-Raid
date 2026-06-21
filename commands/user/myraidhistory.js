@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, MessageFlags} = require('discord.js');
 const Raid = require('../../database/models/Raid');
 
 module.exports = {

@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, MessageFlags} = require('discord.js');
 const Raid = require('../database/models/Raid');
 const User = require('../database/models/User');
 const Tweet = require('../database/models/Tweet');

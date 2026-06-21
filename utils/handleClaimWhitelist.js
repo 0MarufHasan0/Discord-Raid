@@ -1,4 +1,4 @@
-const { EmbedBuilder, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { EmbedBuilder, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags} = require('discord.js');
 const MarketItem = require('../database/models/MarketItem');
 const User = require('../database/models/User');
 const config = require('../config');
