@@ -66,7 +66,7 @@ async function updateMemberPanel(client) {
           .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
           .setCustomId('panel_remove_raid')
-          .setLabel('Remove Raid')
+          .setLabel('Remove My Raid')
           .setEmoji('❌')
           .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
