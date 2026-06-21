@@ -1081,6 +1081,116 @@ client.on('interactionCreate', async interaction => {
           );
 
           await interaction.showModal(modal);
+        } else if (interaction.customId === 'admin_copy_raiders') {
+          const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
+          const embed = new EmbedBuilder()
+            .setColor(0x5865F2)
+            .setTitle("📋 Copy Raider Usernames")
+            .setDescription("Choose the format you want to copy the raider details in:");
+
+          const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+              .setCustomId('admin_copy_raiders_twitter')
+              .setLabel('Twitter Handles')
+              .setEmoji('🐦')
+              .setStyle(ButtonStyle.Primary),
+            new ButtonBuilder()
+              .setCustomId('admin_copy_raiders_discord')
+              .setLabel('Discord Handles')
+              .setEmoji('💬')
+              .setStyle(ButtonStyle.Primary),
+            new ButtonBuilder()
+              .setCustomId('admin_copy_raiders_both')
+              .setLabel('Combined List')
+              .setEmoji('📝')
+              .setStyle(ButtonStyle.Success)
+          );
+
+          await interaction.reply({
+            embeds: [embed],
+            components: [row],
+            ephemeral: true
+          });
+        } else if (interaction.customId.startsWith('admin_copy_raiders_')) {
+          const format = interaction.customId.replace('admin_copy_raiders_', '');
+          const User = require('./database/models/User');
+          const users = await User.find({}).sort({ points: -1 }) || [];
+
+          let content = '';
+          let filename = '';
+
+          if (format === 'twitter') {
+            const twitters = users
+              .map(u => u.twitter?.trim())
+              .filter(Boolean)
+              .map(t => t.startsWith('@') ? t : `@${t}`);
+            content = twitters.join('\n');
+            filename = 'twitter_handles.txt';
+          } else if (format === 'discord') {
+            const discords = users
+              .map(u => u.username?.trim())
+              .filter(Boolean);
+            content = discords.join('\n');
+            filename = 'discord_handles.txt';
+          } else if (format === 'both') {
+            content = users
+              .map((u, i) => {
+                const twStr = u.twitter ? (u.twitter.startsWith('@') ? u.twitter : `@${u.twitter}`) : 'N/A';
+                return `${i + 1}. Twitter: ${twStr} | Discord: ${u.username}`;
+              })
+              .join('\n');
+            filename = 'raiders_list.txt';
+          }
+
+          if (!content) {
+            return await interaction.reply({
+              content: '❌ No user data found for this format.',
+              ephemeral: true
+            });
+          }
+
+          const { AttachmentBuilder } = require('discord.js');
+          const buffer = Buffer.from(content, 'utf-8');
+          const attachment = new AttachmentBuilder(buffer, { name: filename });
+
+          await interaction.reply({
+            content: `✅ Here is your requested **${format.toUpperCase()}** format raider list:`,
+            files: [attachment],
+            ephemeral: true
+          });
+        } else if (interaction.customId === 'admin_raffle_raider') {
+          const modal = new ModalBuilder()
+            .setCustomId('admin_raffle_raider_modal')
+            .setTitle('Raffle Raider Draw');
+
+          const winnersInput = new TextInputBuilder()
+            .setCustomId('winners_count')
+            .setLabel('Number of Winners')
+            .setValue('1')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+
+          const minPointsInput = new TextInputBuilder()
+            .setCustomId('min_points')
+            .setLabel('Minimum Points Target')
+            .setValue('4')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+
+          const tweetIdInput = new TextInputBuilder()
+            .setCustomId('tweet_id')
+            .setLabel('Raid Tweet ID (Optional)')
+            .setPlaceholder('Enter tweet ID to filter by specific raid participants')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false);
+
+          modal.addComponents(
+            new ActionRowBuilder().addComponents(winnersInput),
+            new ActionRowBuilder().addComponents(minPointsInput),
+            new ActionRowBuilder().addComponents(tweetIdInput)
+          );
+
+          await interaction.showModal(modal);
         } else if (interaction.customId === 'admin_update_leaderboard') {
           const updateLeaderboard = require('./utils/updateLeaderboard');
           updateLeaderboard(interaction.client);
@@ -1607,6 +1717,78 @@ client.on('interactionCreate', async interaction => {
           const command = require('./commands/admin/edituserwl');
           const mocked = mockInteraction(interaction, options);
           await command.execute(mocked);
+        } else if (interaction.customId === 'admin_raffle_raider_modal') {
+          const winnersCountStr = interaction.fields.getTextInputValue('winners_count').trim();
+          const minPointsStr = interaction.fields.getTextInputValue('min_points').trim();
+          const tweetId = interaction.fields.getTextInputValue('tweet_id')?.trim();
+
+          const winnersCount = parseInt(winnersCountStr) || 1;
+          const minPoints = parseInt(minPointsStr) || 0;
+
+          await interaction.deferReply({ ephemeral: true });
+
+          try {
+            const User = require('./database/models/User');
+            const Raid = require('./database/models/Raid');
+
+            let users = [];
+
+            if (tweetId) {
+              const raids = await Raid.find({ tweetId, status: 'approved' });
+              const discordIds = raids.map(r => r.userId);
+              users = await User.find({ discordId: { $in: discordIds } });
+            } else {
+              users = await User.find({});
+            }
+
+            const eligible = users.filter(u => u.points >= minPoints && u.twitter);
+
+            if (eligible.length === 0) {
+              return await interaction.editReply({
+                embeds: [
+                  new EmbedBuilder()
+                    .setColor(0xFF0000)
+                    .setDescription(`❌ No eligible raiders found matching point threshold **>= ${minPoints}** ${tweetId ? `for Tweet ID **${tweetId}**` : ''} and with a linked Twitter handle.`)
+                ]
+              });
+            }
+
+            const shuffled = [...eligible];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+
+            const count = Math.min(winnersCount, shuffled.length);
+            const winners = shuffled.slice(0, count);
+
+            const embed = new EmbedBuilder()
+              .setColor(0x9B59B6)
+              .setTitle("🎉 Raffle Draw Winners!")
+              .setDescription(
+                `Successfully drew **${winners.length}** winner(s) from **${eligible.length}** eligible participant(s).\n\n` +
+                `**Filters applied:**\n` +
+                `• Minimum Points: \`${minPoints}\`\n` +
+                (tweetId ? `• Tweet ID: \`${tweetId}\`\n` : '') +
+                `• Linked Twitter: \`Required\`\n\n` +
+                `**Winners:**\n` +
+                winners.map((w, index) => {
+                  const tw = w.twitter.startsWith('@') ? w.twitter : `@${w.twitter}`;
+                  return `**${index + 1}.** Discord: ${w.username} (<@${w.discordId}>) | Twitter: [${tw}](https://x.com/${w.twitter.replace('@','')}) (\`${w.points}\` pts)`;
+                }).join('\n')
+              )
+              .setTimestamp();
+
+            await interaction.editReply({
+              embeds: [embed]
+            });
+
+          } catch (error) {
+            console.error('Error executing Discord raffle draw:', error);
+            await interaction.editReply({
+              content: '❌ An error occurred while running the raffle draw.'
+            });
+          }
         } else if (interaction.customId === 'admin_delete_all_data_modal') {
           const confirmation = interaction.fields.getTextInputValue('confirmation').trim();
           if (confirmation !== "I want to Fuck Chess Dao Data Base") {

@@ -185,6 +185,16 @@ module.exports = {
         const row4 = new ActionRowBuilder()
           .addComponents(
             new ButtonBuilder()
+              .setCustomId('admin_copy_raiders')
+              .setLabel('Copy Raiders')
+              .setEmoji('📋')
+              .setStyle(ButtonStyle.Primary),
+            new ButtonBuilder()
+              .setCustomId('admin_raffle_raider')
+              .setLabel('Raffle Raider')
+              .setEmoji('🏆')
+              .setStyle(ButtonStyle.Primary),
+            new ButtonBuilder()
               .setCustomId('admin_update_leaderboard')
               .setLabel('Update Leaderboard')
               .setEmoji('🔄')

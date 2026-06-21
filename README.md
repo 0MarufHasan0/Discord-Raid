@@ -80,7 +80,9 @@ npm start
 * `/raidlist` - List recently submitted raids with date filters, user details, and remove instructions.
 * `/editraidpoints <tweet_id> <points>` - Edit the point value of an active (non-expired) raid announcement and dynamically update its Discord announcement embed.
 * `/edituserwl <role> <action> [days] [user]` - Edit or remove active whitelist role validity (duration) for a member or all members in the guild. Actions include removing role, reducing validity, extending validity, or setting validity.
-* `/setupcontrolpanel <type> [channel]` - Spawn the interactive Member or Admin Control Panel. The Admin Control Panel includes a **Delete All Data** button.
+* `/setupcontrolpanel <type> [channel]` - Spawn the interactive Member or Admin Control Panel. The Admin Control Panel includes **Copy Raiders**, **Raffle Raider**, and **Delete All Data** buttons.
+* **Copy Raiders** (Admin Control Panel Button) - Instantly generates downloadable `.txt` files containing active user handles (Twitter, Discord, or combined) and sends them ephemerally to the admin.
+* **Raffle Raider** (Admin Control Panel Button) - Triggers an interactive Discord modal asking for winners count, points threshold, and optional Tweet ID to run a random raffle and display winners inside a private embed.
 * **Delete All Data** (Admin Button & Dashboard API) - A secure database wipe feature that clears all `raids`, `tweets`, and `userroleexpirations` collections, resets user stats to 0, and updates the leaderboard. It requires strict admin authorization and typing the verification phrase `I want to Fuck Chess Dao Data Base`.
 
 ### User Commands
