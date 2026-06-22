@@ -15,6 +15,8 @@ const client = new Client({
   ]
 });
 
+console.log('🤖 Node.js Version:', process.version);
+
 // Global error handling to prevent bot crashes on Render
 client.on('error', error => {
   console.error('🛡️ Discord Client Error:', error);
