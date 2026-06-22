@@ -20,6 +20,13 @@ client.on('error', error => {
   console.error('🛡️ Discord Client Error:', error);
 });
 
+client.on('debug', message => {
+  // Only log important connection messages to avoid cluttering logs
+  if (message.includes('connect') || message.includes('identify') || message.includes('Ready') || message.includes('Rate limit') || message.includes('resumed') || message.includes('session')) {
+    console.log('🤖 [Gateway Debug]:', message);
+  }
+});
+
 process.on('unhandledRejection', error => {
   console.error('🛡️ Unhandled Promise Rejection:', error);
 });
