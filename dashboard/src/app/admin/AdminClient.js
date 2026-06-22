@@ -390,7 +390,8 @@ export default function AdminClient({ initialTweets, initialPendingRaids, initia
     const text = raffleWinners
       .map((w, index) => {
         const tw = w.twitter ? (w.twitter.startsWith("@") ? w.twitter : `@${w.twitter}`) : "N/A";
-        return `${index + 1}. Discord: ${w.username} | Twitter: ${tw} (${w.points} pts)`;
+        const submissionStr = w.submissionLink ? ` | Submission: ${w.submissionLink}` : "";
+        return `${index + 1}. Discord: ${w.username} | Twitter: ${tw} (${w.points} pts)${submissionStr}`;
       })
       .join("\n");
     
@@ -1175,6 +1176,16 @@ export default function AdminClient({ initialTweets, initialPendingRaids, initia
                             <span className="text-[10px] text-purple-400 font-medium mt-0.5">
                               Twitter: {winner.twitter ? (winner.twitter.startsWith("@") ? winner.twitter : `@${winner.twitter}`) : "None"}
                             </span>
+                            {winner.submissionLink && (
+                              <a
+                                href={winner.submissionLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[10px] text-amber-400 hover:text-amber-300 underline font-semibold mt-1 inline-flex items-center"
+                              >
+                                🔗 Submission Proof
+                              </a>
+                            )}
                           </div>
                           <span className="text-xs font-bold text-amber-400">
                             {winner.points} pts

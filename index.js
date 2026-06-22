@@ -1749,9 +1749,12 @@ client.on('interactionCreate', async interaction => {
             const Raid = require('./database/models/Raid');
 
             let users = [];
+            let raidsForTweet = [];
 
             if (tweetId) {
-              const raids = await Raid.find({ tweetId, status: 'approved' });
+              const escapedTweetId = tweetId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const raids = await Raid.find({ tweetId: { $regex: new RegExp(`^${escapedTweetId}$`, 'i') }, status: 'approved' });
+              raidsForTweet = raids;
               const discordIds = raids.map(r => r.userId);
               users = await User.find({ discordId: { $in: discordIds } });
             } else {
@@ -1791,7 +1794,9 @@ client.on('interactionCreate', async interaction => {
                 `**Winners:**\n` +
                 winners.map((w, index) => {
                   const tw = w.twitter.startsWith('@') ? w.twitter : `@${w.twitter}`;
-                  return `**${index + 1}.** Discord: ${w.username} (<@${w.discordId}>) | Twitter: [${tw}](https://x.com/${w.twitter.replace('@','')}) (\`${w.points}\` pts)`;
+                  const userRaid = tweetId ? raidsForTweet.find(r => r.userId === w.discordId) : null;
+                  const submissionStr = userRaid ? `\n   ↳ Submission: [Proof Link](${userRaid.link})` : '';
+                  return `**${index + 1}.** Discord: ${w.username} (<@${w.discordId}>) | Twitter: [${tw}](https://x.com/${w.twitter.replace('@','')}) (\`${w.points}\` pts)${submissionStr}`;
                 }).join('\n')
               )
               .setTimestamp();

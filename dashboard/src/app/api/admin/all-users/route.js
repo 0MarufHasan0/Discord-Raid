@@ -23,15 +23,26 @@ export async function GET(req) {
     let users = [];
 
     if (tweetId) {
-      // Find all approved raids for the specific tweetId
-      const raids = await Raid.find({ tweetId, status: "approved" });
+      const escapedTweetId = tweetId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      // Find all approved raids for the specific tweetId (case-insensitive)
+      const raids = await Raid.find({ tweetId: { $regex: new RegExp(`^${escapedTweetId}$`, 'i') }, status: "approved" });
       const discordIds = raids.map((r) => r.userId);
       
       // Find matching users
-      users = await User.find(
+      const usersList = await User.find(
         { discordId: { $in: discordIds } },
         "discordId username twitter points raidsApproved raidsSubmitted"
       ).sort({ points: -1 }) || [];
+
+      // Map users to include their submission link for this tweetId
+      users = usersList.map((u) => {
+        const userObj = u.toObject ? u.toObject() : u;
+        const matchingRaid = raids.find((r) => r.userId === u.discordId);
+        return {
+          ...userObj,
+          submissionLink: matchingRaid ? matchingRaid.link : null
+        };
+      });
     } else {
       // Fetch all users selecting only required fields
       users = await User.find(
