@@ -157,20 +157,7 @@ module.exports = {
 
       await interaction.reply({ embeds: [replyEmbed], flags: MessageFlags.Ephemeral });
 
-      // Send admin log
-      const sendAdminLog = require('../../utils/sendAdminLog');
-      await sendAdminLog(interaction.client, {
-        action: 'Market Item Edited',
-        executor: interaction.user.tag,
-        target: name,
-        details: `Edited details of a marketplace item.`,
-        fields: [
-          { name: 'New Point Cost', value: `${item.pointCost} pts`, inline: true },
-          { name: 'New Total Slots', value: `${item.totalSlots}`, inline: true },
-          { name: 'Claims', value: `${item.claimedSlots}/${item.totalSlots}`, inline: true }
-        ],
-        color: 0x9B59B6 // Purple
-      });
+
 
     } catch (error) {
       console.error('Error in /editwlitem command:', error);

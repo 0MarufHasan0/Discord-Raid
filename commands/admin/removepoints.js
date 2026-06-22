@@ -80,16 +80,7 @@ module.exports = {
 
       await interaction.reply({ embeds: [replyEmbed], flags: MessageFlags.Ephemeral });
 
-      // Send admin log
-      const sendAdminLog = require('../../utils/sendAdminLog');
-      await sendAdminLog(interaction.client, {
-        action: 'Manual Remove Points',
-        executor: interaction.user.tag,
-        target: `${targetUser.username} (${targetUser.id})`,
-        details: `Deducted **${amount}** points.\n**Reason:** *${reason}*`,
-        fields: [{ name: 'Remaining Balance', value: `${newTotal} pts`, inline: true }],
-        color: 0xE74C3C // Red
-      });
+
 
     } catch (error) {
       console.error('Error in /removepoints command:', error);

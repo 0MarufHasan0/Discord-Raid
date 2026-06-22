@@ -214,19 +214,7 @@ module.exports = {
         flags: MessageFlags.Ephemeral
       });
 
-      // Send admin log
-      const sendAdminLog = require('../../utils/sendAdminLog');
-      await sendAdminLog(interaction.client, {
-        action: 'Setup Control Panel',
-        executor: interaction.user.tag,
-        target: `${targetChannel.name} (${targetChannel.id})`,
-        details: `Sent control panel to channel.`,
-        fields: [
-          { name: 'Panel Type', value: panelType === 'member' ? 'Member Panel' : 'Admin Panel', inline: true },
-          { name: 'Channel', value: `<#${targetChannel.id}>`, inline: true }
-        ],
-        color: 0x3498DB // Blue
-      });
+
 
     } catch (error) {
       console.error('Error in setupcontrolpanel command:', error);

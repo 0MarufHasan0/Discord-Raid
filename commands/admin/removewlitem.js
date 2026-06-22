@@ -72,19 +72,7 @@ module.exports = {
 
       await interaction.reply({ embeds: [replyEmbed], flags: MessageFlags.Ephemeral });
 
-      // Send admin log
-      const sendAdminLog = require('../../utils/sendAdminLog');
-      await sendAdminLog(interaction.client, {
-        action: 'Market Item Removed',
-        executor: interaction.user.tag,
-        target: item.name,
-        details: `Deactivated and removed a marketplace item.`,
-        fields: [
-          { name: 'Role Deleted?', value: deleteRoleOpt ? 'Yes' : 'No', inline: true },
-          { name: 'Point Cost', value: `${item.pointCost} pts`, inline: true }
-        ],
-        color: 0xE74C3C // Red
-      });
+
 
     } catch (error) {
       console.error('Error in /removewlitem command:', error);

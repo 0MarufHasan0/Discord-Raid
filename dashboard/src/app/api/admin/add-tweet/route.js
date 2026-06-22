@@ -43,25 +43,7 @@ export async function POST(req) {
     // 3. Trigger bot sync
     await triggerBotSync({ action: "update_all" });
 
-    // Send admin log
-    try {
-      await triggerBotSync({
-        action: "log_action",
-        details: {
-          action: "Tweet Added (Web)",
-          executor: session.user.username,
-          target: `Tweet ID: ${tweetId}`,
-          details: `Posted new target tweet for raid via Web Dashboard.\n**Reward:** \`${points}\` points.\n**Content:** *${content.slice(0, 150)}${content.length > 150 ? '...' : ''}*`,
-          fields: [
-            { name: 'Posted By', value: postedBy || 'ChessDAO', inline: true },
-            { name: 'Channel ID', value: tweet.channelId || 'N/A', inline: true }
-          ],
-          color: 0x3498DB // Blue
-        }
-      });
-    } catch (logErr) {
-      console.warn("Failed to trigger admin log for web tweet addition:", logErr);
-    }
+
 
     return NextResponse.json({
       success: true,

@@ -246,20 +246,7 @@ module.exports = {
 
       await interaction.reply({ embeds: [replyEmbed], flags: MessageFlags.Ephemeral });
 
-      // Send admin log
-      const sendAdminLog = require('../../utils/sendAdminLog');
-      await sendAdminLog(interaction.client, {
-        action: 'Market Item Added',
-        executor: interaction.user.tag,
-        target: name,
-        details: `Added new item/whitelist to the marketplace.`,
-        fields: [
-          { name: 'Point Cost', value: `${pointCost} pts`, inline: true },
-          { name: 'Total Slots', value: `${totalSlots}`, inline: true },
-          { name: 'Role Target', value: roleId ? `<@&${roleId}>` : 'None', inline: true }
-        ],
-        color: 0x9B59B6 // Purple
-      });
+
 
     } catch (error) {
       console.error('Error in /addwlitem command:', error);

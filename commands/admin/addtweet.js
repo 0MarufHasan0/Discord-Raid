@@ -432,21 +432,7 @@ module.exports = {
 
       await interaction.editReply({ embeds: [summaryEmbed] });
 
-      // Send admin log
-      if (isAnySuccess) {
-        const sendAdminLog = require('../../utils/sendAdminLog');
-        await sendAdminLog(interaction.client, {
-          action: 'Raid Posted',
-          executor: interaction.user.tag,
-          target: `Tweet ID: ${tweetId}`,
-          details: `Posted new target tweet for raid.\n**Reward:** \`${points}\` points.\n**Content:** *${content.slice(0, 150)}${content.length > 150 ? '...' : ''}*`,
-          fields: [
-            { name: 'Expiration', value: `${durationDays}d ${durationHours}h ${durationMinutes}m`, inline: true },
-            { name: 'Success Postings', value: `${results.filter(r => r.success).length} channels`, inline: true }
-          ],
-          color: 0x3498DB // Blue
-        });
-      }
+
 
     } catch (error) {
       console.error('Error in /addtweet command:', error);

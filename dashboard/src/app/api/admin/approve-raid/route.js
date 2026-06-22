@@ -56,26 +56,7 @@ export async function POST(req) {
     // 4. Trigger bot to synchronize live channels
     await triggerBotSync({ action: "update_all" });
 
-    // Send admin log
-    try {
-      await triggerBotSync({
-        action: "log_action",
-        details: {
-          action: "Raid Approved (Web)",
-          executor: session.user.username,
-          target: `${raid.username} (${raid.userId})`,
-          details: `Raid **${raidId}** approved via Web Dashboard. Rewarded **${raid.points ?? 1}** points.`,
-          fields: [
-            { name: 'Raid Link', value: raid.link || 'N/A', inline: false },
-            { name: 'Tweet ID', value: raid.tweetId || 'N/A', inline: true },
-            { name: 'New Balance', value: `${user.points} pts`, inline: true }
-          ],
-          color: 0x2ECC71 // Green
-        }
-      });
-    } catch (logErr) {
-      console.warn("Failed to trigger admin log for web raid approval:", logErr);
-    }
+
 
     return NextResponse.json({
       success: true,

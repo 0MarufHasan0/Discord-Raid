@@ -13,7 +13,6 @@ const config = {
   marketplaceChannelId: process.env.MARKETPLACE_CHANNEL_ID || '',
   leaderboardChannelId: process.env.LEADERBOARD_CHANNEL_ID || '',
   ticketCategoryId: process.env.TICKET_CATEGORY_ID || '',
-  adminLogChannelId: process.env.ADMIN_LOG_CHANNEL_ID || '',
 };
 
 // Check for missing configurations

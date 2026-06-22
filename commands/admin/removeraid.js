@@ -119,21 +119,7 @@ module.exports = {
 
       await interaction.editReply({ embeds: [successEmbed] });
 
-      // Send admin log
-      const sendAdminLog = require('../../utils/sendAdminLog');
-      await sendAdminLog(interaction.client, {
-        action: 'Raid Deleted',
-        executor: interaction.user.tag,
-        target: `Tweet ID: ${canonicalTweetId}`,
-        details: `Deleted raid announcement and all associated database records.`,
-        fields: [
-          { name: 'Deleted Announcements', value: `${tweetDocs.length}`, inline: true },
-          { name: 'Deleted Discord Messages', value: `${deletedMessagesCount}`, inline: true },
-          { name: 'Deleted Submissions', value: `${deletedRaidsResult.deletedCount}`, inline: true },
-          { name: 'Points Deducted (Total)', value: `${totalDeductedPoints} pts from ${affectedUsersCount} users`, inline: false }
-        ],
-        color: 0xE74C3C // Red
-      });
+
 
     } catch (error) {
       console.error('Error in /removeraid command:', error);

@@ -46,24 +46,7 @@ export async function POST(req) {
     // 3. Trigger live update
     await triggerBotSync({ action: "update_all" });
 
-    // Send admin log
-    try {
-      await triggerBotSync({
-        action: "log_action",
-        details: {
-          action: "Points Adjusted (Web)",
-          executor: session.user.username,
-          target: `${user.username} (${user.discordId})`,
-          details: `Points manually **${action === 'add' ? 'added' : 'removed'}** via Web Dashboard.\n**Amount:** \`${adjustAmount}\` pts`,
-          fields: [
-            { name: 'New Balance', value: `${user.points} pts`, inline: true }
-          ],
-          color: action === 'add' ? 0x2ECC71 : 0xE74C3C
-        }
-      });
-    } catch (logErr) {
-      console.warn("Failed to trigger admin log for web points adjustment:", logErr);
-    }
+
 
     return NextResponse.json({
       success: true,

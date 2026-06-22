@@ -1154,15 +1154,7 @@ client.on('interactionCreate', async interaction => {
             flags: MessageFlags.Ephemeral
           });
 
-          // Send admin log
-          const sendAdminLog = require('./utils/sendAdminLog');
-          await sendAdminLog(interaction.client, {
-            action: 'Copy Raiders (Discord)',
-            executor: interaction.user.tag,
-            target: 'Server Raiders',
-            details: `Exported and downloaded raiders list in **${format.toUpperCase()}** format.`,
-            color: 0x3498DB // Blue
-          });
+
         } else if (interaction.customId === 'admin_raffle_raider') {
           const modal = new ModalBuilder()
             .setCustomId('admin_raffle_raider_modal')
@@ -1204,15 +1196,7 @@ client.on('interactionCreate', async interaction => {
             flags: MessageFlags.Ephemeral
           });
 
-          // Send admin log
-          const sendAdminLog = require('./utils/sendAdminLog');
-          await sendAdminLog(interaction.client, {
-            action: 'Update Leaderboard (Discord)',
-            executor: interaction.user.tag,
-            target: 'Leaderboard Embed',
-            details: `Force updated the live leaderboard channel embed.`,
-            color: 0x5865F2 // Default Blue
-          });
+
         } else if (interaction.customId === 'admin_delete_all_data') {
           const { ButtonBuilder, ButtonStyle } = require('discord.js');
           const warningEmbed = new EmbedBuilder()
@@ -1793,20 +1777,7 @@ client.on('interactionCreate', async interaction => {
               embeds: [embed]
             });
 
-            // Send admin log
-            const sendAdminLog = require('./utils/sendAdminLog');
-            await sendAdminLog(interaction.client, {
-              action: 'Raffle Draw (Discord)',
-              executor: interaction.user.tag,
-              target: 'Server Raiders',
-              details: `Drew **${winners.length}** winner(s) from **${eligible.length}** eligible participant(s).`,
-              fields: [
-                { name: 'Min Points Filter', value: `${minPoints} pts`, inline: true },
-                { name: 'Tweet ID Filter', value: tweetId || 'None', inline: true },
-                { name: 'Winners List', value: winners.map((w, i) => `**${i + 1}.** ${w.username} (${w.twitter ? (w.twitter.startsWith('@') ? w.twitter : `@${w.twitter}`) : 'N/A'})`).join('\n'), inline: false }
-              ],
-              color: 0x9B59B6 // Purple
-            });
+
 
           } catch (error) {
             console.error('Error executing Discord raffle draw:', error);
@@ -1869,21 +1840,7 @@ client.on('interactionCreate', async interaction => {
               ]
             });
 
-            // Send admin log
-            const sendAdminLog = require('./utils/sendAdminLog');
-            await sendAdminLog(interaction.client, {
-              action: 'Database Wipe (Discord)',
-              executor: interaction.user.tag,
-              target: 'Entire Database',
-              details: `Reset/cleared all database collections.`,
-              fields: [
-                { name: 'Deleted Raids', value: `${raidsDelete.deletedCount}`, inline: true },
-                { name: 'Deleted Tweets', value: `${tweetsDelete.deletedCount}`, inline: true },
-                { name: 'Reset Users', value: `${usersReset.modifiedCount}`, inline: true },
-                { name: 'Deleted Expirations', value: `${expirationsDelete.deletedCount}`, inline: true }
-              ],
-              color: 0xE74C3C // Red
-            });
+
           } catch (dbErr) {
             console.error('Error resetting database in modal submission:', dbErr);
             await interaction.editReply({
@@ -1975,16 +1932,7 @@ http.createServer(async (req, res) => {
           return;
         }
 
-        if (data.action === 'log_action') {
-          const { details } = data;
-          if (details) {
-            const sendAdminLog = require('./utils/sendAdminLog');
-            await sendAdminLog(client, details);
-          }
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: true, logged: true }));
-          return;
-        }
+
 
         if (data.action === 'add_role') {
           const { userId, roleId, itemName } = data;
