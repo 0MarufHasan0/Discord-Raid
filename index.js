@@ -15,6 +15,19 @@ const client = new Client({
   ]
 });
 
+// Global error handling to prevent bot crashes on Render
+client.on('error', error => {
+  console.error('🛡️ Discord Client Error:', error);
+});
+
+process.on('unhandledRejection', error => {
+  console.error('🛡️ Unhandled Promise Rejection:', error);
+});
+
+process.on('uncaughtException', error => {
+  console.error('🛡️ Uncaught Exception:', error);
+});
+
 // Setup command collection
 client.commands = new Collection();
 
