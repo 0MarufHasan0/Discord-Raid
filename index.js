@@ -1387,16 +1387,189 @@ client.on('interactionCreate', async interaction => {
 
             const csvContent = csvLines.join('\n');
 
+            // 3. HTML Table Generation
+            const htmlRows = users.map((u, i) => {
+              const rank = i + 1;
+              const discordId = u.discordId || 'N/A';
+              const username = u.username || 'N/A';
+              const twRaw = u.twitter ? (u.twitter.startsWith('@') ? u.twitter : `@${u.twitter}`) : 'N/A';
+              const totalPoints = `${u.points} pts`;
+              const raidPointsVal = raidPointsMap.get(u.discordId) || 0;
+              const raidPoints = `${raidPointsVal} pts`;
+              const adjVal = u.points - raidPointsVal;
+              const adjustments = adjVal >= 0 ? `+${adjVal} pts` : `${adjVal} pts`;
+
+              let detailsArray = [];
+              const claimedItems = userExpirationsMap.get(u.discordId) || [];
+              if (claimedItems.length > 0) {
+                detailsArray.push(...claimedItems);
+              }
+
+              if (adjVal > 0) {
+                detailsArray.push(`Manual Addition (+${adjVal} pts)`);
+              } else if (adjVal < 0) {
+                if (claimedItems.length === 0) {
+                  detailsArray.push(`Marketplace Claim / Manual Deduction (${adjVal} pts)`);
+                } else {
+                  detailsArray.push(`Net Adjustments/Deductions (${adjVal} pts)`);
+                }
+              }
+
+              const detailsStr = detailsArray.length > 0 ? detailsArray.join('; ') : 'None';
+
+              // Escape html entities
+              const esc = (text) => {
+                return String(text)
+                  .replace(/&/g, '&amp;')
+                  .replace(/</g, '&lt;')
+                  .replace(/>/g, '&gt;')
+                  .replace(/"/g, '&quot;')
+                  .replace(/'/g, '&#039;');
+              };
+
+              return `
+        <tr>
+          <td>${rank}</td>
+          <td><code>${esc(discordId)}</code></td>
+          <td><strong>${esc(username)}</strong></td>
+          <td>${twRaw !== 'N/A' ? `<a href="https://x.com/${esc(u.twitter)}" target="_blank" style="color: #38bdf8; text-decoration: none;">${esc(twRaw)}</a>` : 'N/A'}</td>
+          <td><span class="badge badge-points">${esc(totalPoints)}</span></td>
+          <td><span class="badge">${esc(raidPoints)}</span></td>
+          <td><span class="badge badge-adjustment">${esc(adjustments)}</span></td>
+          <td class="details">${esc(detailsStr)}</td>
+        </tr>`;
+            }).join('');
+
+            const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Chess Shop Raider Database</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+      margin: 0;
+      padding: 24px;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: #1e293b;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      color: #38bdf8;
+      margin-top: 0;
+      margin-bottom: 8px;
+      font-size: 28px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .subtitle {
+      color: #94a3b8;
+      font-size: 14px;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+    }
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid #334155;
+    }
+    th {
+      background-color: #334155;
+      color: #38bdf8;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+    }
+    tr:hover {
+      background-color: #334155;
+    }
+    tr:nth-child(even) {
+      background-color: #1e293b;
+    }
+    tr:nth-child(odd) {
+      background-color: #0f172a;
+    }
+    code {
+      background-color: #0f172a;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      color: #f43f5e;
+    }
+    .badge {
+      display: inline-block;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-points {
+      background-color: #10b981;
+    }
+    .badge-adjustment {
+      background-color: #475569;
+    }
+    .details {
+      font-size: 13px;
+      color: #cbd5e1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Chess Shop</h1>
+    <div class="subtitle">
+      <strong>User Database & Points Statement</strong><br>
+      Generated on: ${dateStr} (Dhaka Time)<br>
+      Total Registered Users: ${users.length}
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Discord ID</th>
+          <th>Username</th>
+          <th>Twitter Handle</th>
+          <th>Total Points</th>
+          <th>Raid Points</th>
+          <th>Net Adjustments/Spent</th>
+          <th>Points History & Claims</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${htmlRows}
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>`;
+
             const { AttachmentBuilder } = require('discord.js');
             const txtBuffer = Buffer.from(txtContent, 'utf-8');
             const csvBuffer = Buffer.from(csvContent, 'utf-8');
+            const htmlBuffer = Buffer.from(htmlContent, 'utf-8');
             
             const txtAttachment = new AttachmentBuilder(txtBuffer, { name: 'chess_shop_raiders.txt' });
             const csvAttachment = new AttachmentBuilder(csvBuffer, { name: 'chess_shop_raiders.csv' });
+            const htmlAttachment = new AttachmentBuilder(htmlBuffer, { name: 'chess_shop_raiders.html' });
 
             await interaction.reply({
-              content: `✅ Here is your requested **Combined List** format raider lists (both Text and Excel/CSV formats):`,
-              files: [txtAttachment, csvAttachment],
+              content: `✅ Here is your requested **Combined List** format raider lists (Text, Excel/CSV, and HTML Table formats):`,
+              files: [txtAttachment, csvAttachment, htmlAttachment],
               flags: MessageFlags.Ephemeral
             });
             return;
