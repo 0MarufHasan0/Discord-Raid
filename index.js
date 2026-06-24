@@ -804,6 +804,34 @@ client.on('interactionCreate', async interaction => {
           const row = new ActionRowBuilder().addComponents(userInput);
           modal.addComponents(row);
           await interaction.showModal(modal);
+        } else if (interaction.customId.startsWith('admin_see_points_add_') || interaction.customId.startsWith('admin_see_points_remove_')) {
+          const isAdd = interaction.customId.startsWith('admin_see_points_add_');
+          const targetId = isAdd 
+            ? interaction.customId.replace('admin_see_points_add_', '') 
+            : interaction.customId.replace('admin_see_points_remove_', '');
+
+          const modal = new ModalBuilder()
+            .setCustomId(`admin_see_points_direct_modal_${isAdd ? 'add' : 'remove'}_${targetId}`)
+            .setTitle(`${isAdd ? 'Add' : 'Remove'} Points`);
+
+          const amountInput = new TextInputBuilder()
+            .setCustomId('amount')
+            .setLabel('Point Amount')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+
+          const reasonInput = new TextInputBuilder()
+            .setCustomId('reason')
+            .setLabel('Reason (optional)')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false);
+
+          modal.addComponents(
+            new ActionRowBuilder().addComponents(amountInput),
+            new ActionRowBuilder().addComponents(reasonInput)
+          );
+
+          await interaction.showModal(modal);
         } else if (interaction.customId === 'admin_add_tweet') {
           const modal = new ModalBuilder()
             .setCustomId('admin_add_tweet_modal')
@@ -1458,12 +1486,71 @@ client.on('interactionCreate', async interaction => {
           inline: false
         });
 
-        await interaction.editReply({ embeds: [embed] });
+        const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
+        const actionRow = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId(`admin_see_points_add_${userDoc.discordId}`)
+            .setLabel('Add Points')
+            .setEmoji('➕')
+            .setStyle(ButtonStyle.Success),
+          new ButtonBuilder()
+            .setCustomId(`admin_see_points_remove_${userDoc.discordId}`)
+            .setLabel('Remove Points')
+            .setEmoji('➖')
+            .setStyle(ButtonStyle.Danger)
+        );
+
+        await interaction.editReply({ embeds: [embed], components: [actionRow] });
 
       } catch (error) {
         console.error('Error in admin_see_points_modal submission:', error);
         try {
           await interaction.editReply({ content: '❌ An error occurred while retrieving user details.' });
+        } catch (e) {}
+      }
+      return;
+    }
+
+    if (interaction.customId.startsWith('admin_see_points_direct_modal_')) {
+      const isAdd = interaction.customId.startsWith('admin_see_points_direct_modal_add_');
+      const targetId = isAdd 
+        ? interaction.customId.replace('admin_see_points_direct_modal_add_', '') 
+        : interaction.customId.replace('admin_see_points_direct_modal_remove_', '');
+      
+      const amountStr = interaction.fields.getTextInputValue('amount').trim();
+      const reason = interaction.fields.getTextInputValue('reason')?.trim() || null;
+      const amount = parseInt(amountStr);
+
+      try {
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+        if (isNaN(amount) || amount <= 0) {
+          return await interaction.editReply({
+            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Point amount must be a positive number.")]
+          });
+        }
+
+        const targetUser = await interaction.client.users.fetch(targetId).catch(() => null);
+        if (!targetUser) {
+          return await interaction.editReply({
+            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription("❌ Target user not found in Discord.")]
+          });
+        }
+
+        const options = {
+          user: targetUser,
+          amount: amount,
+          reason: reason
+        };
+
+        const cmdFile = isAdd ? 'addpoints' : 'removepoints';
+        const command = require(`./commands/admin/${cmdFile}`);
+        const mocked = mockInteraction(interaction, options);
+        await command.execute(mocked);
+      } catch (error) {
+        console.error('Error executing direct points modal submission:', error);
+        try {
+          await interaction.editReply({ content: '❌ An error occurred while modifying points.' });
         } catch (e) {}
       }
       return;
