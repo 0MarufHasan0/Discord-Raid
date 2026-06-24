@@ -2091,6 +2091,7 @@ client.on('interactionCreate', async interaction => {
               }
 
               const winnerUser = await interaction.client.users.fetch(w.discordId).catch(() => null);
+              const username = winnerUser ? winnerUser.username : w.username;
               const displayName = winnerUser ? `${winnerUser.globalName || winnerUser.username}` : w.username;
               
               let medal = '⭐';
@@ -2099,7 +2100,7 @@ client.on('interactionCreate', async interaction => {
               else if (i === 2) medal = '🥉';
 
               winnerLines.push(
-                `${medal} **Winner #${i + 1}:** <@${w.discordId}> (${displayName})\n` +
+                `${medal} **Winner #${i + 1}:** @${username} (<@${w.discordId}>) (${displayName})\n` +
                 `   [🐦 Twitter](https://x.com/${w.twitter.replace('@','')}) • 💰 \`${w.points} pts\`${submissionStr}`
               );
             }
