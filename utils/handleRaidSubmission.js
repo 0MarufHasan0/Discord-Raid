@@ -13,9 +13,10 @@ function getTweetIdAndNormalize(url) {
   const regex = /https?:\/\/([a-zA-Z0-9-]+\.)?(twitter|x)\.com\/([a-zA-Z0-9_]+)\/(?:web\/)?status\/(\d+)/i;
   const match = url.match(regex);
   if (!match) return null;
+  const cleanUsername = match[3].toLowerCase();
   return {
-    username: match[3],
-    normalized: `https://x.com/${match[3]}/status/${match[4]}`,
+    username: cleanUsername,
+    normalized: `https://x.com/${cleanUsername}/status/${match[4]}`,
     statusId: match[4]
   };
 }
@@ -229,8 +230,9 @@ async function handleRaidSubmission(interaction, link, tweetId) {
     if (tweetInfo.username.toLowerCase() === 'i' || tweetInfo.username.toLowerCase() === 'web') {
       const resolvedUsername = await resolveRealUsername(link, tweetInfo.statusId);
       if (resolvedUsername) {
-        tweetInfo.username = resolvedUsername;
-        tweetInfo.normalized = `https://x.com/${resolvedUsername}/status/${tweetInfo.statusId}`;
+        const cleanResolved = resolvedUsername.toLowerCase();
+        tweetInfo.username = cleanResolved;
+        tweetInfo.normalized = `https://x.com/${cleanResolved}/status/${tweetInfo.statusId}`;
       }
     }
 
