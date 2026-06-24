@@ -325,7 +325,7 @@ module.exports = {
             });
         }
 
-        // Add Like, Retweet, and Reply buttons if we have a tweet link
+        // Add Like and Reply buttons if we have a tweet link
         if (originalTweetLink) {
           const likeUrl = originalTweetLink;
           twitterRow.addComponents(
@@ -333,15 +333,6 @@ module.exports = {
               .setLabel('Like')
               .setEmoji('❤️')
               .setURL(likeUrl)
-              .setStyle(ButtonStyle.Link)
-          );
-
-          const retweetUrl = originalTweetLink;
-          twitterRow.addComponents(
-            new ButtonBuilder()
-              .setLabel('Retweet')
-              .setEmoji('🔁')
-              .setURL(retweetUrl)
               .setStyle(ButtonStyle.Link)
           );
 
@@ -362,15 +353,6 @@ module.exports = {
             .setEmoji('⚔️')
             .setCustomId(`submit_raid_btn_${tweetId}`)
             .setStyle(ButtonStyle.Success)
-        );
-
-        // Add Copy Tweet ID button
-        botRow.addComponents(
-          new ButtonBuilder()
-            .setLabel('Copy Tweet ID')
-            .setEmoji('📋')
-            .setCustomId(`copy_tweet_id_${tweetId}`)
-            .setStyle(ButtonStyle.Secondary)
         );
 
         const componentsToSend = [];
