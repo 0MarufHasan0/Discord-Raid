@@ -1224,13 +1224,166 @@ client.on('interactionCreate', async interaction => {
             content = discords.join('\n');
             filename = 'discord_handles.txt';
           } else if (format === 'both') {
-            content = users
-              .map((u, i) => {
-                const twStr = u.twitter ? (u.twitter.startsWith('@') ? u.twitter : `@${u.twitter}`) : 'N/A';
-                return `${i + 1}. Twitter: ${twStr} | Discord: ${u.username}`;
-              })
-              .join('\n');
-            filename = 'raiders_list.txt';
+            const Raid = require('./database/models/Raid');
+            const UserRoleExpiration = require('./database/models/UserRoleExpiration');
+            const MarketItem = require('./database/models/MarketItem');
+
+            const approvedRaids = await Raid.find({ status: 'approved' });
+            const expirations = await UserRoleExpiration.find({});
+            const marketItems = await MarketItem.find({});
+            
+            const raidPointsMap = new Map();
+            approvedRaids.forEach(r => {
+              const current = raidPointsMap.get(r.userId) || 0;
+              raidPointsMap.set(r.userId, current + (r.points || 1));
+            });
+
+            const itemCostsMap = new Map();
+            marketItems.forEach(item => {
+              itemCostsMap.set(item.name.toLowerCase(), item.pointCost);
+            });
+
+            const userExpirationsMap = new Map();
+            expirations.forEach(exp => {
+              const list = userExpirationsMap.get(exp.userId) || [];
+              const cost = itemCostsMap.get(exp.itemName.toLowerCase());
+              const costStr = cost ? ` (-${cost} pts)` : '';
+              list.push(`${exp.itemName}${costStr}`);
+              userExpirationsMap.set(exp.userId, list);
+            });
+
+            const dateStr = new Date().toLocaleString('en-US', { timeZone: 'Asia/Dhaka' });
+
+            // 1. TXT Generation
+            let header = `==========================================================================================================================================================================\n`;
+            header += `                                                                    CHESS SHOP - RAIDER DATABASE\n`;
+            header += `==========================================================================================================================================================================\n`;
+            header += `Generated on: ${dateStr} (Dhaka Time)\n`;
+            header += `Total Registered Users: ${users.length}\n\n`;
+            header += `--------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n`;
+            header += ` Rank | Discord Username     | Twitter Handle       | Total Points | Raid Points | Adjustments/Spent | Points History & Claims Details\n`;
+            header += `--------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n`;
+
+            const lines = users.map((u, i) => {
+              const rank = (i + 1).toString().padEnd(4);
+              const username = (u.username || 'N/A').padEnd(20);
+              const twRaw = u.twitter ? (u.twitter.startsWith('@') ? u.twitter : `@${u.twitter}`) : 'N/A';
+              const twitter = twRaw.padEnd(20);
+              const totalPoints = `${u.points} pts`.padEnd(12);
+              const raidPointsVal = raidPointsMap.get(u.discordId) || 0;
+              const raidPoints = `${raidPointsVal} pts`.padEnd(11);
+              const adjVal = u.points - raidPointsVal;
+              const adjustments = adjVal >= 0 ? `+${adjVal} pts` : `${adjVal} pts`;
+              const adjString = adjustments.padEnd(17);
+
+              let detailsArray = [];
+              const claimedItems = userExpirationsMap.get(u.discordId) || [];
+              if (claimedItems.length > 0) {
+                detailsArray.push(...claimedItems);
+              }
+
+              if (adjVal > 0) {
+                detailsArray.push(`Manual Addition (+${adjVal} pts)`);
+              } else if (adjVal < 0) {
+                if (claimedItems.length === 0) {
+                  detailsArray.push(`Marketplace Claim / Manual Deduction (${adjVal} pts)`);
+                } else {
+                  detailsArray.push(`Net Adjustments/Deductions (${adjVal} pts)`);
+                }
+              }
+
+              const detailsStr = detailsArray.length > 0 ? detailsArray.join('; ') : 'None';
+
+              return ` ${rank} | ${username} | ${twitter} | ${totalPoints} | ${raidPoints} | ${adjString} | ${detailsStr}`;
+            });
+
+            let footer = `\n--------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n`;
+            footer += `Note: 'Adjustments/Spent' indicates manual points added (+) or points spent on marketplace/deducted (-).\n`;
+            footer += `==========================================================================================================================================================================\n`;
+
+            const txtContent = header + lines.join('\n') + footer;
+
+            // 2. CSV Generation
+            const escapeCSV = (val) => {
+              if (val === null || val === undefined) return '""';
+              let str = val.toString().replace(/"/g, '""');
+              return `"${str}"`;
+            };
+
+            let csvLines = [];
+            csvLines.push(`${escapeCSV('CHESS SHOP')}`);
+            csvLines.push(`${escapeCSV('USER DATABASE & POINTS STATEMENT')}`);
+            csvLines.push(`${escapeCSV(`Generated on: ${dateStr} (Dhaka Time)`)}`);
+            csvLines.push(`${escapeCSV(`Total Registered Users: ${users.length}`)}`);
+            csvLines.push('');
+
+            csvLines.push([
+              escapeCSV('Rank'),
+              escapeCSV('Discord ID'),
+              escapeCSV('Discord Username'),
+              escapeCSV('Twitter Handle'),
+              escapeCSV('Total Points'),
+              escapeCSV('Raid Points (Earned)'),
+              escapeCSV('Net Adjustments/Spent'),
+              escapeCSV('Points History & Claims Details')
+            ].join(','));
+
+            users.forEach((u, i) => {
+              const rank = i + 1;
+              const discordId = u.discordId || 'N/A';
+              const username = u.username || 'N/A';
+              const twRaw = u.twitter ? (u.twitter.startsWith('@') ? u.twitter : `@${u.twitter}`) : 'N/A';
+              const totalPoints = `${u.points} pts`;
+              const raidPointsVal = raidPointsMap.get(u.discordId) || 0;
+              const raidPoints = `${raidPointsVal} pts`;
+              const adjVal = u.points - raidPointsVal;
+              const adjustments = adjVal >= 0 ? `+${adjVal} pts` : `${adjVal} pts`;
+
+              let detailsArray = [];
+              const claimedItems = userExpirationsMap.get(u.discordId) || [];
+              if (claimedItems.length > 0) {
+                detailsArray.push(...claimedItems);
+              }
+
+              if (adjVal > 0) {
+                detailsArray.push(`Manual Addition (+${adjVal} pts)`);
+              } else if (adjVal < 0) {
+                if (claimedItems.length === 0) {
+                  detailsArray.push(`Marketplace Claim / Manual Deduction (${adjVal} pts)`);
+                } else {
+                  detailsArray.push(`Net Adjustments/Deductions (${adjVal} pts)`);
+                }
+              }
+
+              const detailsStr = detailsArray.length > 0 ? detailsArray.join('; ') : 'None';
+
+              csvLines.push([
+                escapeCSV(rank),
+                escapeCSV(discordId),
+                escapeCSV(username),
+                escapeCSV(twRaw),
+                escapeCSV(totalPoints),
+                escapeCSV(raidPoints),
+                escapeCSV(adjustments),
+                escapeCSV(detailsStr)
+              ].join(','));
+            });
+
+            const csvContent = csvLines.join('\n');
+
+            const { AttachmentBuilder } = require('discord.js');
+            const txtBuffer = Buffer.from(txtContent, 'utf-8');
+            const csvBuffer = Buffer.from(csvContent, 'utf-8');
+            
+            const txtAttachment = new AttachmentBuilder(txtBuffer, { name: 'chess_shop_raiders.txt' });
+            const csvAttachment = new AttachmentBuilder(csvBuffer, { name: 'chess_shop_raiders.csv' });
+
+            await interaction.reply({
+              content: `✅ Here is your requested **Combined List** format raider lists (both Text and Excel/CSV formats):`,
+              files: [txtAttachment, csvAttachment],
+              flags: MessageFlags.Ephemeral
+            });
+            return;
           }
 
           if (!content) {
