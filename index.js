@@ -151,6 +151,22 @@ client.on('interactionCreate', async interaction => {
             }
           };
         }
+        if (prop === 'reply') {
+          return function(replyOptions) {
+            if (target.deferred || target.replied) {
+              return target.editReply(replyOptions);
+            }
+            return target.reply(replyOptions);
+          };
+        }
+        if (prop === 'deferReply') {
+          return function(deferOptions) {
+            if (target.deferred || target.replied) {
+              return Promise.resolve();
+            }
+            return target.deferReply(deferOptions);
+          };
+        }
         const val = target[prop];
         if (typeof val === 'function') {
           return val.bind(target);
