@@ -106,6 +106,7 @@ module.exports = {
             "➖ **Remove Points** — Deduct points from a member\n" +
             "⚙️ **Edit Raid Points** — Modify points rewarded for a specific raid\n" +
             "📜 **Raid List** — View, filter, and manage raid submissions\n" +
+            "🔍 **See Points** — View a member's points, submissions, and details\n" +
             "✅ **Approve Raid** — Manually approve a pending raid\n" +
             "❌ **Reject Raid** — Manually reject a raid submission\n" +
             "🗑️ **Delete Announcement** — Delete a raid announcement and its records\n" +
@@ -161,6 +162,11 @@ module.exports = {
               .setCustomId('admin_raidlist')
               .setLabel('Raid List')
               .setEmoji('📜')
+              .setStyle(ButtonStyle.Primary),
+            new ButtonBuilder()
+              .setCustomId('admin_see_points')
+              .setLabel('See Points')
+              .setEmoji('🔍')
               .setStyle(ButtonStyle.Primary)
           );
 

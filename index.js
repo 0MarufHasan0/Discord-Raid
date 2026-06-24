@@ -789,6 +789,21 @@ client.on('interactionCreate', async interaction => {
           const command = require('./commands/admin/raidlist');
           const mocked = mockInteraction(interaction, {});
           await command.execute(mocked);
+        } else if (interaction.customId === 'admin_see_points') {
+          const modal = new ModalBuilder()
+            .setCustomId('admin_see_points_modal')
+            .setTitle('See Points & Submissions');
+
+          const userInput = new TextInputBuilder()
+            .setCustomId('user_identifier')
+            .setLabel('Discord Username, ID, or Mention')
+            .setPlaceholder('Enter username, ID or mention (e.g. cipher24)')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+
+          const row = new ActionRowBuilder().addComponents(userInput);
+          modal.addComponents(row);
+          await interaction.showModal(modal);
         } else if (interaction.customId === 'admin_add_tweet') {
           const modal = new ModalBuilder()
             .setCustomId('admin_add_tweet_modal')
@@ -1301,6 +1316,159 @@ client.on('interactionCreate', async interaction => {
       }
     }
   } else if (interaction.isModalSubmit()) {
+    if (interaction.customId === 'admin_see_points_modal') {
+      const userIdentifier = interaction.fields.getTextInputValue('user_identifier').trim();
+      try {
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+        const User = require('./database/models/User');
+        const Raid = require('./database/models/Raid');
+        const { EmbedBuilder } = require('discord.js');
+
+        // 1. Locate the user
+        let userDoc = null;
+        const cleanUserId = userIdentifier.replace(/[<@!>]/g, '');
+
+        // Try searching by exact Discord ID
+        if (/^\d+$/.test(cleanUserId)) {
+          userDoc = await User.findOne({ discordId: cleanUserId });
+        }
+
+        // Try searching by exact username
+        if (!userDoc) {
+          userDoc = await User.findOne({ username: { $regex: new RegExp(`^${userIdentifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } });
+        }
+
+        // Try searching server members
+        if (!userDoc) {
+          const member = interaction.guild.members.cache.find(m => 
+            m.user.username.toLowerCase() === userIdentifier.toLowerCase() ||
+            m.user.globalName?.toLowerCase() === userIdentifier.toLowerCase()
+          );
+          if (member) {
+            userDoc = await User.findOne({ discordId: member.id });
+          }
+        }
+
+        if (!userDoc) {
+          return await interaction.editReply({
+            embeds: [
+              new EmbedBuilder()
+                .setColor(0xFF0000)
+                .setDescription(`❌ User **${userIdentifier}** not found in the database.`)
+            ]
+          });
+        }
+
+        // 2. Fetch user's submissions
+        const raids = await Raid.find({ userId: userDoc.discordId }).sort({ submittedAt: -1 });
+
+        // Calculate points breakdown
+        const approvedRaids = raids.filter(r => r.status === 'approved');
+        const pendingRaids = raids.filter(r => r.status === 'pending');
+        const rejectedRaids = raids.filter(r => r.status === 'rejected');
+
+        const totalRaidPoints = approvedRaids.reduce((sum, r) => sum + (r.points || 1), 0);
+        const otherAdjustments = userDoc.points - totalRaidPoints;
+
+        // Fetch user avatar
+        const fetchedUser = await interaction.client.users.fetch(userDoc.discordId).catch(() => null);
+        const avatarUrl = fetchedUser ? fetchedUser.displayAvatarURL({ dynamic: true, size: 256 }) : null;
+        const userTag = fetchedUser ? `${fetchedUser.username} (${fetchedUser.globalName || fetchedUser.username})` : userDoc.username;
+
+        const embed = new EmbedBuilder()
+          .setColor(0x00FF00)
+          .setAuthor({
+            name: `User Details: ${userTag}`,
+            iconURL: avatarUrl || undefined
+          })
+          .setTitle(`🔍 Points & Submissions Profile`)
+          .setDescription(
+            `👤 **Discord Account:** <@${userDoc.discordId}> (\`${userDoc.username}\`)\n` +
+            `🐦 **Linked Twitter:** ${userDoc.twitter ? `[@${userDoc.twitter}](https://x.com/${userDoc.twitter})` : '`Not Linked`'}\n` +
+            `💰 **Current Total Points:** \`${userDoc.points} Points\`\n` +
+            `📊 **Raids Stat:** Submitted: \`${userDoc.raidsSubmitted}\` | Approved: \`${userDoc.raidsApproved}\``
+          )
+          .setTimestamp();
+
+        if (avatarUrl) {
+          embed.setThumbnail(avatarUrl);
+        }
+
+        // Approved submissions list (Max 10)
+        if (approvedRaids.length > 0) {
+          const approvedLines = approvedRaids.slice(0, 10).map((r, i) => {
+            const rawLink = r.link || '';
+            const match = rawLink.match(/\[.*?\]\((.*?)\)/s) || rawLink.match(/\((http.*?)\)/s);
+            const cleanLink = match ? match[1].trim() : rawLink.trim();
+            const dateStr = `<t:${Math.floor(new Date(r.submittedAt).getTime() / 1000)}:f>`;
+            return `**${i + 1}.** Tweet ID: [${r.tweetId}](https://x.com/i/status/${r.tweetId}) • 💰 \`${r.points || 1} pts\`\n` +
+                   `   📅 Date: ${dateStr}\n` +
+                   `   🔗 Proof: [View Submission](${cleanLink})`;
+          });
+
+          embed.addFields({
+            name: `✅ Recent Approved Submissions (${Math.min(10, approvedRaids.length)} of ${approvedRaids.length})`,
+            value: approvedLines.join('\n\n'),
+            inline: false
+          });
+        } else {
+          embed.addFields({
+            name: `✅ Recent Approved Submissions`,
+            value: `*No approved submissions found.*`,
+            inline: false
+          });
+        }
+
+        // Pending Submissions
+        if (pendingRaids.length > 0) {
+          const pendingLines = pendingRaids.map((r) => {
+            const rawLink = r.link || '';
+            const match = rawLink.match(/\[.*?\]\((.*?)\)/s) || rawLink.match(/\((http.*?)\)/s);
+            const cleanLink = match ? match[1].trim() : rawLink.trim();
+            return `• Tweet ID: [${r.tweetId}](https://x.com/i/status/${r.tweetId}) | Link: [View Submission](${cleanLink})`;
+          });
+          embed.addFields({
+            name: `⏳ Pending Submissions (${pendingRaids.length})`,
+            value: pendingLines.join('\n'),
+            inline: false
+          });
+        }
+
+        // Rejected Submissions
+        if (rejectedRaids.length > 0) {
+          const rejectedLines = rejectedRaids.slice(0, 5).map((r) => {
+            const rawLink = r.link || '';
+            const match = rawLink.match(/\[.*?\]\((.*?)\)/s) || rawLink.match(/\((http.*?)\)/s);
+            const cleanLink = match ? match[1].trim() : rawLink.trim();
+            return `• Link: [View Submission](${cleanLink}) | Reason: \`${r.rejectedReason || 'No reason specified'}\``;
+          });
+          embed.addFields({
+            name: `❌ Recent Rejected Submissions (${rejectedRaids.length})`,
+            value: rejectedLines.join('\n'),
+            inline: false
+          });
+        }
+
+        // Points Allocation / Allocation reason
+        embed.addFields({
+          name: `⚙️ Point Allocation Reason/Breakdown`,
+          value: `• Points from Approved Raids: \`${totalRaidPoints} Points\`\n` +
+                 `• Manual Adjustments / Shop Claims: \`${otherAdjustments} Points\``,
+          inline: false
+        });
+
+        await interaction.editReply({ embeds: [embed] });
+
+      } catch (error) {
+        console.error('Error in admin_see_points_modal submission:', error);
+        try {
+          await interaction.editReply({ content: '❌ An error occurred while retrieving user details.' });
+        } catch (e) {}
+      }
+      return;
+    }
+
     if (interaction.customId.startsWith('submit_raid_modal_')) {
       const tweetId = interaction.customId.replace('submit_raid_modal_', '');
       const link = interaction.fields.getTextInputValue('proof_link').trim();
