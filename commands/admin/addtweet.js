@@ -265,13 +265,20 @@ module.exports = {
           // Build description
           let desc = '';
           if (tweetData.text) {
-            desc += `💬 **Tweet Content:**\n> ${tweetData.text.replace(/\n/g, '\n> ')}\n\n`;
+            desc += `${tweetData.text}\n\n`;
           }
           
-          desc += `📋 **RAID TARGET DETAILS**\n`;
-          desc += `> 💰 **Reward:** \`${points} Points\`\n`;
-          desc += `> ⏰ **Ends At:** <t:${unixTimestamp}:f>\n`;
-          desc += `> ⌛ **Time Left:** <t:${unixTimestamp}:R>\n\n`;
+          desc += `**Reward**\n`;
+          desc += `+${points} Points\n\n`;
+          
+          desc += `**Ends At**\n`;
+          desc += `<t:${unixTimestamp}:f>\n\n`;
+          
+          desc += `**Time Left**\n`;
+          desc += `<t:${unixTimestamp}:R>\n\n`;
+          
+          desc += `**Tweet ID**\n`;
+          desc += `${tweetId}\n\n`;
 
           // Add Twitter stats line
           desc += `📈 **Twitter Stats:** 💬 ${tweetData.replies || 0}   🔁 ${tweetData.retweets || 0}   ❤️ ${tweetData.likes || 0}   👁️ ${tweetData.views || 0}\n\n`;
@@ -292,19 +299,28 @@ module.exports = {
           }
         } else {
           // Fallback / Standard layout
+          let desc = `✨ **A new raid challenge has been posted!** complete the task and submit your proof link to earn points.\n\n`;
+          
+          desc += `**Reward**\n`;
+          desc += `+${points} Points\n\n`;
+          
+          desc += `**Ends At**\n`;
+          desc += `<t:${unixTimestamp}:f>\n\n`;
+          
+          desc += `**Time Left**\n`;
+          desc += `<t:${unixTimestamp}:R>\n\n`;
+          
+          desc += `**Tweet ID**\n`;
+          desc += `${tweetId}\n\n`;
+          
+          desc += `📌 **Instruction:** click **Submit Raid** below to input your screenshot or action link proof!`;
+
           announcementEmbed
             .setTitle("⚔️ NEW COMMUNITY RAID TARGET ⚔️")
             .setColor(0xF5A623) // Premium Gold/Orange color
-            .setDescription(
-              `✨ **A new raid challenge has been posted!** complete the task and submit your proof link to earn points.\n\n` +
-              `📊 **RAID DETAILS**\n` +
-              `> 💰 **Reward:** \`${points} Points\`\n` +
-              `> ⏰ **Ends At:** <t:${unixTimestamp}:f>\n` +
-              `> ⌛ **Time Left:** <t:${unixTimestamp}:R>\n\n` +
-              `📌 **Instruction:** click **Submit Raid** below to input your screenshot or action link proof!`
-            )
+            .setDescription(desc)
             .setFooter({ 
-              text: `Raid Target ID: ${tweetId} • Posted by ${interaction.user.username}`,
+              text: `Tweet ID: ${tweetId} • Posted by ${interaction.user.username}`,
               iconURL: interaction.user.displayAvatarURL({ dynamic: true })
             });
         }

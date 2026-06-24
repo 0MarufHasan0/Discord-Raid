@@ -84,12 +84,18 @@ module.exports = {
                 const newEmbed = EmbedBuilder.from(oldEmbed);
                 
                 let desc = oldEmbed.description || '';
-                const pointsRegex = /💰 \*\*Reward:\*\* \*\*\d+ points\*\* upon completion!/;
-                if (pointsRegex.test(desc)) {
-                  desc = desc.replace(pointsRegex, `💰 **Reward:** **${newPoints} points** upon completion!`);
+                const newPointsRegex = /\*\*Reward\*\*\r?\n\+\d+ Points/i;
+                const legacyPointsRegex = /💰 \*\*Reward:\*\* `\d+ Points`/i;
+                const legacyPointsRegex2 = /💰 \*\*Reward:\*\* \*\*\d+ points\*\* upon completion!/i;
+
+                if (newPointsRegex.test(desc)) {
+                  desc = desc.replace(newPointsRegex, `**Reward**\n+${newPoints} Points`);
+                } else if (legacyPointsRegex.test(desc)) {
+                  desc = desc.replace(legacyPointsRegex, `💰 **Reward:** \`${newPoints} Points\``);
+                } else if (legacyPointsRegex2.test(desc)) {
+                  desc = desc.replace(legacyPointsRegex2, `💰 **Reward:** **${newPoints} points** upon completion!`);
                 } else {
-                  // Fallback: prepend it or insert it
-                  desc = `💰 **Reward:** **${newPoints} points** upon completion!\n` + desc;
+                  desc = `**Reward**\n+${newPoints} Points\n\n` + desc;
                 }
                 
                 newEmbed.setDescription(desc);
