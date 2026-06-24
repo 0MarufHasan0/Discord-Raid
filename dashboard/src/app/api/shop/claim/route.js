@@ -5,7 +5,7 @@ import dbConnect from "../../../../../lib/db";
 import MarketItem from "../../../../../lib/models/MarketItem";
 import User from "../../../../../lib/models/User";
 import UserRoleExpiration from "../../../../../lib/models/UserRoleExpiration";
-import { triggerBotSync } from "../../../../../lib/discord";
+import { triggerBotSync, getGuildMember, getGuildRoles } from "../../../../../lib/discord";
 
 export async function POST(req) {
   try {
@@ -46,6 +46,35 @@ export async function POST(req) {
     // 5. Verify point balance
     if (user.points < item.pointCost) {
       return NextResponse.json({ error: `Insufficient points. Required: ${item.pointCost} | You have: ${user.points}` }, { status: 400 });
+    }
+
+    // 5.5 Validate role claim: existence, hierarchy, and ownership
+    if (item.roleId) {
+      const [member, roles] = await Promise.all([
+        getGuildMember(user.discordId),
+        getGuildRoles()
+      ]);
+
+      if (roles && roles.length > 0) {
+        const targetRole = roles.find(r => r.id === item.roleId);
+        if (!targetRole) {
+          return NextResponse.json({ error: "The configured role for this item does not exist in the Discord server." }, { status: 400 });
+        }
+
+        // Check hierarchy
+        const botMember = await getGuildMember(process.env.DISCORD_CLIENT_ID || "");
+        if (botMember && botMember.roles) {
+          const botRoles = roles.filter(r => botMember.roles.includes(r.id));
+          const botHighestPosition = botRoles.reduce((max, r) => Math.max(max, r.position), 0);
+          if (targetRole.position >= botHighestPosition) {
+            return NextResponse.json({ error: "The bot cannot assign this role because it is higher than the bot's highest role. Please contact an admin." }, { status: 400 });
+          }
+        }
+      }
+
+      if (member && member.roles && member.roles.includes(item.roleId)) {
+        return NextResponse.json({ error: `You already have the ${item.name} role! You cannot claim it again.` }, { status: 400 });
+      }
     }
 
     // 6. Atomically claim slot to prevent race conditions

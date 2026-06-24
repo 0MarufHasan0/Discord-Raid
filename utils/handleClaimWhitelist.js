@@ -76,6 +76,34 @@ async function handleClaimWhitelist(interaction, itemName) {
       });
     }
 
+    // Check if user already has the role, if the role exists, and if the bot can assign it (only for Role Items)
+    if (item.roleId && interaction.guild) {
+      try {
+        const role = interaction.guild.roles.cache.get(item.roleId) || await interaction.guild.roles.fetch(item.roleId).catch(() => null);
+        if (!role) {
+          return sendReply(interaction, {
+            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ The configured role for this item does not exist in this Discord server. Please contact an admin.`)]
+          });
+        }
+
+        const botMember = interaction.guild.members.me || await interaction.guild.members.fetch(interaction.client.user.id).catch(() => null);
+        if (botMember && role.position >= botMember.roles.highest.position) {
+          return sendReply(interaction, {
+            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ The bot cannot assign this role because it is higher than the bot's role. Please contact an admin.`)]
+          });
+        }
+
+        const member = await interaction.guild.members.fetch(interaction.user.id).catch(() => null);
+        if (member && member.roles.cache.has(item.roleId)) {
+          return sendReply(interaction, {
+            embeds: [new EmbedBuilder().setColor(0xFF0000).setDescription(`❌ You already have the **${item.name}** role (<@&${item.roleId}>)! You cannot claim it again.`)]
+          });
+        }
+      } catch (err) {
+        console.error('Error checking existing member roles:', err);
+      }
+    }
+
     // Atomically increment claimedSlots to avoid race conditions
     const updatedItem = await MarketItem.findOneAndUpdate(
       { _id: item._id, claimedSlots: { $lt: item.totalSlots } },
