@@ -1812,18 +1812,16 @@ client.on('interactionCreate', async interaction => {
             const count = Math.min(winnersCount, shuffled.length);
             const winners = shuffled.slice(0, count);
 
-            const embed = new EmbedBuilder()
-              .setColor(0x9B59B6)
-              .setTitle("🎉 Raffle Draw Winners!")
-              .setDescription(
-                `Successfully drew **${winners.length}** winner(s) from **${eligible.length}** eligible participant(s).\n\n` +
-                `📊 **Raffle Details:**\n` +
-                `• Minimum Points Required: \`${minPoints} Points\`\n` +
-                (tweetId ? `• Filtered by Tweet ID: \`${tweetId}\`\n` : '') +
-                `• Linked Twitter Account: \`Required\``
-              )
-              .setTimestamp();
+            let description = 
+              `Successfully drew **${winners.length}** winner(s) from **${eligible.length}** eligible participant(s).\n\n` +
+              `📊 **Raffle Details:**\n` +
+              `• Minimum Points Required: \`${minPoints} Points\`\n` +
+              (tweetId ? `• Filtered by Tweet ID: \`${tweetId}\`\n` : '') +
+              `• Linked Twitter Account: \`Required\`\n\n` +
+              `🏆 **Winners List:**\n` +
+              `--------------------------------------------------\n`;
 
+            const winnerLines = [];
             for (let i = 0; i < winners.length; i++) {
               const w = winners[i];
               const tw = w.twitter.startsWith('@') ? w.twitter : `@${w.twitter}`;
@@ -1834,20 +1832,29 @@ client.on('interactionCreate', async interaction => {
                 const rawLink = userRaid.link || '';
                 const match = rawLink.match(/\[.*?\]\((.*?)\)/s) || rawLink.match(/\((http.*?)\)/s);
                 const cleanLink = match ? match[1].trim() : rawLink.trim();
-                submissionStr = `\n🔗 **Submission Link:** [View Submission](${cleanLink})`;
+                submissionStr = ` • 🔗 [Proof Link](${cleanLink})`;
               }
 
               const winnerUser = await interaction.client.users.fetch(w.discordId).catch(() => null);
-              const userTag = winnerUser ? `${winnerUser.username} (${winnerUser.globalName || winnerUser.username})` : w.username;
+              const displayName = winnerUser ? `${winnerUser.globalName || winnerUser.username}` : w.username;
+              
+              let medal = '⭐';
+              if (i === 0) medal = '🥇';
+              else if (i === 1) medal = '🥈';
+              else if (i === 2) medal = '🥉';
 
-              embed.addFields({
-                name: `🏆 Winner #${i + 1} — ${userTag}`,
-                value: `👤 **Discord Account:** <@${w.discordId}>\n` +
-                       `🐦 **Twitter Handle:** [${tw}](https://x.com/${w.twitter.replace('@','')})\n` +
-                       `💰 **Total Raid Points:** \`${w.points} Points\`${submissionStr}`,
-                inline: false
-              });
+              winnerLines.push(
+                `${medal} **Winner #${i + 1}:** <@${w.discordId}> (${displayName})\n` +
+                `   [🐦 Twitter](https://x.com/${w.twitter.replace('@','')}) • 💰 \`${w.points} pts\`${submissionStr}`
+              );
             }
+            description += winnerLines.join('\n\n');
+
+            const embed = new EmbedBuilder()
+              .setColor(0x9B59B6)
+              .setTitle("🎉 Raffle Draw Winners!")
+              .setDescription(description)
+              .setTimestamp();
 
             if (winners.length === 1) {
               const winnerUser = await interaction.client.users.fetch(winners[0].discordId).catch(() => null);
