@@ -123,8 +123,9 @@ module.exports = {
           description += `📅 **Date Filter:** \`${dateStr}\` (Dhaka Timezone)\n`;
         }
         description += `📊 **Total Matching Raids:** **${totalCount}**\n`;
-        description += `📝 Showing page **${pageIndex + 1}** of **${totalPages}** (newest **${raids.length}** loaded):\n`;
-        description += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+        description += `📝 Showing page **${pageIndex + 1}** of **${totalPages}** (newest **${raids.length}** loaded)\n`;
+        
+        embed.setDescription(description.trim());
 
         pageRaids.forEach((raid, index) => {
           const globalIndex = start + index + 1;
@@ -142,24 +143,31 @@ module.exports = {
             statusText = 'Rejected';
           }
 
+          // Helper to extract clean URL from any link format
+          const rawLink = raid.link || '';
+          const match = rawLink.match(/\[.*?\]\((.*?)\)/s) || rawLink.match(/\((http.*?)\)/s);
+          const cleanLink = match ? match[1].trim() : rawLink.trim();
+          const timestampSecs = Math.floor(new Date(raid.submittedAt).getTime() / 1000);
+
           let actionText = '';
           if (raid.status === 'pending') {
-            actionText = `👍 **Approve:** \`/approveraid raid_id:${raid.raidId}\`\n❌ **Reject:** \`/rejectraid raid_id:${raid.raidId} reason:\``;
+            actionText = `🔹 **Approve:** \`/approveraid raid_id:${raid.raidId}\`\n🔹 **Reject:** \`/rejectraid raid_id:${raid.raidId} reason:\``;
           } else if (raid.status === 'approved') {
-            actionText = `✅ **Approved by:** \`${raid.approvedBy || 'System'}\`\n❌ **Reject & Deduct:** \`/rejectraid raid_id:${raid.raidId} reason:\``;
+            actionText = `🟢 **Approved by:** \`${raid.approvedBy || 'System'}\`\n🔹 **Reject & Deduct:** \`/rejectraid raid_id:${raid.raidId} reason:\``;
           } else if (raid.status === 'rejected') {
-            actionText = `🚫 **Rejected Reason:** \`${raid.rejectedReason || 'No reason specified'}\`\n👍 **Approve & Reward:** \`/approveraid raid_id:${raid.raidId}\``;
+            actionText = `🔴 **Rejected Reason:** \`${raid.rejectedReason || 'No reason specified'}\`\n🔹 **Approve & Reward:** \`/approveraid raid_id:${raid.raidId}\``;
           }
 
-          description += `**#${globalIndex}** — **Raid ID:** \`${raid.raidId}\` | ${statusEmoji} **${statusText}**\n` +
-                         `👤 **User:** <@${raid.userId}> (${raid.username}) | 🐦 **Twitter:** \`${twitterHandle}\`\n` +
-                         `🔗 **Link:** [View Submission](${raid.link})\n` +
-                         `📅 **Submitted:** \`${formattedDate}\` | 💰 \`${raid.points || 1} pts\`\n` +
-                         `${actionText}\n` +
-                         `━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+          embed.addFields({
+            name: `${statusEmoji} #${globalIndex} — Raid ID: ${raid.raidId} [${statusText}]`,
+            value: `👤 **User:** <@${raid.userId}> (${raid.username}) | 🐦 **Twitter:** [${twitterHandle}](https://x.com/${twitterHandle.replace('@', '')})\n` +
+                   `🔗 **Submission:** [View Submission](${cleanLink})\n` +
+                   `📅 **Submitted:** <t:${timestampSecs}:f> (<t:${timestampSecs}:R>) | 💰 \`${raid.points || 1} Points\`\n` +
+                   `🛠️ **Quick Actions:**\n${actionText}`,
+            inline: false
+          });
         });
 
-        embed.setDescription(description.trim());
         return embed;
       };
 

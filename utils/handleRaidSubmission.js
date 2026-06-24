@@ -240,6 +240,17 @@ async function handleRaidSubmission(interaction, link, tweetId) {
     if (tweetDoc.imageUrl) {
       const normOriginal = getTweetIdAndNormalize(tweetDoc.imageUrl);
       if (normOriginal && normOriginal.statusId === tweetInfo.statusId) {
+        try {
+          const logUserActivity = require('./logUserActivity');
+          await logUserActivity(
+            interaction.client,
+            interaction.user,
+            'Raid Link Submission Failed',
+            `❌ **Reason:** User submitted original tweet link instead of proof\n**Submitted Link:** ${finalLinkToSave}`,
+            interaction.channelId
+          );
+        } catch (e) {}
+
         return sendReply(interaction, {
           embeds: [
             new EmbedBuilder()
@@ -253,6 +264,17 @@ async function handleRaidSubmission(interaction, link, tweetId) {
 
     // 7. Verify that the link username matches the user's registered Twitter username
     if (tweetInfo.username.toLowerCase() !== userDoc.twitter.toLowerCase()) {
+      try {
+        const logUserActivity = require('./logUserActivity');
+        await logUserActivity(
+          interaction.client,
+          interaction.user,
+          'Raid Link Submission Failed',
+          `❌ **Reason:** Connected Twitter handle (@${userDoc.twitter}) doesn't match submission link username (@${tweetInfo.username})\n**Submitted Link:** ${finalLinkToSave}`,
+          interaction.channelId
+        );
+      } catch (e) {}
+
       return sendReply(interaction, {
         embeds: [
           new EmbedBuilder()
@@ -266,6 +288,17 @@ async function handleRaidSubmission(interaction, link, tweetId) {
     // 8. Check for duplicate link submission in Raid collection (by anyone)
     const existingRaid = await Raid.findOne({ link: finalLinkToSave });
     if (existingRaid) {
+      try {
+        const logUserActivity = require('./logUserActivity');
+        await logUserActivity(
+          interaction.client,
+          interaction.user,
+          'Raid Link Submission Failed',
+          `❌ **Reason:** Duplicate link submission (already submitted)\n**Submitted Link:** ${finalLinkToSave}`,
+          interaction.channelId
+        );
+      } catch (e) {}
+
       return sendReply(interaction, {
         embeds: [
           new EmbedBuilder()
@@ -292,6 +325,21 @@ async function handleRaidSubmission(interaction, link, tweetId) {
       points: rewardPoints
     });
     await newRaid.save();
+
+    try {
+      const logUserActivity = require('./logUserActivity');
+      await logUserActivity(
+        interaction.client,
+        interaction.user,
+        'Raid Link Submitted',
+        `✅ **Status:** Successfully Auto-Approved\n` +
+        `**Raid ID:** \`${raidId}\`\n` +
+        `**Tweet ID:** \`${canonicalTweetId}\`\n` +
+        `**Submitted Link:** ${finalLinkToSave}\n` +
+        `**Points Earned:** \`+${rewardPoints} Points\``,
+        interaction.channelId
+      );
+    } catch (e) {}
 
     // If user already has more than 5 raids, delete the oldest ones to keep history to max 5
     const userRaids = await Raid.find({ userId: interaction.user.id }).sort({ submittedAt: -1 });

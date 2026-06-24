@@ -161,6 +161,32 @@ client.on('interactionCreate', async interaction => {
   };
 
   if (interaction.isButton()) {
+    // Log user activity for button clicks
+    try {
+      const logUserActivity = require('./utils/logUserActivity');
+      let details = `Button ID: \`${interaction.customId}\``;
+      const label = interaction.component?.label || '';
+      if (label) {
+        details += `\nButton Label: **${label}**`;
+      }
+      
+      if (interaction.customId.startsWith('submit_raid_btn_')) {
+        const tId = interaction.customId.replace('submit_raid_btn_', '');
+        details += `\nAction: Submitting raid proof for Tweet ID \`${tId}\``;
+      } else if (interaction.customId.startsWith('copy_tweet_id_')) {
+        const tId = interaction.customId.replace('copy_tweet_id_', '');
+        details += `\nAction: Copying Tweet ID \`${tId}\``;
+      } else if (interaction.customId.startsWith('panel_')) {
+        details += `\nAction: Interacting with Member Control Panel (\`${interaction.customId.replace('panel_', '')}\`)`;
+      } else if (interaction.customId.startsWith('admin_')) {
+        details += `\nAction: Interacting with Admin Control Panel (\`${interaction.customId.replace('admin_', '')}\`)`;
+      }
+      
+      await logUserActivity(interaction.client, interaction.user, 'Button Clicked', details, interaction.channelId);
+    } catch (logErr) {
+      console.error('Error logging button click activity:', logErr);
+    }
+
     if (interaction.customId.startsWith('copy_tweet_id_')) {
       const tweetId = interaction.customId.replace('copy_tweet_id_', '');
       console.log(`[Button Click] User ${interaction.user.tag} (${interaction.user.id}) clicked Copy Tweet ID button for: ${tweetId}`);
@@ -759,7 +785,11 @@ client.on('interactionCreate', async interaction => {
 
         const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, EmbedBuilder } = require('discord.js');
 
-        if (interaction.customId === 'admin_add_tweet') {
+        if (interaction.customId === 'admin_raidlist') {
+          const command = require('./commands/admin/raidlist');
+          const mocked = mockInteraction(interaction, {});
+          await command.execute(mocked);
+        } else if (interaction.customId === 'admin_add_tweet') {
           const modal = new ModalBuilder()
             .setCustomId('admin_add_tweet_modal')
             .setTitle('Add Tweet for Raid');
