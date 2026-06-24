@@ -1817,19 +1817,44 @@ client.on('interactionCreate', async interaction => {
               .setTitle("🎉 Raffle Draw Winners!")
               .setDescription(
                 `Successfully drew **${winners.length}** winner(s) from **${eligible.length}** eligible participant(s).\n\n` +
-                `**Filters applied:**\n` +
-                `• Minimum Points: \`${minPoints}\`\n` +
-                (tweetId ? `• Tweet ID: \`${tweetId}\`\n` : '') +
-                `• Linked Twitter: \`Required\`\n\n` +
-                `**Winners:**\n` +
-                winners.map((w, index) => {
-                  const tw = w.twitter.startsWith('@') ? w.twitter : `@${w.twitter}`;
-                  const userRaid = tweetId ? raidsForTweet.find(r => r.userId === w.discordId) : null;
-                  const submissionStr = userRaid ? `\n   ↳ Submission: [Proof Link](${userRaid.link})` : '';
-                  return `**${index + 1}.** Discord: ${w.username} (<@${w.discordId}>) | Twitter: [${tw}](https://x.com/${w.twitter.replace('@','')}) (\`${w.points}\` pts)${submissionStr}`;
-                }).join('\n')
+                `📊 **Raffle Details:**\n` +
+                `• Minimum Points Required: \`${minPoints} Points\`\n` +
+                (tweetId ? `• Filtered by Tweet ID: \`${tweetId}\`\n` : '') +
+                `• Linked Twitter Account: \`Required\``
               )
               .setTimestamp();
+
+            for (let i = 0; i < winners.length; i++) {
+              const w = winners[i];
+              const tw = w.twitter.startsWith('@') ? w.twitter : `@${w.twitter}`;
+              const userRaid = tweetId ? raidsForTweet.find(r => r.userId === w.discordId) : null;
+              
+              let submissionStr = '';
+              if (userRaid) {
+                const rawLink = userRaid.link || '';
+                const match = rawLink.match(/\[.*?\]\((.*?)\)/s) || rawLink.match(/\((http.*?)\)/s);
+                const cleanLink = match ? match[1].trim() : rawLink.trim();
+                submissionStr = `\n🔗 **Submission Link:** [View Submission](${cleanLink})`;
+              }
+
+              const winnerUser = await interaction.client.users.fetch(w.discordId).catch(() => null);
+              const userTag = winnerUser ? `${winnerUser.username} (${winnerUser.globalName || winnerUser.username})` : w.username;
+
+              embed.addFields({
+                name: `🏆 Winner #${i + 1} — ${userTag}`,
+                value: `👤 **Discord Account:** <@${w.discordId}>\n` +
+                       `🐦 **Twitter Handle:** [${tw}](https://x.com/${w.twitter.replace('@','')})\n` +
+                       `💰 **Total Raid Points:** \`${w.points} Points\`${submissionStr}`,
+                inline: false
+              });
+            }
+
+            if (winners.length === 1) {
+              const winnerUser = await interaction.client.users.fetch(winners[0].discordId).catch(() => null);
+              if (winnerUser) {
+                embed.setThumbnail(winnerUser.displayAvatarURL({ dynamic: true, size: 256 }));
+              }
+            }
 
             await interaction.editReply({
               embeds: [embed]
