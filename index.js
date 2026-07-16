@@ -2419,6 +2419,7 @@ client.on('interactionCreate', async interaction => {
               `--------------------------------------------------\n`;
 
             const winnerLines = [];
+            const preparedWinners = [];
             for (let i = 0; i < winners.length; i++) {
               const w = winners[i];
               const tw = w.twitter.startsWith('@') ? w.twitter : `@${w.twitter}`;
@@ -2442,9 +2443,15 @@ client.on('interactionCreate', async interaction => {
               else if (i === 2) medal = '🥉';
 
               winnerLines.push(
-                `${medal} **Winner #${i + 1}:** @${username} (<@${w.discordId}>) (${displayName})\n` +
-                `   [🐦 Twitter](https://x.com/${w.twitter.replace('@','')}) • 💰 \`${w.points} pts\`${submissionStr}`
+                `${medal} **Winner #${i + 1}:** @${username} (<@${w.discordId}>) (${displayName}) | Twitter: \`${tw}\`\n` +
+                `   [🐦 Twitter Account](https://x.com/${w.twitter.replace('@','')}) • 💰 \`${w.points} pts\`${submissionStr}`
               );
+
+              preparedWinners.push({
+                discordName: `@${username}`,
+                twitterName: tw,
+                points: w.points
+              });
             }
             description += winnerLines.join('\n\n');
 
@@ -2461,9 +2468,24 @@ client.on('interactionCreate', async interaction => {
               }
             }
 
-            await interaction.editReply({
-              embeds: [embed]
-            });
+            // Generate slip image buffer using helper
+            let attachment = null;
+            try {
+              const { generateRaffleSlip } = require('./utils/generateRaffleSlip');
+              const imageBuffer = await generateRaffleSlip(preparedWinners, tweetId);
+              const { AttachmentBuilder } = require('discord.js');
+              attachment = new AttachmentBuilder(imageBuffer, { name: 'raffle-slip.png' });
+              embed.setImage('attachment://raffle-slip.png');
+            } catch (imageError) {
+              console.error('Error generating raffle slip image:', imageError);
+            }
+
+            const replyOptions = { embeds: [embed] };
+            if (attachment) {
+              replyOptions.files = [attachment];
+            }
+
+            await interaction.editReply(replyOptions);
 
 
 
