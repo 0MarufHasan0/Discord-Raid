@@ -53,7 +53,7 @@ async function generateRaffleSlip(winners, tweetId) {
     font: fontBody,
     x: 30,
     y: 75,
-    text: `Date: ${new Date().toLocaleDateString()} | Filter: ${tweetId ? tweetId.slice(0, 12) + '...' : 'None'}`
+    text: `Date: ${new Date().toLocaleDateString()} | Raid ID: ${tweetId ? tweetId.slice(0, 12) + '...' : 'None'}`
   });
 
   // Draw separator line
@@ -69,7 +69,7 @@ async function generateRaffleSlip(winners, tweetId) {
       font: fontBody,
       x: 40,
       y: y,
-      text: `Rank #${i + 1} - ${w.points} Points`
+      text: `Winner #${i + 1} - ${w.points} Points`
     });
     y += 22;
 
