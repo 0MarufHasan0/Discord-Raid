@@ -1644,7 +1644,7 @@ client.on('interactionCreate', async interaction => {
             }
 
             const embeds = [];
-            const chunkSize = 10;
+            const chunkSize = 15;
 
             for (let i = 0; i < expirations.length; i += chunkSize) {
               const chunk = expirations.slice(i, i + chunkSize);
@@ -1670,12 +1670,14 @@ client.on('interactionCreate', async interaction => {
               embeds.push(embed);
             }
 
-            await interaction.editReply({ embeds: embeds.slice(0, 10) });
+            // Send the first embed as the editReply
+            await interaction.editReply({ embeds: [embeds[0]] });
 
-            if (embeds.length > 10) {
-              for (let j = 10; j < embeds.length; j += 10) {
+            // Send any remaining embeds as separate followUp messages
+            if (embeds.length > 1) {
+              for (let j = 1; j < embeds.length; j++) {
                 await interaction.followUp({
-                  embeds: embeds.slice(j, j + 10),
+                  embeds: [embeds[j]],
                   flags: MessageFlags.Ephemeral
                 });
               }
