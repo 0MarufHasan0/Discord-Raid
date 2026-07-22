@@ -97,7 +97,9 @@ export async function POST(req) {
     // 8. Trigger Discord bot sync actions
     if (item.roleId) {
       // Role claim
-      const expiresAt = new Date(Date.now() + (item.claimDurationMs || (item.claimDurationDays || 30) * 24 * 60 * 60 * 1000));
+      const now = new Date();
+      const expiresAt = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0, 0);
+
       
       await UserRoleExpiration.findOneAndUpdate(
         { userId: user.discordId, guildId: process.env.DISCORD_GUILD_ID, roleId: item.roleId },
