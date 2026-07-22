@@ -45,8 +45,8 @@ export async function POST(req) {
     // 4. Delete all user role expirations
     const expirationsDelete = await UserRoleExpiration.deleteMany({});
 
-    // Reset claimedSlots back to 0 for all marketplace items
-    const marketReset = await MarketItem.updateMany({}, { $set: { claimedSlots: 0 } });
+    // Delete all marketplace items so the shop starts completely empty
+    const marketDelete = await MarketItem.deleteMany({});
 
     // 5. Trigger bot sync
     try {
@@ -64,7 +64,7 @@ export async function POST(req) {
         deletedTweets: tweetsDelete.deletedCount,
         resetUsers: usersReset.modifiedCount,
         deletedExpirations: expirationsDelete.deletedCount,
-        resetMarketplaceItems: marketReset.modifiedCount
+        deletedMarketplaceItems: marketDelete.deletedCount
       }
     });
 

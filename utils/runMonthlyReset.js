@@ -43,10 +43,10 @@ async function runMonthlyReset(client) {
     await UserRoleExpiration.deleteMany({});
     console.log('[Monthly Reset] Cleared all UserRoleExpiration records.');
 
-    // Reset claimedSlots back to 0 for all marketplace items
+    // Delete all marketplace items so the shop starts completely empty
     const MarketItem = require('../database/models/MarketItem');
-    await MarketItem.updateMany({}, { $set: { claimedSlots: 0 } });
-    console.log('[Monthly Reset] Reset claimed slots for all marketplace items.');
+    await MarketItem.deleteMany({});
+    console.log('[Monthly Reset] Cleared all marketplace items (empty shop).');
 
 
     // 3. Delete all records from Raid
