@@ -1655,10 +1655,10 @@ client.on('interactionCreate', async interaction => {
                 const createdUnix = Math.floor((record.createdAt || new Date()).getTime() / 1000);
                 const expiresUnix = Math.floor(record.expiresAt.getTime() / 1000);
                 
-                description += `**${globalIndex}.** User: <@${record.userId}> (\`${record.userId}\`)\n` +
-                               `   🔑 Item: **${record.itemName}** | Role: <@&${record.roleId}>\n` +
-                               `   📅 Purchased: <t:${createdUnix}:F>\n` +
-                               `   ⏰ Expires: <t:${expiresUnix}:F> (<t:${expiresUnix}:R>)\n\n`;
+                description += `**[${globalIndex}]** 👤 **User:** <@${record.userId}> (\`${record.userId}\`)\n` +
+                               `   ├ 📦 **Item:** \`${record.itemName}\` | 🎭 **Role:** <@&${record.roleId}>\n` +
+                               `   ├ 📥 **Bought:** <t:${createdUnix}:f>\n` +
+                               `   └ ⏳ **Expires:** <t:${expiresUnix}:f> (<t:${expiresUnix}:R>)\n\n`;
               });
 
               const embed = new EmbedBuilder()
