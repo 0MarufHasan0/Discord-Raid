@@ -922,8 +922,8 @@ client.on('interactionCreate', async interaction => {
 
           const durationsInput = new TextInputBuilder()
             .setCustomId('durations')
-            .setLabel('Durations (Role / Market)')
-            .setPlaceholder('e.g. Role: 30d | Market: 7d')
+            .setLabel('Market Duration (e.g. 7d)')
+            .setPlaceholder('e.g. 7d (leave blank for no shop expiration)')
             .setStyle(TextInputStyle.Short)
             .setRequired(false);
 
@@ -2253,18 +2253,31 @@ client.on('interactionCreate', async interaction => {
           let marketDurationMs = null;
 
           if (durationsInput) {
-            const parts = durationsInput.split('|');
-            for (const part of parts) {
-              const cleanPart = part.trim().toLowerCase();
-              if (cleanPart.startsWith('role:')) {
-                const val = cleanPart.replace('role:', '').trim();
-                claimDurationMs = parseDurationStringToMs(val) || claimDurationMs;
-              } else if (cleanPart.startsWith('market:')) {
-                const val = cleanPart.replace('market:', '').trim();
+            const cleanInput = durationsInput.toLowerCase();
+            if (cleanInput.includes('|')) {
+              // Handle old format: e.g. Role: 30d | Market: 7d
+              const parts = cleanInput.split('|');
+              for (const part of parts) {
+                const cleanPart = part.trim();
+                if (cleanPart.startsWith('role:')) {
+                  const val = cleanPart.replace('role:', '').trim();
+                  claimDurationMs = parseDurationStringToMs(val) || claimDurationMs;
+                } else if (cleanPart.startsWith('market:')) {
+                  const val = cleanPart.replace('market:', '').trim();
+                  marketDurationMs = parseDurationStringToMs(val);
+                }
+              }
+            } else {
+              // Handle new format: just direct market duration (e.g. 7d)
+              if (cleanInput.startsWith('market:')) {
+                const val = cleanInput.replace('market:', '').trim();
                 marketDurationMs = parseDurationStringToMs(val);
+              } else if (cleanInput.startsWith('role:')) {
+                const val = cleanInput.replace('role:', '').trim();
+                claimDurationMs = parseDurationStringToMs(val) || claimDurationMs;
               } else {
-                const parsed = parseDurationStringToMs(cleanPart);
-                if (parsed) claimDurationMs = parsed;
+                // If it is just a plain duration (e.g. 7d), it is the Market Duration
+                marketDurationMs = parseDurationStringToMs(cleanInput);
               }
             }
           }
