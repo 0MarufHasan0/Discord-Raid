@@ -140,7 +140,8 @@ async function handleClaimWhitelist(interaction, itemName) {
 
           // Save expiration to database
           const UserRoleExpiration = require('../database/models/UserRoleExpiration');
-          const expiresAt = new Date(Date.now() + (item.claimDurationMs || (item.claimDurationDays || 30) * 24 * 60 * 60 * 1000));
+          const now = new Date();
+          const expiresAt = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0, 0);
           
           await UserRoleExpiration.findOneAndUpdate(
             { userId: interaction.user.id, guildId: guild.id, roleId: item.roleId },
