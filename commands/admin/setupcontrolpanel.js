@@ -111,6 +111,7 @@ module.exports = {
             "❌ **Reject Raid** — Manually reject a raid submission\n" +
             "🗑️ **Delete Announcement** — Delete a raid announcement and its records\n" +
             "🎭 **Edit User WL** — Modify or remove a member's whitelist validity\n" +
+            "🔑 **WL Purchases** — View active whitelist purchases & expiration dates\n" +
             "🔄 **Update Leaderboard** — Force update the leaderboard embed\n" +
             "🗑️ **Delete All Data** — Reset database, clear all point and raid records"
           )
@@ -205,6 +206,11 @@ module.exports = {
               .setCustomId('admin_raffle_raider')
               .setLabel('Raffle Raider')
               .setEmoji('🏆')
+              .setStyle(ButtonStyle.Primary),
+            new ButtonBuilder()
+              .setCustomId('admin_view_active_wl')
+              .setLabel('WL Purchases')
+              .setEmoji('🔑')
               .setStyle(ButtonStyle.Primary),
             new ButtonBuilder()
               .setCustomId('admin_update_leaderboard')

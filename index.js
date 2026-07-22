@@ -1626,6 +1626,67 @@ client.on('interactionCreate', async interaction => {
           );
 
           await interaction.showModal(modal);
+        } else if (interaction.customId === 'admin_view_active_wl') {
+          await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+          try {
+            const UserRoleExpiration = require('./database/models/UserRoleExpiration');
+            const expirations = await UserRoleExpiration.find({}).sort({ expiresAt: 1 });
+
+            if (!expirations || expirations.length === 0) {
+              return await interaction.editReply({
+                embeds: [
+                  new EmbedBuilder()
+                    .setColor(0x3498DB)
+                    .setDescription("ℹ️ No active whitelist role purchases found in the database.")
+                ]
+              });
+            }
+
+            const embeds = [];
+            const chunkSize = 10;
+
+            for (let i = 0; i < expirations.length; i += chunkSize) {
+              const chunk = expirations.slice(i, i + chunkSize);
+              let description = "";
+
+              chunk.forEach((record, index) => {
+                const globalIndex = i + index + 1;
+                const createdUnix = Math.floor((record.createdAt || new Date()).getTime() / 1000);
+                const expiresUnix = Math.floor(record.expiresAt.getTime() / 1000);
+                
+                description += `**${globalIndex}.** User: <@${record.userId}> (\`${record.userId}\`)\n` +
+                               `   🔑 Item: **${record.itemName}** | Role: <@&${record.roleId}>\n` +
+                               `   📅 Purchased: <t:${createdUnix}:F>\n` +
+                               `   ⏰ Expires: <t:${expiresUnix}:F> (<t:${expiresUnix}:R>)\n\n`;
+              });
+
+              const embed = new EmbedBuilder()
+                .setColor(0xE91E63)
+                .setTitle(`🔑 Active Whitelist Purchases (${i + 1} - ${Math.min(i + chunkSize, expirations.length)} of ${expirations.length})`)
+                .setDescription(description)
+                .setTimestamp();
+
+              embeds.push(embed);
+            }
+
+            await interaction.editReply({ embeds: embeds.slice(0, 10) });
+
+            if (embeds.length > 10) {
+              for (let j = 10; j < embeds.length; j += 10) {
+                await interaction.followUp({
+                  embeds: embeds.slice(j, j + 10),
+                  flags: MessageFlags.Ephemeral
+                });
+              }
+            }
+
+          } catch (error) {
+            console.error('Error fetching active whitelists:', error);
+            await interaction.editReply({
+              content: '❌ An error occurred while retrieving active whitelist purchases.'
+            });
+          }
         } else if (interaction.customId === 'admin_update_leaderboard') {
           const updateLeaderboard = require('./utils/updateLeaderboard');
           updateLeaderboard(interaction.client);
