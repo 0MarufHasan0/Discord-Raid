@@ -2607,6 +2607,10 @@ client.on('interactionCreate', async interaction => {
             // Delete all expirations
             const expirationsDelete = await UserRoleExpiration.deleteMany({});
 
+            // Reset claimedSlots back to 0 for all marketplace items
+            const MarketItem = require('./database/models/MarketItem');
+            const marketReset = await MarketItem.updateMany({}, { $set: { claimedSlots: 0 } });
+
             // Update leaderboard
             updateLeaderboard(interaction.client);
 
@@ -2620,7 +2624,8 @@ client.on('interactionCreate', async interaction => {
                     `• **Deleted Raids:** \`${raidsDelete.deletedCount}\`\n` +
                     `• **Deleted Tweets:** \`${tweetsDelete.deletedCount}\`\n` +
                     `• **Reset Users:** \`${usersReset.modifiedCount}\`\n` +
-                    `• **Deleted Expirations:** \`${expirationsDelete.deletedCount}\``
+                    `• **Deleted Expirations:** \`${expirationsDelete.deletedCount}\`\n` +
+                    `• **Reset Marketplace Items:** \`${marketReset.modifiedCount}\``
                   )
                   .setTimestamp()
               ]
