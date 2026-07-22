@@ -51,92 +51,69 @@ async function updateMarketplace(client) {
     const roleItems = items.filter(item => typeof item.roleId === 'string' && item.roleId.trim() !== '');
     const whitelistItems = items.filter(item => !(typeof item.roleId === 'string' && item.roleId.trim() !== ''));
 
-    const { AttachmentBuilder } = require('discord.js');
-    const fs = require('fs');
-    const embeds = [];
-    const files = [];
+    const embed = new EmbedBuilder()
+      .setTitle("🏪 Live Whitelist Marketplace")
+      .setColor(0x5865F2) // Discord Blurple
+      .setTimestamp();
 
     if (items.length === 0) {
-      const emptyEmbed = new EmbedBuilder()
-        .setTitle("🏪 Live Whitelist Marketplace")
-        .setColor(0x5865F2)
-        .setDescription("🏪 **There are currently no Whitelist Roles/Items in the Marketplace.**\nWhen a new item is added, it will automatically be updated here.")
-        .setTimestamp();
-      embeds.push(emptyEmbed);
+      embed.setDescription("🏪 **There are currently no Whitelist Roles/Items in the Marketplace.**\nWhen a new item is added, it will automatically be updated here.");
     } else {
+      let desc = "Select an item using the **Claim Whitelist** or **Claim Role** button below to exchange your points.\n\n";
+      
       if (roleItems.length > 0) {
-        let roleDesc = "Select a role item using the **Claim Role** button below to exchange your points.\n\n";
-        
+        desc += `👑 ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ 👑\n`;
+        desc += `🎭 **ROLE MARKETPLACE (Auto-Removed on 1st)**\n`;
+        desc += `*All purchased roles will be automatically removed from your profile on the 1st of every month.*\n`;
+        desc += `👑 ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ 👑\n\n`;
+
         roleItems.forEach(item => {
           const availableSlots = Math.max(0, item.totalSlots - item.claimedSlots);
           const slotsText = availableSlots > 0 ? `\`${availableSlots}\` left` : `**SOLD OUT**`;
           
-          roleDesc += `**🏷️ ${item.name}**\n`;
-          roleDesc += `• **Description:** ${item.description}\n`;
-          roleDesc += `• **Cost:** \`${item.pointCost}\` points\n`;
-          roleDesc += `• **Slots:** ${item.claimedSlots}/${item.totalSlots} (${slotsText})\n`;
-          roleDesc += `• **Role Reward:** <@&${item.roleId}>\n`;
-          roleDesc += `• **Role Duration:** \`Every month 1st date role reset hobe\`\n`;
+          desc += `**🏷️ ${item.name}**\n`;
+          desc += `• **Description:** ${item.description}\n`;
+          desc += `• **Cost:** \`${item.pointCost}\` points\n`;
+          desc += `• **Slots:** ${item.claimedSlots}/${item.totalSlots} (${slotsText})\n`;
+          desc += `• **Role Reward:** <@&${item.roleId}>\n`;
+          desc += `• **Role Duration:** \`Every month 1st date role reset hobe\`\n`;
           
           if (item.expiresAt) {
             const unixTimestamp = Math.floor(item.expiresAt.getTime() / 1000);
-            roleDesc += `• **Market Expiry:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)\n`;
+            desc += `• **Market Expiry:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)\n`;
           }
-          roleDesc += `───────────────────────────────\n\n`;
+          desc += `───────────────────────────────\n\n`;
         });
-
-        const roleEmbed = new EmbedBuilder()
-          .setTitle("🎭 Role Marketplace (Auto-Removed on 1st)")
-          .setColor(0x9B59B6)
-          .setDescription(roleDesc)
-          .setImage('attachment://role_card.png');
-
-        if (fs.existsSync('./assets/role_marketplace_card.png')) {
-          files.push(new AttachmentBuilder('./assets/role_marketplace_card.png', { name: 'role_card.png' }));
-        }
-
-        embeds.push(roleEmbed);
       }
 
       if (whitelistItems.length > 0) {
-        let wlDesc = "Select a whitelist item using the **Claim Whitelist** button below to exchange your points.\n\n";
-        
+        desc += `🎟️ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ 🎟️\n`;
+        desc += `🔑 **WHITELIST & TICKETS MARKETPLACE**\n`;
+        desc += `*Claim codes or private channels using your points.*\n`;
+        desc += `🎟️ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ 🎟️\n\n`;
+
         whitelistItems.forEach(item => {
           const availableSlots = Math.max(0, item.totalSlots - item.claimedSlots);
           const slotsText = availableSlots > 0 ? `\`${availableSlots}\` left` : `**SOLD OUT**`;
           
-          wlDesc += `**🏷️ ${item.name}**\n`;
-          wlDesc += `• **Description:** ${item.description}\n`;
-          wlDesc += `• **Cost:** \`${item.pointCost}\` points\n`;
-          wlDesc += `• **Slots:** ${item.claimedSlots}/${item.totalSlots} (${slotsText})\n`;
-          wlDesc += `• **Type:** Whitelist Ticket (Opens private channel)\n`;
+          desc += `**🏷️ ${item.name}**\n`;
+          desc += `• **Description:** ${item.description}\n`;
+          desc += `• **Cost:** \`${item.pointCost}\` points\n`;
+          desc += `• **Slots:** ${item.claimedSlots}/${item.totalSlots} (${slotsText})\n`;
+          desc += `• **Type:** Whitelist Ticket (Opens private channel)\n`;
           
           if (item.expiresAt) {
             const unixTimestamp = Math.floor(item.expiresAt.getTime() / 1000);
-            wlDesc += `• **Market Expiry:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)\n`;
+            desc += `• **Market Expiry:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)\n`;
           }
-          wlDesc += `───────────────────────────────\n\n`;
+          desc += `───────────────────────────────\n\n`;
         });
-
-        const wlEmbed = new EmbedBuilder()
-          .setTitle("🔑 Whitelist & Tickets Marketplace")
-          .setColor(0xF1C40F)
-          .setDescription(wlDesc)
-          .setImage('attachment://wl_card.png');
-
-        if (fs.existsSync('./assets/whitelist_marketplace_card.png')) {
-          files.push(new AttachmentBuilder('./assets/whitelist_marketplace_card.png', { name: 'wl_card.png' }));
-        }
-
-        embeds.push(wlEmbed);
       }
-
-      if (embeds.length > 0) {
-        embeds[embeds.length - 1]
-          .setTimestamp()
-          .setFooter({ text: "🔴 Live updates enabled • Click 'Claim Whitelist' or 'Claim Role' below to purchase" });
-      }
+      
+      embed.setDescription(desc);
     }
+
+    embed.setFooter({ text: "🔴 Live updates enabled • Click 'Claim Whitelist' or 'Claim Role' below to purchase" });
 
     // Build the components row
     const components = [];
@@ -170,7 +147,7 @@ async function updateMarketplace(client) {
         }
         // Fallback: try to send a new message
         try {
-          await channel.send({ content: "<@&1478383117776715970>", embeds: embeds, files: files, components: components });
+          await channel.send({ content: "<@&1478383117776715970>", embeds: [embed], files: [], components: components });
         } catch (sendErr) {
           console.error(`❌ Fallback send failed in channel (${channel.id}):`, sendErr.message);
         }
@@ -189,11 +166,10 @@ async function updateMarketplace(client) {
 
       try {
         if (botMessage) {
-          // Clear previous attachments by editing with new files array
-          await botMessage.edit({ content: "<@&1478383117776715970>", embeds: embeds, files: files, components: components });
+          await botMessage.edit({ content: "<@&1478383117776715970>", embeds: [embed], files: [], components: components });
           console.log(`✅ Live Marketplace message updated in #${channel.name} (${channel.id})`);
         } else {
-          await channel.send({ content: "<@&1478383117776715970>", embeds: embeds, files: files, components: components });
+          await channel.send({ content: "<@&1478383117776715970>", embeds: [embed], files: [], components: components });
           console.log(`✅ New Live Marketplace message sent in #${channel.name} (${channel.id})`);
         }
       } catch (sendOrEditError) {
