@@ -2506,8 +2506,8 @@ client.on('interactionCreate', async interaction => {
               else if (i === 2) medal = '🥉';
 
               winnerLines.push(
-                `${medal} **Winner #${i + 1}:** @${username} (<@${w.discordId}>) (${displayName}) | Twitter: \`${tw}\`\n` +
-                `   [🐦 Twitter Account](https://x.com/${w.twitter.replace('@','')}) • 💰 \`${w.points} pts\`${submissionStr}`
+                `${medal} **Winner #${i + 1}:** <@${w.discordId}> (@${username})\n` +
+                `   🐦 Twitter: [${tw}](https://x.com/${w.twitter.replace('@','')}) • 💰 Points: \`${w.points} pts\`${submissionStr}`
               );
 
               preparedWinners.push({
