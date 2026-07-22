@@ -257,7 +257,8 @@ async function handleClaimWhitelist(interaction, itemName) {
     if (item.roleId) {
       // Role Item response
       if (roleAdded) {
-        const expiresAt = new Date(Date.now() + (item.claimDurationMs || (item.claimDurationDays || 30) * 24 * 60 * 60 * 1000));
+        const now = new Date();
+        const expiresAt = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0, 0);
         const unixTimestamp = Math.floor(expiresAt.getTime() / 1000);
         const text = `\n🎭 **Role Assigned:** <@&${item.roleId}>\n⏳ **Role Expiry:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)`;
         receiptDescription = `Congratulations! You have successfully claimed a role item from the server marketplace.\n\n🏷️ **Item Name:** **${item.name}**\n💰 **Cost:** \`${item.pointCost}\` points\n💳 **Remaining Points:** \`${userDoc.points}\` points${text}`;
