@@ -48,14 +48,8 @@ async function updateMarketplace(client) {
       ]
     }).sort({ createdAt: 1 });
 
-    // Sort items: roles on top, whitelists below
-    items.sort((a, b) => {
-      const aIsRole = typeof a.roleId === 'string' && a.roleId.trim() !== '';
-      const bIsRole = typeof b.roleId === 'string' && b.roleId.trim() !== '';
-      if (aIsRole && !bIsRole) return -1;
-      if (!aIsRole && bIsRole) return 1;
-      return 0; // maintain relative creation-based order
-    });
+    const roleItems = items.filter(item => typeof item.roleId === 'string' && item.roleId.trim() !== '');
+    const whitelistItems = items.filter(item => !(typeof item.roleId === 'string' && item.roleId.trim() !== ''));
 
     const embed = new EmbedBuilder()
       .setTitle("🏪 Live Whitelist Marketplace")
@@ -65,44 +59,56 @@ async function updateMarketplace(client) {
     if (items.length === 0) {
       embed.setDescription("🏪 **There are currently no Whitelist Roles/Items in the Marketplace.**\nWhen a new item is added, it will automatically be updated here.");
     } else {
-      let desc = "Select an item using the **Claim Whitelist** button below to exchange your points.\n\n";
+      let desc = "Select an item using the **Claim Whitelist** or **Claim Role** button below to exchange your points.\n\n";
       
-      items.forEach(item => {
-        const availableSlots = Math.max(0, item.totalSlots - item.claimedSlots);
-        const slotsText = availableSlots > 0 ? `\`${availableSlots}\` left` : `**SOLD OUT**`;
-        
-        desc += `**🏷️ ${item.name}**\n`;
-        desc += `• **Description:** ${item.description}\n`;
-        desc += `• **Cost:** \`${item.pointCost}\` points\n`;
-        desc += `• **Slots:** ${item.claimedSlots}/${item.totalSlots} (${slotsText})\n`;
-        
-        if (item.roleId) {
+      if (roleItems.length > 0) {
+        desc += `👑 ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ 👑\n`;
+        desc += `🎭 **ROLE MARKETPLACE (Auto-Removed on 1st)**\n`;
+        desc += `*All purchased roles will be automatically removed from your profile on the 1st of every month.*\n`;
+        desc += `👑 ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ 👑\n\n`;
+
+        roleItems.forEach(item => {
+          const availableSlots = Math.max(0, item.totalSlots - item.claimedSlots);
+          const slotsText = availableSlots > 0 ? `\`${availableSlots}\` left` : `**SOLD OUT**`;
+          
+          desc += `**🏷️ ${item.name}**\n`;
+          desc += `• **Description:** ${item.description}\n`;
+          desc += `• **Cost:** \`${item.pointCost}\` points\n`;
+          desc += `• **Slots:** ${item.claimedSlots}/${item.totalSlots} (${slotsText})\n`;
           desc += `• **Role Reward:** <@&${item.roleId}>\n`;
-          let durationStr = '30 days';
-          if (item.claimDurationMs) {
-            const totalMinutes = Math.floor(item.claimDurationMs / (60 * 1000));
-            const d = Math.floor(totalMinutes / (24 * 60));
-            const h = Math.floor((totalMinutes % (24 * 60)) / 60);
-            const m = totalMinutes % 60;
-            let parts = [];
-            if (d > 0) parts.push(`${d} days`);
-            if (h > 0) parts.push(`${h} hours`);
-            if (m > 0) parts.push(`${m} minutes`);
-            if (parts.length > 0) durationStr = parts.join(' ');
-          } else if (item.claimDurationDays) {
-            durationStr = `${item.claimDurationDays} days`;
+          desc += `• **Role Duration:** \`Every month 1st date role reset hobe\`\n`;
+          
+          if (item.expiresAt) {
+            const unixTimestamp = Math.floor(item.expiresAt.getTime() / 1000);
+            desc += `• **Market Expiry:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)\n`;
           }
-          desc += `• **Role Duration:** \`${durationStr}\`\n`;
-        } else {
+          desc += `───────────────────────────────\n\n`;
+        });
+      }
+
+      if (whitelistItems.length > 0) {
+        desc += `🎟️ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ 🎟️\n`;
+        desc += `🔑 **WHITELIST & TICKETS MARKETPLACE**\n`;
+        desc += `*Claim codes or private channels using your points.*\n`;
+        desc += `🎟️ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ 🎟️\n\n`;
+
+        whitelistItems.forEach(item => {
+          const availableSlots = Math.max(0, item.totalSlots - item.claimedSlots);
+          const slotsText = availableSlots > 0 ? `\`${availableSlots}\` left` : `**SOLD OUT**`;
+          
+          desc += `**🏷️ ${item.name}**\n`;
+          desc += `• **Description:** ${item.description}\n`;
+          desc += `• **Cost:** \`${item.pointCost}\` points\n`;
+          desc += `• **Slots:** ${item.claimedSlots}/${item.totalSlots} (${slotsText})\n`;
           desc += `• **Type:** Whitelist Ticket (Opens private channel)\n`;
-        }
-        
-        if (item.expiresAt) {
-          const unixTimestamp = Math.floor(item.expiresAt.getTime() / 1000);
-          desc += `• **Market Expiry:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)\n`;
-        }
-        desc += `───────────────────────────────\n\n`;
-      });
+          
+          if (item.expiresAt) {
+            const unixTimestamp = Math.floor(item.expiresAt.getTime() / 1000);
+            desc += `• **Market Expiry:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)\n`;
+          }
+          desc += `───────────────────────────────\n\n`;
+        });
+      }
       
       embed.setDescription(desc);
     }
