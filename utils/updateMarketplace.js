@@ -74,7 +74,7 @@ async function updateMarketplace(client) {
           desc += `• **Cost:** \`${item.pointCost}\` points\n`;
           desc += `• **Slots:** ${item.claimedSlots}/${item.totalSlots} (${slotsText})\n`;
           desc += `• **Role Reward:** <@&${item.roleId}>\n`;
-          desc += `• **Role Duration:** \`Every month 1st date role reset hobe\`\n`;
+          desc += `• **Role Duration:** \`Every month role reset\`\n`;
           
           if (item.expiresAt) {
             const unixTimestamp = Math.floor(item.expiresAt.getTime() / 1000);
