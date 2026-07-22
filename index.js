@@ -2658,9 +2658,38 @@ client.once('ready', async () => {
     console.error('Error running updateActiveRaidButtons on startup:', err);
   }
   
-  // Periodically check for expired whitelist roles (every 1 minute)
+  // Periodically check for expired whitelist roles and monthly reset (every 1 minute)
+  const checkMonthlyReset = async () => {
+    try {
+      const now = new Date();
+      if (now.getDate() === 1) {
+        const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        const SystemState = require('./database/models/SystemState');
+        const state = await SystemState.findOne({ key: 'last_monthly_reset_month' });
+        
+        if (!state || state.value !== monthKey) {
+          const runMonthlyReset = require('./utils/runMonthlyReset');
+          await runMonthlyReset(client);
+          
+          await SystemState.findOneAndUpdate(
+            { key: 'last_monthly_reset_month' },
+            { value: monthKey },
+            { upsert: true, new: true }
+          );
+        }
+      }
+    } catch (err) {
+      console.error('Error running checkMonthlyReset:', err);
+    }
+  };
+
   await checkExpiredRoles(client);
-  setInterval(() => checkExpiredRoles(client), 60 * 1000);
+  await checkMonthlyReset();
+
+  setInterval(async () => {
+    await checkExpiredRoles(client);
+    await checkMonthlyReset();
+  }, 60 * 1000);
 });
 
 // Keep-alive HTTP Server for 24/7 Hosting (Render/Koyeb) & Dashboard Sync API
