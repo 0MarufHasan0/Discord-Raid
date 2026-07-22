@@ -69,7 +69,7 @@ npm start
 
 ### Admin Commands (Requires Admin Role)
 * `/addtweet <content> [tweet_link] [duration_days] [duration_hours] [duration_minutes] [points]` - Post a premium Twitter announcement to all configured `TWEET_CHANNEL_ID`s with "Like", "Retweet" link buttons, "Copy Tweet ID" button, and "Submit Raid" (crossed swords emoji ⚔️) button. Supported durations specify how long the raid remains active, and points specifies the reward (default: 1).
-* `/addwlitem <name> <description> <point_cost> <total_slots> [role] [create_role_name] [claim_duration_days] [claim_duration_hours] [claim_duration_minutes] [duration_days] [duration_hours] [duration_minutes]` - Add a new item/whitelist role to the marketplace. You can link an existing Discord role or specify `create_role_name` to automatically create a new role. `claim_duration_days`/`hours`/`minutes` sets how long the role remains active for members (default: 30 days). `duration_days`/`hours`/`minutes` sets how long the item remains active in the market.
+* `/addwlitem <name> <description> <point_cost> <total_slots> [role] [create_role_name] [claim_duration_days] [claim_duration_hours] [claim_duration_minutes] [duration_days] [duration_hours] [duration_minutes]` - Add a new item/whitelist role to the marketplace. You can link an existing Discord role or specify `create_role_name` to automatically create a new role. Note: For role items, their expiration is automatically set to the 1st of the next calendar month (matching the monthly server reset), so custom claim durations are ignored for roles. `duration_days`/`hours`/`minutes` sets how long the item remains active in the marketplace shop.
 * `/removewlitem <name> [delete_role]` - Deactivate a marketplace item. Setting `delete_role` to `True` will also delete the associated Discord role from the server.
 * `/botroles list` - List all existing Discord roles automatically created by the bot.
 * `/botroles delete <role>` - Delete a bot-created role from the server, clear its tracking, and deactivate any linked marketplace items.
@@ -125,7 +125,19 @@ The bot manages a live marketplace where users can exchange points for Whitelist
    * Generates **Reopen Ticket** (🔓) and **Delete Ticket** (⛔) buttons.
    * Reopening restores writing permission; deleting triggers a 5-second countdown and deletes the channel.
 
+### 3. Monthly Reset & Role Expirations Flow
+The system supports a full-wipe calendar-month server reset structure:
+1. **End-of-Month Expirations**: When a member claims a role item (either via Discord or the Web Dashboard), its expiration date is automatically hardcoded to the 1st day of the next calendar month at 00:00:00 (ignoring custom role duration parameters).
+2. **Automated Monthly Reset**: A cron task runs on the 1st of every month to:
+   * Fetch all active server role purchases from the database (`userroleexpirations` collection) and automatically strip the roles from their respective members on Discord.
+   * Send a Direct Message (DM) to each user notifying them that their whitelist role has been reset.
+   * Wipe all records from the `userroleexpirations` collection.
+   * Clear all Twitter/X raid submission logs from the database (`raids` collection) to start clean.
+   * Reset all users' points, submissions count, and approvals count back to `0`.
+   * Update and redraw the server's live Leaderboard embed.
+
 ---
+
 
 ## Next.js Web Dashboard
 
