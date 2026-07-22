@@ -62,10 +62,8 @@ async function updateMarketplace(client) {
       let desc = "Select an item using the **Claim Whitelist** or **Claim Role** button below to exchange your points.\n\n";
       
       if (roleItems.length > 0) {
-        desc += `👑 ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ 👑\n`;
         desc += `🎭 **ROLE MARKETPLACE (Auto-Removed on 1st)**\n`;
-        desc += `*All purchased roles will be automatically removed from your profile on the 1st of every month.*\n`;
-        desc += `👑 ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ 👑\n\n`;
+        desc += `*All purchased roles will be automatically removed from your profile on the 1st of every month.*\n\n`;
 
         roleItems.forEach(item => {
           const availableSlots = Math.max(0, item.totalSlots - item.claimedSlots);
@@ -82,15 +80,13 @@ async function updateMarketplace(client) {
             const unixTimestamp = Math.floor(item.expiresAt.getTime() / 1000);
             desc += `• **Market Expiry:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)\n`;
           }
-          desc += `───────────────────────────────\n\n`;
+          desc += `\n`;
         });
       }
 
       if (whitelistItems.length > 0) {
-        desc += `🎟️ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ 🎟️\n`;
-        desc += `🔑 **WHITELIST & TICKETS MARKETPLACE**\n`;
-        desc += `*Claim codes or private channels using your points.*\n`;
-        desc += `🎟️ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ 🎟️\n\n`;
+        desc += `🎟️ **WHITELIST & TICKETS MARKETPLACE**\n`;
+        desc += `*Claim codes or private channels using your points.*\n\n`;
 
         whitelistItems.forEach(item => {
           const availableSlots = Math.max(0, item.totalSlots - item.claimedSlots);
@@ -106,7 +102,7 @@ async function updateMarketplace(client) {
             const unixTimestamp = Math.floor(item.expiresAt.getTime() / 1000);
             desc += `• **Market Expiry:** <t:${unixTimestamp}:F> (<t:${unixTimestamp}:R>)\n`;
           }
-          desc += `───────────────────────────────\n\n`;
+          desc += `\n`;
         });
       }
       
